@@ -9,15 +9,14 @@ import SwiftUI
 
 struct AnimeCell: View {
     @Binding var anime: Anime
-    @State var progress = 0.5
-    @State var text = ""
-
+    @State var seen = ""
+    
     
     var body: some View {
         VStack(spacing: 0) {
 
             HStack(alignment: .imageTitleAlignmentGuide, spacing: 0) {
-                AsyncImage(url: URL(string: anime.posterUrl)) { image in
+                AsyncImage(url: URL(string: anime.main_picture.medium)) { image in
                     image
                         .resizable()
                         .scaledToFill()
@@ -36,37 +35,44 @@ struct AnimeCell: View {
                 
                 VStack(alignment: .leading, spacing:10) {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("Fall 2007")
+                        Text(verbatim: "\(anime.start_season.season.capitalized) \(anime.start_season.year)")
                             .foregroundColor(.secondary)
                             .font(.caption)
                         
                         Text(anime.title)
 
-                        GenreTagView(genre: anime.genre)
+                        GenreTagView(genre: anime.genres.map{ $0.name })
 
                     }
                                         
-                    ProgressView(value: 96, total: 456) {
-                        HStack {
-                            Text("21 seasons | Finished")
+                    ProgressView(value: Float(seen), total: Float(anime.num_episodes)) {
+                        HStack(spacing: 4) {
+                            Text("\(String(format: "Score: %.2f", anime.mean)) | Rank: \(anime.rank)")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
                             Spacer()
-
-                            Text("Episodes:")
+//
+//                            Label(anime.media_type.uppercased(), systemImage: "tv")
+//                                .foregroundColor(.secondary)
+//                                .font(.caption)
+//
+                            Text("Episodes")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
-                                                    
-                            TextField("0", text: $text)
+                            
+                            TextField("0", text: $seen)
                                 .fixedSize()
+                                .foregroundColor(.accentColor)
                                 .font(.caption)
+//                                .border(.orange)
                                                     
-                            Text("/ \(anime.episodes.description)")
+                            Text(verbatim: "/ \(anime.num_episodes.description)")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                         }
                     }
+                    .progressViewStyle(.linear)
                     
                     Label("Next episode: \(Date().formatted(date: .abbreviated, time: .shortened))", systemImage: "clock")
                         .foregroundColor(.secondary)
@@ -76,7 +82,7 @@ struct AnimeCell: View {
 
                 Spacer()
             }
-            .padding(.bottom)
+            .padding(.vertical)
             
             Divider()
         }
@@ -86,7 +92,7 @@ struct AnimeCell: View {
 
 struct AnimeCell_Previews: PreviewProvider {
     static var previews: some View {
-        AnimeCell(anime: .constant(Anime.sampleAnimes[0]))
+        AnimeCell(anime: .constant(AnimeCollection.sampleData[0].node))
 //            .border(.blue)
     }
 }

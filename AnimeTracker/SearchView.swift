@@ -12,25 +12,47 @@ struct SearchView: View {
     @EnvironmentObject var searchViewModel: SearchViewModel
 
     var body: some View {
-        VStack {
-            Picker("View Mode", selection: $homeViewModel.selectedSearchMode) {
-                ForEach(HomeViewModel.SearchMode.allCases) { mode in
-                    Text(mode.rawValue.capitalized)
+        ScrollView {
+            VStack(spacing: 0) {
+                Picker("View Mode", selection: $homeViewModel.selectedSearchMode) {
+                    ForEach(HomeViewModel.SearchMode.allCases) { mode in
+                        Text(mode.rawValue.capitalized)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .padding([.horizontal, .bottom])
+                
+                Divider()
+                
+                ForEach($searchViewModel.searchResults, id: \.node.id) { $animeNode in
+                    NavigationLink {
+                        AnimeCellDetail(anime: animeNode.node)
+                    } label: {
+                        AnimeCell(anime: $animeNode.node)
+                    }
+                    .buttonStyle(.plain)
+//                    AnimeCell(anime: $animeNode.node)
+                }
+                .padding([.horizontal])
+                
+                Spacer()
             }
-            .pickerStyle(.segmented)
-            .padding(.bottom)
-            
-            Text("Hello, World!")
-            
-            Spacer()
+            .edgesIgnoringSafeArea(.bottom)
         }
-        .padding([.horizontal, .bottom])
         .searchable(text: $searchViewModel.searchText)
+        .onSubmit(of: .search) {
+            Task {
+                try await searchViewModel.fetchAnimeByTitle(title: searchViewModel.searchText)
+            }
+        }
         .onReceive(searchViewModel.$searchText.debounce(for: 0.5, scheduler: RunLoop.main)
         ) { _ in
             // Debounce. Fetch api calls after 0.5 seconds of not typing.
-            print("Fetch api data for: \(searchViewModel.searchText)")
+            Task {
+                print("searching...")
+                try await searchViewModel.fetchAnimeByTitle(title: searchViewModel.searchText)
+                print(searchViewModel.searchResults.count)
+            }
         }
         .navigationTitle("Search for Anime")
     }

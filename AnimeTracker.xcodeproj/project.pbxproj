@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		320ACB6C2917568D00BD02F9 /* AnimeCellDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320ACB6B2917568D00BD02F9 /* AnimeCellDetail.swift */; };
 		325FF0422906021000085F68 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325FF0412906021000085F68 /* AuthViewModel.swift */; };
 		325FF0442906025700085F68 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325FF0432906025700085F68 /* HomeView.swift */; };
 		327410372907372100743CD4 /* Anime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 327410362907372100743CD4 /* Anime.swift */; };
@@ -22,6 +23,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		320ACB6B2917568D00BD02F9 /* AnimeCellDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimeCellDetail.swift; sourceTree = "<group>"; };
 		325FF0412906021000085F68 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		325FF0432906025700085F68 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		3274103529071D7200743CD4 /* AnimeTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AnimeTracker.entitlements; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 				32AD889A2908DF2C007E7217 /* SearchView.swift */,
 				3274103C2907398300743CD4 /* AnimeCell.swift */,
 				327410422907400600743CD4 /* GenreTagView.swift */,
+				320ACB6B2917568D00BD02F9 /* AnimeCellDetail.swift */,
 				32741038290738FD00743CD4 /* ViewModel */,
 				327410392907390800743CD4 /* Models */,
 				3274103529071D7200743CD4 /* AnimeTracker.entitlements */,
@@ -189,6 +192,7 @@
 				3284D91B2905FC810026EC1A /* AnimeTrackerApp.swift in Sources */,
 				32AD889D2909D187007E7217 /* SearchViewModel.swift in Sources */,
 				327410432907400600743CD4 /* GenreTagView.swift in Sources */,
+				320ACB6C2917568D00BD02F9 /* AnimeCellDetail.swift in Sources */,
 				3274103D2907398300743CD4 /* AnimeCell.swift in Sources */,
 				3284D9272905FC820026EC1A /* AnimeTracker.xcdatamodeld in Sources */,
 			);

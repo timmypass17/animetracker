@@ -6,13 +6,17 @@
 //
 
 import Foundation
+import CloudKit
 
+@MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
 class HomeViewModel: ObservableObject {
+    @Published var animeData: [AnimeNode] = []
+    @Published var filterResults: [AnimeNode] = []  // maybe use .filter{ }
+    @Published var filterText = ""
     @Published var selectedViewMode: ViewMode = .watching
     @Published var selectedSearchMode: SearchMode = .all
-    @Published var animeData: [Anime] = Anime.sampleAnimes
-    @Published var filterResults: [Anime] = []
-    @Published var filterText = ""
+    
+    static let TAG = "[HomeViewModel]" // for debugging
     
     enum ViewMode: String, CaseIterable, Identifiable {
         case watching, completed, planning
@@ -23,5 +27,93 @@ class HomeViewModel: ObservableObject {
         case all, anime, manga
         var id: Self { self } // forEach
     }
+    
+    func addAnime(anime: Anime) {
+        // 1. Create record object
+        let record = CKRecord(recordType: "Anime")
+        
+        // 2. Set values of record
+        record.setValuesForKeys([
+            "id": anime.id,
+            "episodes_seen": 0,
+//            "status": "watching"
+        ])
+        
+        // 3. Save record to cloudkit
+        let container = CKContainer.default()
+        let database = container.publicCloudDatabase
 
+        database.save(record) { record, error in
+            if let error = error {
+                // Handle error.
+                print("\(HomeViewModel.TAG) Error saving record: \(error)")
+                return
+            }
+            
+            // Record saved sucessfully.
+            print("\(HomeViewModel.TAG) Record saved successfully.")
+        }
+        
+    }
+    
+    // Fetches all anime from user.
+    func fetchAnimes() async {
+        let container = CKContainer.default()
+        let database = container.publicCloudDatabase
+
+        do {
+            // Fetch animes of current user
+            let userID = try await container.userRecordID()
+            let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
+            // different name from cloudkit dashboard for some reason... Also need to add index to make it queryable
+            let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
+            let query = CKQuery(recordType: "Anime", predicate: predicate)
+//            let queryOp = CKQueryOperation(query: query)
+            
+            let (animeResults, cursor) = try await database.records(matching: query)
+            
+            var animes: [AnimeNode] = []
+            for (recordID, result) in animeResults {
+                switch result {
+                case .success(let record):
+                    if let id = record["id"] as? Int {
+                        // MAL api call to get anime data
+                        animes.append(try await fetchAnimeByID(id: id))
+                    }
+                    
+                case .failure(let error):
+                    print(error)
+                }
+            }
+            
+            // update user's list with new data
+            self.animeData = animes
+            
+        } catch let operationError {
+            // Handle error.
+            print("\(HomeViewModel.TAG) Error fetching anime ids: \(operationError)")
+            return
+        }
+    }
+    
+    let baseUrl = "https://api.myanimelist.net/v2"
+    let apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
+    
+    func fetchAnimeByID(id: Int) async throws -> AnimeNode {
+        let fieldValue = "num_episodes,genres,mean,rank,start_season,synopsis,studios,status,average_episode_duration,media_type"
+        guard let url = URL(string: "\(baseUrl)/anime/\(id)?fields=\(fieldValue)") else { throw FetchError.badRequest }
+        
+        var request = URLRequest(url: url)
+        request.setValue(apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw FetchError.badRequest
+        }
+        
+        let anime = try JSONDecoder().decode(Anime.self, from: data)
+        
+        return AnimeNode(node: anime)
+    }
 }

@@ -18,7 +18,8 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var homeViewModel: HomeViewModel
-
+    static let TAG = "[HomeView]"
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -31,10 +32,9 @@ struct HomeView: View {
                 .padding([.horizontal, .bottom])
                 
                 Divider()
-                    .padding(.bottom)
                 
-                ForEach($homeViewModel.animeData, id: \.id) { $anime in
-                    AnimeCell(anime: $anime)
+                ForEach($homeViewModel.animeData, id: \.node.id) { $animeNode in
+                    AnimeCell(anime: $animeNode.node)
                         .padding(.bottom)
                 }
                 .padding([.horizontal])
@@ -56,16 +56,23 @@ struct HomeView: View {
                 text: $homeViewModel.filterText,
                 prompt: "Filter by name"
             ) {
-                ForEach($homeViewModel.filterResults, id: \.id) { $anime in
-                    AnimeCell(anime: $anime)
+                ForEach($homeViewModel.filterResults, id: \.node.id) { $animeNode in
+                    AnimeCell(anime: $animeNode.node)
                         .listRowSeparator(.hidden) // remove default separator
                 }
             }
             .onChange(of: homeViewModel.filterText) { newValue in
-                homeViewModel.filterResults = homeViewModel.animeData.filter { anime in
-                    anime.title.lowercased().contains(newValue.lowercased()) // case insensitive
+                homeViewModel.filterResults = homeViewModel.animeData.filter { animeNode in
+                    animeNode.node.title.lowercased().contains(newValue.lowercased()) // case insensitive
                 }
-        }
+            }
+            .onAppear {
+                print("\(HomeView.TAG) fetching animes")
+                Task {
+                    print("List of animes: \(await homeViewModel.fetchAnimes())")
+                }
+                
+            }
         }
     }
 }
