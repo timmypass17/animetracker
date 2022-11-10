@@ -26,9 +26,9 @@ struct SearchView: View {
                 
                 ForEach($searchViewModel.searchResults, id: \.node.id) { $animeNode in
                     NavigationLink {
-                        AnimeCellDetail(anime: animeNode.node)
+                        AnimeCellDetail(animeNode: $animeNode)
                     } label: {
-                        AnimeCell(anime: $animeNode.node)
+                        AnimeCell(animeNode: $animeNode)
                     }
                     .buttonStyle(.plain)
 //                    AnimeCell(anime: $animeNode.node)

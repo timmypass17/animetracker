@@ -9,15 +9,29 @@ import SwiftUI
 
 struct AnimeCellDetail: View {
     @EnvironmentObject var homeViewModel: HomeViewModel
-    let anime: Anime
+    @Binding var animeNode: AnimeNode
 
     var body: some View {
-        Button("Add", action: { homeViewModel.addAnime(anime: anime) })
+        Text(animeNode.record.recordID.recordName)
+        Text(animeNode.node.title)
+        Button("Add", action: {
+            Task {
+                await homeViewModel.addAnime(anime: animeNode.node)
+            }
+            
+        })
+        Button("Delete", action: {
+            Task {
+                await homeViewModel.deleteAnime(recordToDelete: animeNode.record)
+            }
+            
+        })
+
     }
 }
 
 struct AnimeCellDetail_Previews: PreviewProvider {
     static var previews: some View {
-        AnimeCellDetail(anime: AnimeCollection.sampleData[0].node)
+        AnimeCellDetail(animeNode: .constant(AnimeCollection.sampleData[0]))
     }
 }

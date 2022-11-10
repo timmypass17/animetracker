@@ -6,15 +6,24 @@
 //
 
 import Foundation
+import CloudKit
 
-// Note: Need to mirror JSON result
+// Make your data types encodable and decodable for compatibility with external representations such as JSON.
+// Note: 1. Need to mirror JSON result
+//       2. Use coding keys to add aditional fields not found in json structure
 
 struct AnimeCollection: Codable {
     var data: [AnimeNode]
 }
 
 struct AnimeNode: Codable {
+    
+    enum CodingKeys: String, CodingKey {
+        case node // if u want to add additinal fields, you have to explicitly list the nodes that ARE in the json structure
+    }
+    
     var node: Anime
+    var record: CKRecord = CKRecord(recordType: "Anime")
 }
 
 struct Anime: Codable {

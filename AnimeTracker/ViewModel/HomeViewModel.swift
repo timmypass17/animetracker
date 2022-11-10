@@ -28,7 +28,7 @@ class HomeViewModel: ObservableObject {
         var id: Self { self } // forEach
     }
     
-    func addAnime(anime: Anime) {
+    func addAnime(anime: Anime) async {
         // 1. Create record object
         let record = CKRecord(recordType: "Anime")
         
@@ -42,21 +42,20 @@ class HomeViewModel: ObservableObject {
         // 3. Save record to cloudkit
         let container = CKContainer.default()
         let database = container.publicCloudDatabase
-
-        database.save(record) { record, error in
-            if let error = error {
-                // Handle error.
-                print("\(HomeViewModel.TAG) Error saving record: \(error)")
-                return
-            }
             
+        do {
+            try await database.save(record)
             // Record saved sucessfully.
             print("\(HomeViewModel.TAG) Record saved successfully.")
+            
+        } catch {
+            // Handle error.
+            print("\(HomeViewModel.TAG) Error saving record: \(error)")
         }
         
     }
     
-    // Fetches all anime from user.
+    // Fetches anime data for user from CloudKit.
     func fetchAnimes() async {
         let container = CKContainer.default()
         let database = container.publicCloudDatabase
@@ -72,13 +71,15 @@ class HomeViewModel: ObservableObject {
             
             let (animeResults, cursor) = try await database.records(matching: query)
             
-            var animes: [AnimeNode] = []
-            for (recordID, result) in animeResults {
+            var animeNodes: [AnimeNode] = []
+            for (recordID, result) in animeResults { // result is (CKRecord, error)
                 switch result {
                 case .success(let record):
                     if let id = record["id"] as? Int {
                         // MAL api call to get anime data
-                        animes.append(try await fetchAnimeByID(id: id))
+                        var animeNode = try await fetchAnimeByID(id: id)
+                        animeNode.record = record
+                        animeNodes.append(animeNode)
                     }
                     
                 case .failure(let error):
@@ -87,7 +88,7 @@ class HomeViewModel: ObservableObject {
             }
             
             // update user's list with new data
-            self.animeData = animes
+            self.animeData = animeNodes
             
         } catch let operationError {
             // Handle error.
@@ -112,8 +113,24 @@ class HomeViewModel: ObservableObject {
             throw FetchError.badRequest
         }
         
+        // get anime data from rest api
         let anime = try JSONDecoder().decode(Anime.self, from: data)
         
         return AnimeNode(node: anime)
+    }
+    
+    // Only OP can delete post, no one else can.
+    func deleteAnime(recordToDelete: CKRecord) async {
+        let container = CKContainer.default()
+        let database = container.publicCloudDatabase
+        do {
+            print(recordToDelete.recordID.recordName)
+            try await database.deleteRecord(withID: recordToDelete.recordID)
+            // delete post locally aswell (better than re-fetching data to update ui)
+            self.animeData = self.animeData.filter {$0.record.recordID != recordToDelete.recordID}
+            print("\(HomeViewModel.TAG) Successfully deleted anime.")
+        } catch {
+            print("\(HomeViewModel.TAG) Error deleting post: \(error)")
+        }
     }
 }

@@ -8,15 +8,14 @@
 import SwiftUI
 
 struct AnimeCell: View {
-    @Binding var anime: Anime
+    @Binding var animeNode: AnimeNode
     @State var seen = ""
-    
-    
+        
     var body: some View {
         VStack(spacing: 0) {
 
             HStack(alignment: .imageTitleAlignmentGuide, spacing: 0) {
-                AsyncImage(url: URL(string: anime.main_picture.medium)) { image in
+                AsyncImage(url: URL(string: animeNode.node.main_picture.medium)) { image in
                     image
                         .resizable()
                         .scaledToFill()
@@ -35,19 +34,19 @@ struct AnimeCell: View {
                 
                 VStack(alignment: .leading, spacing:10) {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(verbatim: "\(anime.start_season.season.capitalized) \(anime.start_season.year)")
+                        Text(verbatim: "\(animeNode.node.start_season.season.capitalized) \(animeNode.node.start_season.year)")
                             .foregroundColor(.secondary)
                             .font(.caption)
                         
-                        Text(anime.title)
+                        Text(animeNode.node.title)
 
-                        GenreTagView(genre: anime.genres.map{ $0.name })
+                        GenreTagView(genre: animeNode.node.genres.map{ $0.name })
 
                     }
                                         
-                    ProgressView(value: Float(seen), total: Float(anime.num_episodes)) {
+                    ProgressView(value: Float(seen), total: Float(animeNode.node.num_episodes)) {
                         HStack(spacing: 4) {
-                            Text("\(String(format: "Score: %.2f", anime.mean)) | Rank: \(anime.rank)")
+                            Text("\(String(format: "Score: %.2f", animeNode.node.mean)) | Rank: \(animeNode.node.rank)")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
@@ -67,7 +66,7 @@ struct AnimeCell: View {
                                 .font(.caption)
 //                                .border(.orange)
                                                     
-                            Text(verbatim: "/ \(anime.num_episodes.description)")
+                            Text(verbatim: "/ \(animeNode.node.num_episodes.description)")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                         }
@@ -92,7 +91,7 @@ struct AnimeCell: View {
 
 struct AnimeCell_Previews: PreviewProvider {
     static var previews: some View {
-        AnimeCell(anime: .constant(AnimeCollection.sampleData[0].node))
+        AnimeCell(animeNode: .constant(AnimeCollection.sampleData[0]))
 //            .border(.blue)
     }
 }

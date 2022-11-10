@@ -34,8 +34,12 @@ struct HomeView: View {
                 Divider()
                 
                 ForEach($homeViewModel.animeData, id: \.node.id) { $animeNode in
-                    AnimeCell(anime: $animeNode.node)
-                        .padding(.bottom)
+                    NavigationLink {
+                        AnimeCellDetail(animeNode: $animeNode)
+                    } label: {
+                        AnimeCell(animeNode: $animeNode)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding([.horizontal])
                 
@@ -57,7 +61,7 @@ struct HomeView: View {
                 prompt: "Filter by name"
             ) {
                 ForEach($homeViewModel.filterResults, id: \.node.id) { $animeNode in
-                    AnimeCell(anime: $animeNode.node)
+                    AnimeCell(animeNode: $animeNode)
                         .listRowSeparator(.hidden) // remove default separator
                 }
             }
@@ -69,9 +73,9 @@ struct HomeView: View {
             .onAppear {
                 print("\(HomeView.TAG) fetching animes")
                 Task {
-                    print("List of animes: \(await homeViewModel.fetchAnimes())")
+                    await homeViewModel.fetchAnimes()
+                    print(self.homeViewModel.animeData.count)
                 }
-                
             }
         }
     }
