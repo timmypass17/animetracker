@@ -24,7 +24,7 @@ class SearchViewModel: ObservableObject {
         print("[SearchViewModel] fetchAnime(\"\(title)\")")
         let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
         
-        let fieldValue = "num_episodes,genres,mean,rank,start_season,synopsis,studios,status,average_episode_duration,media_type"
+        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
         guard let url = URL(string: "\(baseUrl)/anime?q=\(titleFormatted)&fields=\(fieldValue)") else { return }
         
         var request = URLRequest(url: url)

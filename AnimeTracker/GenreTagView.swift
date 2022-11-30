@@ -54,7 +54,6 @@ struct GenreTagView: View {
                         }
                         return result
                     })
-                
             }
         }.background(viewHeightReader($totalHeight))
     }

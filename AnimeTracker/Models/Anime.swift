@@ -12,6 +12,10 @@ import CloudKit
 // Note: 1. Need to mirror JSON result
 //       2. Use coding keys to add aditional fields not found in json structure
 
+struct MyAnimeListApi {
+    static let fieldValues = ["num_episodes", "genres", "mean", "rank", "start_season", "synopsis", "studios", "status", "average_episode_duration", "media_type", "alternative_titles", "popularity", "num_list_users"]
+}
+
 struct AnimeCollection: Codable {
     var data: [AnimeNode]
 }
@@ -40,6 +44,9 @@ struct Anime: Codable {
     var status: String
     var average_episode_duration: Int // seconds
     var media_type: String
+    var alternative_titles: AlternativeTitle
+    var popularity: Int
+    var num_list_users: Int
     
     struct Poster: Codable {
         var medium: String
@@ -55,8 +62,13 @@ struct Anime: Codable {
     struct Studio: Codable, Equatable {
         var name: String
     }
+    struct AlternativeTitle: Codable {
+        var synonyms: [String]
+        var en: String
+        var ja: String
+    }
     
-    init(id: Int, title: String, main_picture: Poster, num_episodes: Int, genres: [Genre], studios: [Studio], mean: Float, rank: Int, start_season: Season, synopsis: String, status: String, average_episode_duration: Int, media_type: String) {
+    init(id: Int, title: String, main_picture: Poster, num_episodes: Int, genres: [Genre], studios: [Studio], mean: Float, rank: Int, start_season: Season, synopsis: String, status: String, average_episode_duration: Int, media_type: String, alternative_titles: AlternativeTitle, popularity: Int, num_list_users: Int) {
         self.id = id
         self.title = title
         self.main_picture = main_picture
@@ -70,6 +82,9 @@ struct Anime: Codable {
         self.status = status
         self.average_episode_duration = average_episode_duration
         self.media_type = media_type
+        self.alternative_titles = alternative_titles
+        self.popularity = popularity
+        self.num_list_users = num_list_users
     }
 }
 
@@ -82,7 +97,7 @@ extension AnimeCollection {
                 title: "One Piece",
                 main_picture: Anime.Poster(medium: "https://api-cdn.myanimelist.net/images/anime/6/73245.jpg", large: "https://api-cdn.myanimelist.net/images/anime/6/73245.jpg"),
                 num_episodes: 973,
-                genres: [Anime.Genre(name: "Action"), Anime.Genre(name: "Adventure")],
+                genres: [Anime.Genre(name: "Action"), Anime.Genre(name: "Adventure"), Anime.Genre(name: "Comedy")],
                 studios: [Anime.Studio(name: "Toei Animation")],
                 mean: 8.42,
                 rank: 152,
@@ -90,7 +105,10 @@ extension AnimeCollection {
                 synopsis: "Gol D. Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The capture and execution of Roger by the World Government brought a change throughout the world. His last words before his",
                 status: "ongoing",
                 average_episode_duration: 1440,
-                media_type: "tv"
+                media_type: "tv",
+                alternative_titles: Anime.AlternativeTitle(synonyms: ["Daiya no Ace: Second Season", "Ace of the Diamond: 2nd Season"], en: "One Piece", ja: "One Piece"),
+                popularity: 23,
+                num_list_users: 480628
             )
         )
     ]

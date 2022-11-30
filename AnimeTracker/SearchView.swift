@@ -15,7 +15,7 @@ struct SearchView: View {
         ScrollView {
             VStack(spacing: 0) {
                 Picker("View Mode", selection: $homeViewModel.selectedSearchMode) {
-                    ForEach(HomeViewModel.SearchMode.allCases) { mode in
+                    ForEach(SearchMode.allCases) { mode in
                         Text(mode.rawValue.capitalized)
                     }
                 }

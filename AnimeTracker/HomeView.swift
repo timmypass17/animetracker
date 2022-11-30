@@ -24,7 +24,7 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: 0) {
                 Picker("View Mode", selection: $homeViewModel.selectedViewMode) {
-                    ForEach(HomeViewModel.ViewMode.allCases) { mode in
+                    ForEach(ViewMode.allCases) { mode in
                         Text(mode.rawValue.capitalized)
                     }
                 }

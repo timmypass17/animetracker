@@ -8,6 +8,16 @@
 import Foundation
 import CloudKit
 
+enum ViewMode: String, CaseIterable, Identifiable {
+    case watching, completed, planning
+    var id: Self { self } // forEach
+}
+
+enum SearchMode: String, CaseIterable, Identifiable {
+    case all, anime, manga
+    var id: Self { self } // forEach
+}
+
 @MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
 class HomeViewModel: ObservableObject {
     @Published var animeData: [AnimeNode] = []
@@ -17,16 +27,6 @@ class HomeViewModel: ObservableObject {
     @Published var selectedSearchMode: SearchMode = .all
     
     static let TAG = "[HomeViewModel]" // for debugging
-    
-    enum ViewMode: String, CaseIterable, Identifiable {
-        case watching, completed, planning
-        var id: Self { self } // forEach
-    }
-
-    enum SearchMode: String, CaseIterable, Identifiable {
-        case all, anime, manga
-        var id: Self { self } // forEach
-    }
     
     func addAnime(anime: Anime) async {
         // 1. Create record object
@@ -101,14 +101,13 @@ class HomeViewModel: ObservableObject {
     let apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
     
     func fetchAnimeByID(id: Int) async throws -> AnimeNode {
-        let fieldValue = "num_episodes,genres,mean,rank,start_season,synopsis,studios,status,average_episode_duration,media_type"
+        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
         guard let url = URL(string: "\(baseUrl)/anime/\(id)?fields=\(fieldValue)") else { throw FetchError.badRequest }
         
         var request = URLRequest(url: url)
         request.setValue(apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
         
         let (data, response) = try await URLSession.shared.data(for: request)
-        
         guard (response as? HTTPURLResponse)?.statusCode == 200 else {
             throw FetchError.badRequest
         }

@@ -14,7 +14,7 @@ struct AnimeCell: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            HStack(alignment: .imageTitleAlignmentGuide, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
                 AsyncImage(url: URL(string: animeNode.node.main_picture.medium)) { image in
                     image
                         .resizable()
@@ -38,10 +38,35 @@ struct AnimeCell: View {
                             .foregroundColor(.secondary)
                             .font(.caption)
                         
-                        Text(animeNode.node.title)
-
-                        GenreTagView(genre: animeNode.node.genres.map{ $0.name })
-
+                        HStack(spacing: 4){
+                            Text(animeNode.node.title)
+                        }
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.bottom, 5)
+                        
+                        HStack(spacing: 4) {
+                            let maxTags = 2
+                            ForEach(animeNode.node.genres.prefix(maxTags), id: \.name) { tag in
+                                Text(tag.name)
+                                    .font(.caption)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 2)
+                                    .font(.body)
+                                    .background(Color.accentColor)
+                                    .foregroundColor(Color.white)
+                                    .cornerRadius(3)
+                            }
+                            if animeNode.node.genres.count > maxTags {
+                                HStack(spacing: 0) {
+                                    Image(systemName: "plus")
+                                    Text("\(animeNode.node.genres.count - maxTags) more")
+                                }
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                                .padding(.leading, 2)
+                            }
+                        }
                     }
                                         
                     ProgressView(value: Float(seen), total: Float(animeNode.node.num_episodes)) {
@@ -51,18 +76,13 @@ struct AnimeCell: View {
                                 .font(.caption)
                             
                             Spacer()
-//
-//                            Label(anime.media_type.uppercased(), systemImage: "tv")
-//                                .foregroundColor(.secondary)
-//                                .font(.caption)
-//
-                            Text("Episodes")
+
+                            Text("Episodes:")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
-                            TextField("0", text: $seen)
-                                .fixedSize()
-                                .foregroundColor(.accentColor)
+                            Text("0")
+                                .foregroundColor(.secondary)
                                 .font(.caption)
 //                                .border(.orange)
                                                     
@@ -85,7 +105,6 @@ struct AnimeCell: View {
             
             Divider()
         }
-        
     }
 }
 
@@ -96,14 +115,4 @@ struct AnimeCell_Previews: PreviewProvider {
     }
 }
 
-extension VerticalAlignment {
-    private struct ImageTitleAlignment: AlignmentID {
-        static func defaultValue(in context: ViewDimensions) -> CGFloat {
-            context[VerticalAlignment.top]
-        }
-    }
-    
-    static let imageTitleAlignmentGuide = VerticalAlignment(
-        ImageTitleAlignment.self
-    )
-}
+
