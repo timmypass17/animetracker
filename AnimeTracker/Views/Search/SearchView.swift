@@ -9,8 +9,8 @@ import SwiftUI
 
 struct SearchView: View {
     @EnvironmentObject var homeViewModel: HomeViewModel
-    @EnvironmentObject var searchViewModel: SearchViewModel
-
+//    @EnvironmentObject var searchViewModel: SearchViewModel
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -24,9 +24,9 @@ struct SearchView: View {
                 
                 Divider()
                 
-                ForEach($searchViewModel.searchResults, id: \.node.id) { $animeNode in
+                ForEach($homeViewModel.searchResults, id: \.node.id) { $animeNode in
                     NavigationLink {
-                        AnimeCellDetail(animeNode: $animeNode)
+                        AnimeDetail(animeID: animeNode.node.id)
                     } label: {
                         AnimeCell(animeNode: $animeNode)
                     }
@@ -39,19 +39,17 @@ struct SearchView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
         }
-        .searchable(text: $searchViewModel.searchText)
+        .searchable(text: $homeViewModel.searchText)
         .onSubmit(of: .search) {
             Task {
-                try await searchViewModel.fetchAnimeByTitle(title: searchViewModel.searchText)
+                try await homeViewModel.fetchAnimeByTitle(title: homeViewModel.searchText)
             }
         }
-        .onReceive(searchViewModel.$searchText.debounce(for: 0.5, scheduler: RunLoop.main)
+        .onReceive(homeViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
         ) { _ in
             // Debounce. Fetch api calls after 0.5 seconds of not typing.
             Task {
-                print("searching...")
-                try await searchViewModel.fetchAnimeByTitle(title: searchViewModel.searchText)
-                print(searchViewModel.searchResults.count)
+                try await homeViewModel.fetchAnimeByTitle(title: homeViewModel.searchText)
             }
         }
         .navigationTitle("Search for Anime")
@@ -63,7 +61,7 @@ struct SearchView_Previews: PreviewProvider {
         NavigationStack {
             SearchView()
                 .environmentObject(HomeViewModel())
-                .environmentObject(SearchViewModel())
+//                .environmentObject(SearchViewModel())
         }
     }
 }

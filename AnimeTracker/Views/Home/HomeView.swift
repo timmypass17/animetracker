@@ -33,25 +33,15 @@ struct HomeView: View {
                 
                 Divider()
                 
-                ForEach($homeViewModel.animeData, id: \.node.id) { $animeNode in
-                    NavigationLink {
-                        AnimeCellDetail(animeNode: $animeNode)
-                    } label: {
-                        AnimeCell(animeNode: $animeNode)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding([.horizontal])
+                HomeColumn(animeData: $homeViewModel.animeData)
                 
                 Spacer()
             }
             .edgesIgnoringSafeArea(.bottom)
             .toolbar {
-                ToolbarItemGroup {
-                    NavigationLink {
-                        SearchView()
-                    } label: {
-                        Image(systemName: "plus")
+                ToolbarItem {
+                    Button(action: {}) {
+                        Image(systemName: "line.3.horizontal.decrease")
                     }
                 }
             }
@@ -68,13 +58,6 @@ struct HomeView: View {
             .onChange(of: homeViewModel.filterText) { newValue in
                 homeViewModel.filterResults = homeViewModel.animeData.filter { animeNode in
                     animeNode.node.title.lowercased().contains(newValue.lowercased()) // case insensitive
-                }
-            }
-            .onAppear {
-                print("\(HomeView.TAG) fetching animes")
-                Task {
-                    await homeViewModel.fetchAnimes()
-                    print(self.homeViewModel.animeData.count)
                 }
             }
         }

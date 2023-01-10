@@ -17,7 +17,7 @@ enum Tab {
 struct AnimeTrackerApp: App {
     @StateObject var authViewModel = AuthViewModel()
     @StateObject var homeViewModel = HomeViewModel()
-    @StateObject var searchViewModel = SearchViewModel()
+//    @StateObject var searchViewModel = SearchViewModel()
     
     var body: some Scene {
         WindowGroup {
@@ -28,8 +28,6 @@ struct AnimeTrackerApp: App {
                 .tabItem {
                     Label("List", systemImage: "list.bullet")
                 }
-                .environmentObject(authViewModel)
-                .environmentObject(homeViewModel)
                 
                 NavigationStack {
                     SearchView()
@@ -37,14 +35,14 @@ struct AnimeTrackerApp: App {
                 .tabItem {
                     Label("Search", systemImage: "magnifyingglass")
                 }
-                .environmentObject(homeViewModel)
-                .environmentObject(searchViewModel)
                 
                 Text("Chart View")
                     .tabItem {
                         Label("Chart", systemImage: "chart.bar.fill")
                     }
             }
+            .environmentObject(authViewModel)
+            .environmentObject(homeViewModel)
         }
     }
 }

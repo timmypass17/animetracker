@@ -9,8 +9,7 @@ import SwiftUI
 
 struct AnimeCell: View {
     @Binding var animeNode: AnimeNode
-    @State var seen = ""
-        
+    
     var body: some View {
         VStack(spacing: 0) {
 
@@ -32,9 +31,9 @@ struct AnimeCell: View {
                 }
                 .padding(.trailing)
                 
-                VStack(alignment: .leading, spacing:10) {
+                VStack(alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(verbatim: "\(animeNode.node.start_season.season.capitalized) \(animeNode.node.start_season.year)")
+                        Text(animeNode.node.startSeasonFormatted())
                             .foregroundColor(.secondary)
                             .font(.caption)
                         
@@ -68,10 +67,11 @@ struct AnimeCell: View {
                             }
                         }
                     }
-                                        
-                    ProgressView(value: Float(seen), total: Float(animeNode.node.num_episodes)) {
+                    
+                    // progressiveView likes float
+                    ProgressView(value: Float(self.animeNode.record["episodes_seen"] as? Int ?? 0), total: Float(animeNode.node.num_episodes)) {
                         HStack(spacing: 4) {
-                            Text("\(String(format: "Score: %.2f", animeNode.node.mean)) | Rank: \(animeNode.node.rank)")
+                            Text("Score: \(animeNode.node.meanFormatted()) | Rank: \(animeNode.node.rankFormatted())")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
@@ -81,7 +81,7 @@ struct AnimeCell: View {
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
-                            Text("0")
+                            Text("\(self.animeNode.record["episodes_seen"] as? Int ?? 0)")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
 //                                .border(.orange)
@@ -105,13 +105,13 @@ struct AnimeCell: View {
             
             Divider()
         }
+        .contentShape(Rectangle()) // makes whole view clickable
     }
 }
 
 struct AnimeCell_Previews: PreviewProvider {
     static var previews: some View {
         AnimeCell(animeNode: .constant(AnimeCollection.sampleData[0]))
-//            .border(.blue)
     }
 }
 
