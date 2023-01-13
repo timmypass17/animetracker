@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct FilterColumn: View {
-    @EnvironmentObject var homeViewModel: HomeViewModel
+    @EnvironmentObject var animeViewModel: AnimeViewModel
     
     var body: some View {
-        ForEach($homeViewModel.filterResults, id: \.node.id) { $animeNode in
+        ForEach($animeViewModel.filterResults, id: \.node.id) { $animeNode in
             AnimeCell(animeNode: $animeNode)
                 .listRowSeparator(.hidden) // remove default separator
         }
@@ -21,6 +21,6 @@ struct FilterColumn: View {
 struct FilterColumn_Previews: PreviewProvider {
     static var previews: some View {
         FilterColumn()
-            .environmentObject(HomeViewModel())
+            .environmentObject(AnimeViewModel())
     }
 }

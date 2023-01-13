@@ -9,7 +9,7 @@ import SwiftUI
 import CloudKit
 
 struct EpisodeSheet: View {
-    @EnvironmentObject var homeViewModel: HomeViewModel
+    @EnvironmentObject var homeViewModel: AnimeViewModel
     @State var isEditing = false
     @Binding var isShowingSheet: Bool
     @Binding var animeNode: AnimeNode

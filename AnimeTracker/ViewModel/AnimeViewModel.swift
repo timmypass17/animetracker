@@ -1,5 +1,5 @@
 //
-//  HomeViewModel.swift
+//  AnimeViewModel.swift
 //  AnimeTracker
 //
 //  Created by Timmy Nguyen on 10/24/22.
@@ -10,38 +10,105 @@ import CloudKit
 
 
 @MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
-class HomeViewModel: ObservableObject {
+class AnimeViewModel: ObservableObject {
     @Published var animeData: [AnimeNode] = [] // underying data
+    @Published var selectedAnimeData: [AnimeNode] = []
     @Published var filterResults: [AnimeNode] = []
-    @Published var selectedViewMode: ViewMode = .all
     @Published var searchResults: [AnimeNode] = []
+    @Published var selectedViewMode: ViewMode = .all
     @Published var selectedSearchMode: SearchMode = .all
+    @Published var selectedSort: SortBy = .last_modified
     @Published var filterText = ""
-
     @Published var searchText = ""
     
-    @Published var selectedAnimeData: [AnimeNode] = []
-    var selectedData: [AnimeNode] {
-        switch selectedViewMode {
-        case .all:
-            return animeData
-        case .watching:
-            // Get animes between range 0 to num_episodes - 1
-            return animeData.filter { 0 ... $0.node.num_episodes - 1 ~= ($0.record["episodes_seen"] as? Int ?? 0) }
-        case .completed:
-            return animeData.filter { ($0.record["episodes_seen"] as? Int ?? 0) == $0.node.num_episodes}
-        case .planning:
-            return animeData.filter { $0.record["bookmarked"] as? Bool ?? false }
-        }
-    }
-
-    let TAG = "[HomeViewModel]" // for debugging
-
+    let TAG = "[AnimeViewModel]" // for debugging
+    
+    
     init() {
         Task {
             // request api call only once. Every "addition" is done locally, abstracted from user
             await fetchAnimes()
+            sortData()
+        }
+    }
+    
+    func sortData() {
+        sortByMode()
+        sortBySorting()
+    }
+    
+    private func sortByMode() {
+        switch selectedViewMode {
+        case .all:
             selectedAnimeData = animeData
+        case .watching:
+            // Get animes between range 0 to num_episodes - 1
+            selectedAnimeData = animeData.filter { 0 ... $0.node.num_episodes - 1 ~= ($0.record["episodes_seen"] as? Int ?? 0) }
+        case .completed:
+            selectedAnimeData = animeData.filter { ($0.record["episodes_seen"] as? Int ?? 0) == $0.node.num_episodes}
+        case .planning:
+            selectedAnimeData = animeData.filter { $0.record["bookmarked"] as? Bool ?? false }
+        }
+    }
+    
+    private func sortBySorting() {
+        switch selectedSort {
+        case .alphabetical:
+            selectedAnimeData = selectedAnimeData.sorted { $0.node.title < $1.node.title }
+        case .newest:
+            selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? 9999 > $1.node.start_season?.year ?? 9999 }
+        case .date_created:
+            selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate! > $1.record.creationDate! } // most recent on top
+        case .last_modified:
+            selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate! > $1.record.modificationDate! }
+        }
+    }
+    
+    func fetchAnimeByID(id: Int) async throws -> AnimeNode {
+        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(id)?fields=\(fieldValue)") else { throw FetchError.badRequest }
+        
+        var request = URLRequest(url: url)
+        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw FetchError.badRequest
+        }
+        
+        // get anime data from rest api
+        let anime = try JSONDecoder().decode(Anime.self, from: data)
+        return AnimeNode(node: anime)
+    }
+    
+    func fetchAnimesByTitle(title: String) async throws {
+        guard title != "" else { return }
+        
+        // Create query url
+        let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
+        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(fieldValue)") else { return }
+        var request = URLRequest(url: url)
+        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+        
+        // Send network request to get anime data
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
+        
+        do {
+            // Store result into viewmodel
+            searchResults = try JSONDecoder().decode(AnimeCollection.self, from: data).data
+        } catch {
+            print(error)
+        }
+        
+        // Update record for each search item using existing record in animeData!
+        for (index, animeNode) in searchResults.enumerated() {
+            for item in animeData {
+                if item.node.id == animeNode.node.id {
+                    searchResults[index].record = item.record
+                }
+            }
         }
     }
     
@@ -72,24 +139,9 @@ class HomeViewModel: ObservableObject {
         
         await saveItem(record: record)
     }
-    
-    func saveItem(record: CKRecord) async {
-        let container = CKContainer.default()
-        let database = container.publicCloudDatabase
-        do {
-            try await database.save(record) // slow, takes a few seconds for record to be saved onto cloudkit? skill diff
-            // Record saved sucessfully.
-            print("\(TAG) Added record successfully.")
-        } catch {
-            // Handle error.
-            print("\(TAG) Error saving record: \(error)")
-        }
-    }
 
     // Fetches user's anime list from CloudKit
     func fetchAnimes() async {
-        print("\(TAG) fetchAnimes()")
-        
         let container = CKContainer.default()
         let database = container.publicCloudDatabase
         
@@ -130,74 +182,6 @@ class HomeViewModel: ObservableObject {
         }
     }
     
-    // Fetch anime from MAL API
-    func fetchAnimeByID(id: Int) async throws -> AnimeNode {
-        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(id)?fields=\(fieldValue)") else { throw FetchError.badRequest }
-        
-        var request = URLRequest(url: url)
-        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw FetchError.badRequest
-        }
-        
-        // get anime data from rest api
-        let anime = try JSONDecoder().decode(Anime.self, from: data)
-        return AnimeNode(node: anime)
-    }
-
-//    // Fetch anime from MAL API
-//    func fetchAnimeByID(id: Int) async throws -> AnimeNode {
-//        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
-//        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(id)?fields=\(fieldValue)") else { throw FetchError.badRequest }
-//
-//        var request = URLRequest(url: url)
-//        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-//
-//        let (data, response) = try await URLSession.shared.data(for: request)
-//        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-//            throw FetchError.badRequest
-//        }
-//
-//        // get anime data from rest api
-//        let anime = try JSONDecoder().decode(Anime.self, from: data)
-//        return AnimeNode(node: anime)
-//    }
-    
-    // Fetch anime by title from MAL API
-    func fetchAnimesByTitle(title: String) async throws {
-        guard title != "" else { return }
-        
-        // Create query url
-        let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
-        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(fieldValue)") else { return }
-        var request = URLRequest(url: url)
-        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-        
-        // Send network request to get anime data
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
-        
-        do {
-            // Store result into viewmodel
-            searchResults = try JSONDecoder().decode(AnimeCollection.self, from: data).data
-        } catch {
-            print(error)
-        }
-        
-        // Update record for each search item using existing record in animeData!
-        for (index, animeNode) in searchResults.enumerated() {
-            for item in animeData {
-                if item.node.id == animeNode.node.id {
-                    searchResults[index].record = item.record
-                }
-            }
-        }
-    }
-    
     // Delete anime record from CloudKit. Note: only OP can delete post, no one else can.
     func deleteAnime(animeNode: AnimeNode) async {
         let container = CKContainer.default()
@@ -215,6 +199,20 @@ class HomeViewModel: ObservableObject {
             print("\(TAG) Successfully deleted anime.")
         } catch {
             print("\(TAG) Error deleting post: \(error)")
+        }
+    }
+    
+    
+    func saveItem(record: CKRecord) async {
+        let container = CKContainer.default()
+        let database = container.publicCloudDatabase
+        do {
+            try await database.save(record) // slow, takes a few seconds for record to be saved onto cloudkit? skill diff
+            // Record saved sucessfully.
+            print("\(TAG) Added record successfully.")
+        } catch {
+            // Handle error.
+            print("\(TAG) Error saving record: \(error)")
         }
     }
     
@@ -236,4 +234,10 @@ enum SearchMode: String, CaseIterable, Identifiable {
 enum FetchError: Error {
     case badRequest
     case badJson
+}
+
+enum Tab {
+    case list
+    case search
+    case chart
 }

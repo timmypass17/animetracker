@@ -9,7 +9,7 @@ import SwiftUI
 
 // Note: Could have multible anime detail screens so we store state seperately
 struct AnimeDetail: View {
-    @EnvironmentObject var homeViewModel: HomeViewModel
+    @EnvironmentObject var homeViewModel: AnimeViewModel
     @Environment(\.dismiss) private var dismiss
     @State var animationAmount = 1.0
     @State var animeNode: AnimeNode = AnimeNode(node: Anime())
@@ -134,7 +134,7 @@ struct AnimeDetail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             AnimeDetail(animeNode: AnimeCollection.sampleData[0], animeID: 0)
-                .environmentObject(HomeViewModel())
+                .environmentObject(AnimeViewModel())
         }
     }
 }

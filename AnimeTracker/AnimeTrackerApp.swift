@@ -7,17 +7,11 @@
 
 import SwiftUI
 
-enum Tab {
-    case list
-    case search
-    case chart
-}
 
 @main
 struct AnimeTrackerApp: App {
     @StateObject var authViewModel = AuthViewModel()
-    @StateObject var homeViewModel = HomeViewModel()
-//    @StateObject var searchViewModel = SearchViewModel()
+    @StateObject var animeViewModel = AnimeViewModel()
     
     var body: some Scene {
         WindowGroup {
@@ -36,13 +30,13 @@ struct AnimeTrackerApp: App {
                     Label("Search", systemImage: "magnifyingglass")
                 }
                 
-                Text("Chart View")
+                Text("Friend View")
                     .tabItem {
-                        Label("Chart", systemImage: "chart.bar.fill")
+                        Label("Friends", systemImage: "person.2")
                     }
             }
             .environmentObject(authViewModel)
-            .environmentObject(homeViewModel)
+            .environmentObject(animeViewModel)
         }
     }
 }

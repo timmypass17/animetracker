@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SearchView: View {
-    @EnvironmentObject var homeViewModel: HomeViewModel
+    @EnvironmentObject var animeViewModel: AnimeViewModel
 
     var body: some View {
         ScrollView {
@@ -18,20 +18,20 @@ struct SearchView: View {
                 
                 Divider()
                 
-                AnimeList(animeData: $homeViewModel.searchResults)
+                AnimeList(animeData: $animeViewModel.searchResults)
             }
         }
-        .searchable(text: $homeViewModel.searchText)
+        .searchable(text: $animeViewModel.searchText)
         .onSubmit(of: .search) {
             Task {
-                try await homeViewModel.fetchAnimesByTitle(title: homeViewModel.searchText)
+                try await animeViewModel.fetchAnimesByTitle(title: animeViewModel.searchText)
             }
         }
-        .onReceive(homeViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
+        .onReceive(animeViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
         ) { _ in
             // Debounce. Fetch api calls after 0.5 seconds of not typing.
             Task {
-                try await homeViewModel.fetchAnimesByTitle(title: homeViewModel.searchText)
+                try await animeViewModel.fetchAnimesByTitle(title: animeViewModel.searchText)
             }
         }
         .navigationTitle("Search for Anime")
@@ -42,7 +42,7 @@ struct SearchView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             SearchView()
-                .environmentObject(HomeViewModel())
+                .environmentObject(AnimeViewModel())
 //                .environmentObject(SearchViewModel())
         }
     }

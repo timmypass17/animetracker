@@ -154,11 +154,11 @@ extension Anime {
 //          - if u want to add additinal fields, you have to explicitly list the nodes that ARE in the json structure
 
 // "related_anime" field doesnt exist when querying using title. (works when querying using id)
-struct MyAnimeListApi {
-    static let fieldValues = ["num_episodes", "genres", "mean", "rank", "start_season", "synopsis", "studios", "status", "average_episode_duration", "media_type", "alternative_titles", "popularity", "num_list_users", "source", "rating", "related_anime", "recommendations"]
-    static let baseUrl = "https://api.myanimelist.net/v2"
-    static let apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
-}
+//struct MyAnimeListApi {
+//    static let fieldValues = ["num_episodes", "genres", "mean", "rank", "start_season", "synopsis", "studios", "status", "average_episode_duration", "media_type", "alternative_titles", "popularity", "num_list_users", "source", "rating", "related_anime", "recommendations"]
+//    static let baseUrl = "https://api.myanimelist.net/v2"
+//    static let apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
+//}
 
 
 extension AnimeCollection {

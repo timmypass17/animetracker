@@ -7,9 +7,17 @@
 
 import SwiftUI
 
+enum SortBy: String, CaseIterable, Identifiable {
+    case alphabetical
+    case newest
+    case date_created = "Date Created"
+    case last_modified = "Last Modified"
+    var id: Self { self }
+}
+
 struct HomeView: View {
-    @EnvironmentObject var homeViewModel: HomeViewModel
-    
+    @EnvironmentObject var animeViewModel: AnimeViewModel
+
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -18,32 +26,49 @@ struct HomeView: View {
                 
                 Divider()
                 
-                AnimeList(animeData: $homeViewModel.selectedAnimeData)
+                AnimeList(animeData: $animeViewModel.selectedAnimeData)
             }
             .searchable(
-                text: $homeViewModel.filterText,
+                text: $animeViewModel.filterText,
                 prompt: "Filter by name"
             ) {
-//                FilterColumn()
-                AnimeList(animeData: $homeViewModel.filterResults)
+                AnimeList(animeData: $animeViewModel.filterResults)
             }
-            .onChange(of: homeViewModel.filterText) { newValue in
-                homeViewModel.filterDataByTitle(query: newValue)
+            .onChange(of: animeViewModel.filterText) { newValue in
+                animeViewModel.filterDataByTitle(query: newValue)
             }
             .navigationTitle("Anime Tracker")
             .toolbar {
                 ToolbarItem {
-                    Button(action: {}) {
-                        Image(systemName: "line.3.horizontal.decrease")
+                    Menu {
+                        Picker("Sort By", selection: $animeViewModel.selectedSort) {
+                            Label("Newest", systemImage: "leaf")
+                                .tag(SortBy.newest)
+                            
+                            Label("Alphabetical", systemImage: "textformat.abc")
+                                .tag(SortBy.alphabetical)
+                            
+                            Label("Date Added", systemImage: "calendar")
+                                .tag(SortBy.date_created)
+                            
+
+                            Label("Last Modified", systemImage: "clock")
+                                .tag(SortBy.last_modified)
+                        }
+                    } label: {
+                        Label("Add Bookmark", systemImage: "line.3.horizontal.decrease")
                     }
                 }
             }
         }
         .onAppear {
-            homeViewModel.selectedAnimeData = homeViewModel.selectedData
+            animeViewModel.sortData()
         }
-        .onChange(of: homeViewModel.selectedViewMode) { newValue in
-            homeViewModel.selectedAnimeData = homeViewModel.selectedData
+        .onChange(of: animeViewModel.selectedViewMode) { newValue in
+            animeViewModel.sortData()
+        }
+        .onChange(of: animeViewModel.selectedSort) { newValue in
+            animeViewModel.sortData()
         }
     }
 }
@@ -52,7 +77,7 @@ struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             HomeView()
-                .environmentObject(HomeViewModel())
+                .environmentObject(AnimeViewModel())
         }
     }
 }
