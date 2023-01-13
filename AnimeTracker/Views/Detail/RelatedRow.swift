@@ -69,6 +69,7 @@ struct RelatedRowCell: View {
                 
         }
         .frame(width: 100)
+        .contentShape(RoundedRectangle(cornerRadius: 5)) // fixes overlap click area
     }
 }
 

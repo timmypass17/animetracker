@@ -7,57 +7,32 @@
 
 import SwiftUI
 
-enum DetailOption: String, CaseIterable, Identifiable {
-    case synopsis, statistic, recommendation
-    var id: Self { self } // forEach
-}
-
+// Note: Could have multible anime detail screens so we store state seperately
 struct AnimeDetail: View {
     @EnvironmentObject var homeViewModel: HomeViewModel
-    @State var selectedViewType: ViewMode = .watching
+    @Environment(\.dismiss) private var dismiss
     @State var animationAmount = 1.0
     @State var animeNode: AnimeNode = AnimeNode(node: Anime())
-    @State var isBookmarked = false
-    @State var isAdded = false
     @State var isShowingSheet = false
     @State var currentEpisode: Float = 0.0
-
     let animeID: Int
     
     var body: some View {
         ScrollView(.vertical) {
             VStack(spacing: 0) {
-                DetailBackground(animeNode: $animeNode)
+//                DetailBackground(animeNode: $animeNode)
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    DetailTopSection(
-                        animeNode: animeNode,
-                        selectedViewType: $selectedViewType
-                    )
+                    DetailTopSection(animeNode: animeNode)
                     
                     GenreRow(animeNode: animeNode)
                         .padding(.top)
                     
-                    DetailProgress(animeNode: $animeNode)
+                    DetailProgress(animeNode: $animeNode, current_episode: $currentEpisode)
                         .padding(.top)
                     
                     Synopsis(animeNode: animeNode)
                         .padding(.top)
-                    
-                    // can either have related mangas or related animes
-//                    if animeNode.node.media_type == "manga" {
-//                        RelatedRow(
-//                            title: "Related Manga",
-//                            relatedAnimes: animeNode.node.related_manga
-//                        )
-//                        .padding(.top)
-//                    } else {
-//                        RelatedRow(
-//                            title: "Related Anime",
-//                            relatedAnimes: animeNode.node.related_anime
-//                        )
-//                        .padding(.top)
-//                    }
                     
                     if let related_animes = animeNode.node.related_anime {
                         if related_animes.count > 0 {
@@ -81,7 +56,8 @@ struct AnimeDetail: View {
                                         
                     Button(action: {
                         Task {
-                            await homeViewModel.deleteAnime(recordToDelete: animeNode.record)
+                            dismiss()
+                            await homeViewModel.deleteAnime(animeNode: animeNode)
                         }
                     }) {
                         Text("Delete Anime")
@@ -91,33 +67,39 @@ struct AnimeDetail: View {
                     .padding(.top)
                 }
                 .padding()
-                .offset(y: -230) // to overlap background image
+                .padding(.top, 115)
+//                .offset(y: -230) // to overlap background image
+                .background(alignment: .top) {
+                    DetailBackground(animeNode: $animeNode)
+                }
                 
                 Spacer()
             }
         }
+        
         .foregroundColor(.white)
-        .background(.black)
-        .ignoresSafeArea()
+        .edgesIgnoringSafeArea(.top)
+//        .background(.black)
+//        .ignoresSafeArea()
         .navigationTitle(animeNode.node.title)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isShowingSheet, onDismiss: { /** Save data **/ }, content: {
             NavigationView {
-                EpisodeSheet(currentEpisode: $currentEpisode, isShowingSheet: $isShowingSheet, animeNode: $animeNode, isBookmarked: $isBookmarked)
+                EpisodeSheet(isShowingSheet: $isShowingSheet, animeNode: $animeNode, current_episode: $currentEpisode)
             }
             .presentationDetents([.medium])
         })
         .toolbar {
             ToolbarItemGroup {
                 Button(action: {
-                    isBookmarked.toggle()
                     Task {
-                        await homeViewModel.addAnime(anime: animeNode.node, episodes_seen: Int(currentEpisode), isBookedmarked: isBookmarked)
+                        animeNode.bookmarked.toggle()
+                        await homeViewModel.addAnime(animeNode: animeNode)
                     }
                 }) {
                     Image(systemName: "bookmark")
                         .foregroundColor(.yellow)
-                        .symbolVariant(isBookmarked ? .fill : .none)
+                        .symbolVariant(animeNode.bookmarked ? .fill : .none)
                 }
                 
                 Button(action: { isShowingSheet.toggle() }) {
@@ -127,24 +109,25 @@ struct AnimeDetail: View {
             }
         }
         .onAppear {
-            print("onAppear()")
+            print("AnimeDetail onAppear()")
             Task {
-                // get anime data
-                animeNode = try await homeViewModel.fetchAnimeByID(id: animeID)
-                // Loop through cached user's list and get the episodes_seen value.
-                // (Also if its bookedmarked)
-                for item in homeViewModel.animeData {
-                    if item.node.id == self.animeID {
-                        animeNode.record = item.record
-                        isBookmarked = animeNode.record["bookmarked"] as? Bool ?? false
-                        break
-                    }
+                // get anime data from local cache
+                if let existingNode = homeViewModel.animeData.first(where: { $0.node.id == animeID }) {
+                    print("exists")
+                    animeNode = existingNode
+                } else {
+                    // send api network request
+                    print("network request")
+                    animeNode = try await homeViewModel.fetchAnimeByID(id: animeID)
                 }
-                
-                
             }
         }
     }
+}
+
+enum DetailOption: String, CaseIterable, Identifiable {
+    case synopsis, statistic, recommendation
+    var id: Self { self } // forEach
 }
 
 struct AnimeDetail_Previews: PreviewProvider {

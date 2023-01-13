@@ -9,11 +9,12 @@ import SwiftUI
 
 struct DetailProgress: View {
     @Binding var animeNode: AnimeNode
+    @Binding var current_episode: Float
     
     var body: some View {
         VStack(alignment: .leading) {
             
-            ProgressView(value: Float(animeNode.record["episodes_seen"] as? Int ?? 0), total: Float(animeNode.node.num_episodes)) {
+            ProgressView(value: Float(animeNode.episodes_seen), total: Float(animeNode.node.num_episodes)) {
                 HStack(spacing: 4) {
                     Text("Status: \(animeNode.node.status.capitalized.replacingOccurrences(of: "_", with: " "))")
                         .font(.caption)
@@ -23,7 +24,7 @@ struct DetailProgress: View {
                     Text("Episodes:")
                         .font(.caption)
                     
-                    Text("\(animeNode.record["episodes_seen"] as? Int ?? 0)")
+                    Text("\(animeNode.episodes_seen)")
                         .font(.caption)
                     
                     Text(verbatim: "/ \(animeNode.node.num_episodes.description)")
@@ -40,6 +41,6 @@ struct DetailProgress: View {
 
 struct DetailProgress_Previews: PreviewProvider {
     static var previews: some View {
-        DetailProgress(animeNode: .constant(AnimeCollection.sampleData[0]))
+        DetailProgress(animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(5.0))
     }
 }

@@ -11,10 +11,10 @@ import CloudKit
 struct EpisodeSheet: View {
     @EnvironmentObject var homeViewModel: HomeViewModel
     @State var isEditing = false
-    @Binding var currentEpisode: Float
     @Binding var isShowingSheet: Bool
     @Binding var animeNode: AnimeNode
-    @Binding var isBookmarked: Bool
+//    @Binding var isBookmarked: Bool
+    @Binding var current_episode: Float
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -28,13 +28,13 @@ struct EpisodeSheet: View {
             AnimeCell(animeNode: $animeNode)
             
             HStack {
-                Button(action: { currentEpisode = max(currentEpisode - 1.0, 0.0) }) {
+                Button(action: { animeNode.episodes_seen = max(animeNode.episodes_seen - 1, 0) }) {
                     Image(systemName: "minus")
                 }
                 
                 // TODO: Some animes don't have num count (ex. One Piece)
                 Slider(
-                    value: $currentEpisode,
+                    value: $current_episode,
                     in: 0...Float(animeNode.node.num_episodes),
                     step: 1
                 ) {
@@ -47,20 +47,20 @@ struct EpisodeSheet: View {
                     isEditing = editing
                 }
                 
-                Button(action: { currentEpisode = min(currentEpisode + 1.0, Float(animeNode.node.num_episodes)) }) {
+                Button(action: { animeNode.episodes_seen = min(animeNode.episodes_seen + 1, animeNode.node.num_episodes) }) {
                     Image(systemName: "plus")
                 }
             }
             .padding(.top, 10)
             
-            Text("Currently on episode: \(Int(currentEpisode)) / \(animeNode.node.num_episodes)")
+            Text("Currently on episode: \(Int(current_episode)) / \(animeNode.node.num_episodes)")
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .font(.caption)
             
             Spacer()
             
-            Button(action : { handleSaveAction() } ) {
+            Button(action : { handleSaveAction() }) {
                 // save to icloud
                 Text("Save")
                     .foregroundColor(.white)
@@ -73,21 +73,15 @@ struct EpisodeSheet: View {
         .padding()
         .padding(.top) // sheet needs extra top padding
         .onAppear {
-            self.currentEpisode = animeNode.record["episodes_seen"] as? Float ?? 0.0
+            current_episode = Float(animeNode.episodes_seen)
         }
     }
     
     func handleSaveAction() {
         Task {
             isShowingSheet = false
-            // swiftui doesnt let me update record field, i would have to create an entirely new record for it to trigger a ui update...
-            let record = CKRecord(recordType: "Anime")
-            record.setValuesForKeys([
-                "id": animeNode.node.id,
-                "episodes_seen": Int(currentEpisode),
-            ])
-            animeNode.record = record
-            await homeViewModel.addAnime(anime: animeNode.node, episodes_seen: Int(currentEpisode), isBookedmarked: isBookmarked)
+            animeNode.episodes_seen = Int(current_episode)
+            await homeViewModel.addAnime(animeNode: animeNode)
         }
     }
 }
@@ -95,7 +89,7 @@ struct EpisodeSheet: View {
 struct EpisodeSheet_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            EpisodeSheet(currentEpisode: .constant(0.0), isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]), isBookmarked: .constant(false))
+            EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(100.0))
         }
     }
 }

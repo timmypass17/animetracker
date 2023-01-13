@@ -9,7 +9,6 @@ import SwiftUI
 
 struct DetailTopSection: View {
     let animeNode: AnimeNode
-    @Binding var selectedViewType: ViewMode
     
     var body: some View {
         HStack(alignment: .top) {
@@ -96,7 +95,7 @@ struct DetailTopSection: View {
 
 struct DetailTopSection_Previews: PreviewProvider {
     static var previews: some View {
-        DetailTopSection(animeNode: AnimeCollection.sampleData[0], selectedViewType: .constant(.completed))
+        DetailTopSection(animeNode: AnimeCollection.sampleData[0])
             .background(.black)
     }
 }

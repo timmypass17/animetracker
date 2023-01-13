@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-struct HomeColumn: View {
+struct AnimeList: View {
     @Binding var animeData: [AnimeNode]
-
+    
     var body: some View {
         VStack(spacing: 0) {
             ForEach($animeData, id: \.record.recordID) { $animeNode in
@@ -27,6 +27,6 @@ struct HomeColumn: View {
 
 struct HomeColumn_Previews: PreviewProvider {
     static var previews: some View {
-        HomeColumn(animeData: .constant(AnimeCollection.sampleData))
+        AnimeList(animeData: .constant(AnimeCollection.sampleData))
     }
 }

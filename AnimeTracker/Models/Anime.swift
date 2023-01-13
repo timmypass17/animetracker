@@ -8,15 +8,6 @@
 import Foundation
 import CloudKit
 
-// Make your data types encodable and decodable for compatibility with external representations such as JSON.
-// Note: 1. Need to mirror JSON result
-//       2. Use coding keys to add aditional fields not found in json structure.
-//          - if u want to add additinal fields, you have to explicitly list the nodes that ARE in the json structure
-
-// "related_anime" field doesnt exist when querying using title. (works when querying using id)
-struct MyAnimeListApi {
-    static let fieldValues = ["num_episodes", "genres", "mean", "rank", "start_season", "synopsis", "studios", "status", "average_episode_duration", "media_type", "alternative_titles", "popularity", "num_list_users", "source", "rating", "related_anime", "recommendations"]
-}
 
 struct AnimeCollection: Codable {
     var data: [AnimeNode]
@@ -31,6 +22,16 @@ struct AnimeNode: Codable {
 
     var node: Anime
     var record: CKRecord = CKRecord(recordType: "Anime") // not in json tree, so its not in enum. episodes_seen should be inside on cloudkit
+    
+    // unwrap record fields
+    var episodes_seen: Int {
+        get { record["episodes_seen"] as? Int ?? 0 }
+        set { record["episodes_seen"] = newValue }
+    }
+    var bookmarked: Bool {
+        get { record["bookmarked"] as? Bool ?? false }
+        set { record["bookmarked"] = newValue }
+    }
 }
 
 struct Anime: Codable {
@@ -50,7 +51,7 @@ struct Anime: Codable {
     var alternative_titles: AlternativeTitle
     var popularity: Int
     var num_list_users: Int
-    var source: String
+    var source: String?
     var rating: String?
     var related_anime: [RelatedNode]? // might not exist for some reason?
 //    var related_manga: [RelatedNode] = []
@@ -146,6 +147,19 @@ extension Anime {
         return "\(start_season.season.capitalized) \(start_season.year)"
     }
 }
+
+// Make your data types encodable and decodable for compatibility with external representations such as JSON.
+// Note: 1. Need to mirror JSON result
+//       2. Use coding keys to add aditional fields not found in json structure.
+//          - if u want to add additinal fields, you have to explicitly list the nodes that ARE in the json structure
+
+// "related_anime" field doesnt exist when querying using title. (works when querying using id)
+struct MyAnimeListApi {
+    static let fieldValues = ["num_episodes", "genres", "mean", "rank", "start_season", "synopsis", "studios", "status", "average_episode_duration", "media_type", "alternative_titles", "popularity", "num_list_users", "source", "rating", "related_anime", "recommendations"]
+    static let baseUrl = "https://api.myanimelist.net/v2"
+    static let apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
+}
+
 
 extension AnimeCollection {
     static let relatedAnime: Anime.RelatedNode = Anime.RelatedNode(node: Anime.AnimeNodeSmall(id: 1, title: "One Piece Movie", main_picture: Anime.Poster(medium: "https://api-cdn.myanimelist.net/images/anime/6/73245.jpg", large: "https://api-cdn.myanimelist.net/images/anime/6/73245.jpg")), relation_type_formatted: "Prequel")

@@ -9,10 +9,11 @@ import SwiftUI
 
 struct DetailBackground: View {
     @Binding var animeNode: AnimeNode
+    
     let gradient = LinearGradient(
         gradient: Gradient(stops: [
             .init(color: .black, location: 0),
-            .init(color: .clear, location: 1.5) // height of gradient
+            .init(color: .clear, location: 1.0) // 1.5 height of gradient
         ]),
         startPoint: .bottom,
         endPoint: .top
@@ -20,40 +21,40 @@ struct DetailBackground: View {
     
     var body: some View {
         // slightly hacky. Using scaledToFill() may cause affect layout.
-        Color.clear
-            .overlay {
-                AsyncImage(url: URL(string: animeNode.node.main_picture.large)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-//                        .frame(height: 350)
-                        .clipShape(Rectangle())
-                        .overlay {
-                            gradient
-                        }
-                        .clipped()
-                } placeholder: {
-                    ProgressView()
-//                        .frame(height: 350)
-                }
-            }
-            .frame(height: 350)
-            .clipped()
-        
-//        AsyncImage(url: URL(string: animeNode.node.main_picture.large)) { image in
-//            image
-//                .resizable()
-//                .scaledToFill()
-//                .frame(height: 350)
-//                .clipShape(Rectangle())
-//                .overlay {
-//                    gradient
+//        Color.clear
+//            .overlay {
+//                AsyncImage(url: URL(string: animeNode.node.main_picture.large)) { image in
+//                    image
+//                        .resizable()
+//                        .scaledToFill()
+////                        .frame(height: 350)
+//                        .clipShape(Rectangle())
+//                        .overlay {
+//                            gradient
+//                        }
+//                        .clipped()
+//                } placeholder: {
+//                    ProgressView()
+////                        .frame(height: 350)
 //                }
-//                .clipped()
-//        } placeholder: {
-//            ProgressView()
-//                .frame(height: 350)
-//        }
+//            }
+//            .frame(height: 350)
+//            .clipped()
+        
+        AsyncImage(url: URL(string: animeNode.node.main_picture.large)) { image in
+            image
+                .resizable()
+                .scaledToFill()
+                .frame(height: 350)
+                .clipShape(Rectangle())
+                .overlay {
+                    gradient
+                }
+                .clipped()
+        } placeholder: {
+            ProgressView()
+                .frame(height: 350)
+        }
     }
 }
 
