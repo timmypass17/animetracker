@@ -226,6 +226,10 @@ extension Anime {
             return "Error converting aired date"
         }
     }
+    
+    func titleFormatted() -> String {
+        return alternative_titles.en != "" ? alternative_titles.en : title
+    }
 }
 
 // Make your data types encodable and decodable for compatibility with external representations such as JSON.

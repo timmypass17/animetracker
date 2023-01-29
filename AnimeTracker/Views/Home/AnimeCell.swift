@@ -40,7 +40,7 @@ struct AnimeCell: View {
                             .font(.caption)
                         
                         HStack(spacing: 4){
-                            Text(animeNode.node.alternative_titles.en)
+                            Text(animeNode.node.titleFormatted())
                         }
                         .lineLimit(1)
                         .truncationMode(.tail)

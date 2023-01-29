@@ -39,7 +39,7 @@ struct DiscoverCell: View {
                     .frame(width: posterWidth, height: posterHeight)
             }
             
-            Text(selectTitle)
+            Text(animeNode.node.titleFormatted())
                 .font(.system(size: 14))
                 .lineLimit(1)
                 .padding(.top, 4)
@@ -53,11 +53,6 @@ struct DiscoverCell: View {
         }
         .frame(width: posterWidth)
         .contentShape(RoundedRectangle(cornerRadius: 5)) // fixes overlap click area
-    }
-    
-    var selectTitle: String {
-        // prioritize using english title if possible
-        return animeNode.node.alternative_titles.en != "" ? animeNode.node.alternative_titles.en : animeNode.node.title
     }
 }
 

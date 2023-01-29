@@ -21,16 +21,6 @@ struct HomeView: View {
                 AnimeList(animeData: $animeViewModel.selectedAnimeData)
                     .padding([.horizontal])
             }
-            .searchable(
-                text: $animeViewModel.filterText,
-                prompt: "Filter by name"
-            ) {
-                AnimeList(animeData: $animeViewModel.filterResults)
-            }
-            .onChange(of: animeViewModel.filterText) { newValue in
-                animeViewModel.filterDataByTitle(query: newValue)
-            }
-            .navigationTitle("Anime Tracker")
             .toolbar {
                 ToolbarItem {
                     Menu {
@@ -54,8 +44,19 @@ struct HomeView: View {
                 }
             }
         }
+        .navigationTitle("Anime Tracker")
         .background(Color.ui.background)
+        .searchable(
+            text: $animeViewModel.filterText,
+            prompt: "Filter by name"
+        ) {
+            AnimeList(animeData: $animeViewModel.filterResults)
+        }
+        .onChange(of: animeViewModel.filterText) { newValue in
+            animeViewModel.filterDataByTitle(query: newValue)
+        }
         .onAppear {
+            // TODO: use user saved defaults
             animeViewModel.applySort()
         }
         .onChange(of: animeViewModel.selectedViewMode) { newValue in

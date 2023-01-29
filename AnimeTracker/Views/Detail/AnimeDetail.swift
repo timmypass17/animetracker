@@ -9,7 +9,7 @@ import SwiftUI
 
 // Note: Could have multible anime detail screens so we store state seperately
 struct AnimeDetail: View {
-    @EnvironmentObject var homeViewModel: AnimeViewModel
+    @EnvironmentObject var animeViewModel: AnimeViewModel
     @Environment(\.dismiss) private var dismiss
     @State var animationAmount = 1.0
     @State var animeNode: AnimeNode = AnimeNode(node: Anime())
@@ -67,7 +67,7 @@ struct AnimeDetail: View {
                 Button(action: {
                     Task {
                         dismiss()
-                        await homeViewModel.deleteAnime(animeNode: animeNode)
+                        await animeViewModel.deleteAnime(animeNode: animeNode)
                     }
                 }) {
                     Text("Delete Anime")
@@ -119,17 +119,18 @@ struct AnimeDetail: View {
         .onAppear {
             print("AnimeDetail onAppear()")
             Task {
-                // get anime data from local cache
-                if let existingNode = homeViewModel.animeData.first(where: { $0.node.id == animeID }) {
-                    print("exists")
-                    animeNode = existingNode
-                } else {
-                    // send api network request
-                    print("network request")
-                    animeNode = try await homeViewModel.fetchAnimeByID(id: animeID)
-                    print(animeNode)
-                }
+                try await handleFetchingData()
             }
+        }
+    }
+    
+    func handleFetchingData() async throws {
+        // get anime data from local cache
+        if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == animeID }) {
+            animeNode = existingNode
+        } else {
+            // send api network request
+            animeNode = try await animeViewModel.fetchAnimeByID(id: animeID)
         }
     }
 }
