@@ -19,13 +19,7 @@ struct DiscoverView: View {
                         .padding([.horizontal, .bottom])
                     
                     Divider()
-//                                    
-//                    DiscoverRow(categoryName: "Top Airing Anime", animeNodes: discoverViewModel.topAiringData, geometry: geometry)
-//                        .padding(.top)
-//                                    
-//                    DiscoverRow(categoryName: "Top Upcoming Anime", animeNodes: discoverViewModel.topUpcomingData, geometry: geometry)
-//                        .padding(.top)
-//                    
+
                     DiscoverRow(animeNodes: discoverViewModel.fallData, season: .fall, year: discoverViewModel.fallYear, geometry: geometry)
                         .padding(.top)
                     
@@ -40,22 +34,21 @@ struct DiscoverView: View {
                 }
             }
             .searchable(
-                text: $animeViewModel.searchText,
+                text: $discoverViewModel.searchText,
                 prompt: "Search Anime"
             ) {
-                AnimeList(animeData: $animeViewModel.searchResults)
+                AnimeList(animeData: $discoverViewModel.searchResults)
             }
-    //        .searchable(text: $animeViewModel.searchText)
             .onSubmit(of: .search) {
                 Task {
-                    try await animeViewModel.fetchAnimesByTitle(title: animeViewModel.searchText)
+                    try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
                 }
             }
-            .onReceive(animeViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
+            .onReceive(discoverViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
             ) { _ in
                 // Debounce. Fetch api calls after 0.5 seconds of not typing.
                 Task {
-                    try await animeViewModel.fetchAnimesByTitle(title: animeViewModel.searchText)
+                    try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
                 }
             }
         .navigationTitle("Discover Animes")
@@ -68,8 +61,8 @@ struct DiscoverView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             DiscoverView()
-                .environmentObject(AnimeViewModel())
-                .environmentObject(DiscoverViewModel())
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+                .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

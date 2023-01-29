@@ -23,6 +23,6 @@ struct HomeTabView: View {
 struct HomeTabView_Previews: PreviewProvider {
     static var previews: some View {
         HomeTabView()
-            .environmentObject(AnimeViewModel())
+            .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
     }
 }

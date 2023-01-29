@@ -39,11 +39,6 @@ struct DiscoverDetailView: View {
         }
         .padding()
         .background(Color.ui.background)
-        .onAppear {
-            Task {
-                try await discoverViewModel.fetchAnimeBySeason(season: season, year: year, limit: 500)
-            }
-        }
     }
 }
 
@@ -51,7 +46,7 @@ struct DiscoverDetailView_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
             DiscoverDetailView(animeData: AnimeCollection.sampleData, season: .fall, year: 2021, geometry: geometry)
-                .environmentObject(DiscoverViewModel())
+                .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

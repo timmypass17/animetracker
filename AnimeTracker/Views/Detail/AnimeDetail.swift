@@ -98,17 +98,6 @@ struct AnimeDetail: View {
         })
         .toolbar {
             ToolbarItemGroup {
-//                Button(action: {
-//                    Task {
-//                        animeNode.bookmarked.toggle()
-//                        await homeViewModel.addAnime(animeNode: animeNode)
-//                    }
-//                }) {
-//                    Image(systemName: "bookmark")
-//                        .foregroundColor(.yellow)
-//                        .symbolVariant(animeNode.bookmarked ? .fill : .none)
-//                }
-                
                 Button(action: { isShowingSheet.toggle() }) {
                     Image(systemName: "plus") // plus.square
                         .imageScale(.large)
@@ -144,7 +133,7 @@ struct AnimeDetail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             AnimeDetail(animeNode: AnimeCollection.sampleData[0], animeID: 0)
-                .environmentObject(AnimeViewModel())
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

@@ -90,7 +90,7 @@ struct EpisodeSheet_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(100.0))
-                .environmentObject(AnimeViewModel())
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

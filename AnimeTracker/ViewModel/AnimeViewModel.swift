@@ -12,27 +12,24 @@ import Combine
 
 @MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
 class AnimeViewModel: ObservableObject {
-    @Published var animeRepository = AnimeRepository() // share with other viewmodel, so create repo in main file, and pass into init()
-    
+    @Published var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
     @Published var animeData: [AnimeNode] = []
     @Published var selectedAnimeData: [AnimeNode] = []
     
     @Published var filterResults: [AnimeNode] = []
-    @Published var searchResults: [AnimeNode] = []
-    
     @Published var selectedViewMode: ViewMode = .all
     @Published var selectedSearchMode: SearchMode = .all
     @Published var selectedSort: SortBy = .last_modified
     @Published var filterText = ""
-    @Published var searchText = ""
 
     let TAG = "[AnimeViewModel]" // for debugging
     private var cancellables = Set<AnyCancellable>()
     
     // request api call only once. Every "addition" is done locally, abstracted from user
-    init() {
+    init(animeRepository: AnimeRepository) {
+        self.animeRepository = animeRepository
         // subscribe to changes in repository. Connect publisher to another publisher
-        animeRepository.$animeData
+        self.animeRepository.$animeData
             .assign(to: \.animeData, on: self)
             .store(in: &cancellables)
         
@@ -46,20 +43,12 @@ class AnimeViewModel: ObservableObject {
         try await animeRepository.fetchAnimeByID(id: id)
     }
     
-    func fetchAnimesByTitle(title: String, limit: Int = 15) async throws {
-        try await animeRepository.fetchAnimesByTitle(title: title, limit: limit)
-    }
-    
     func addAnime(animeNode: AnimeNode) async {
         await animeRepository.addAnime(animeNode: animeNode)
     }
     
     func deleteAnime(animeNode: AnimeNode) async {
         await animeRepository.deleteAnime(animeNode: animeNode)
-    }
-    
-    func saveItem(record: CKRecord) async {
-        await animeRepository.saveItem(record: record)
     }
     
     func filterDataByTitle(query: String) {

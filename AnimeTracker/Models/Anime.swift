@@ -85,46 +85,6 @@ struct Anime: WeebItem, Codable {
     }
 }
 
-struct Poster: Codable {
-    var medium: String
-    var large: String
-}
-
-struct Genre: Codable, Equatable {
-    var name: String
-}
-
-struct AnimeSeason: Codable {
-    var year: Int
-    var season: String
-}
-
-struct Studio: Codable, Equatable {
-    var name: String
-}
-
-struct AlternativeTitle: Codable {
-    var synonyms: [String]
-    var en: String
-    var ja: String
-}
-
-struct RelatedNode: Codable {
-    var node: AnimeNodeSmall
-    var relation_type_formatted: String?
-}
-
-struct AnimeNodeSmall: Codable {
-    var id: Int
-    var title: String
-    var main_picture: Poster
-}
-
-struct Broadcast: Codable {
-    var day_of_the_week: String
-    var start_time: String
-}
-    
 extension Anime {
     func meanFormatted() -> String {
         guard let mean = mean else {
@@ -278,6 +238,48 @@ extension AnimeCollection {
         )
     ]
 }
+
+
+struct Poster: Codable {
+    var medium: String
+    var large: String
+}
+
+struct Genre: Codable, Equatable {
+    var name: String
+}
+
+struct AnimeSeason: Codable {
+    var year: Int
+    var season: String
+}
+
+struct Studio: Codable, Equatable {
+    var name: String
+}
+
+struct AlternativeTitle: Codable {
+    var synonyms: [String]
+    var en: String
+    var ja: String
+}
+
+struct RelatedNode: Codable {
+    var node: AnimeNodeSmall
+    var relation_type_formatted: String?
+}
+
+struct AnimeNodeSmall: Codable {
+    var id: Int
+    var title: String
+    var main_picture: Poster
+}
+
+struct Broadcast: Codable {
+    var day_of_the_week: String
+    var start_time: String
+}
+    
 
 extension Double {
     func reduceScale(to places: Int) -> Double {

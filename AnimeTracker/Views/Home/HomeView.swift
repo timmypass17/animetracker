@@ -55,14 +55,14 @@ struct HomeView: View {
         .onChange(of: animeViewModel.filterText) { newValue in
             animeViewModel.filterDataByTitle(query: newValue)
         }
-        .onAppear {
-            // TODO: use user saved defaults
-            animeViewModel.applySort()
-        }
         .onChange(of: animeViewModel.selectedViewMode) { newValue in
             animeViewModel.applySort()
         }
         .onChange(of: animeViewModel.selectedSort) { newValue in
+            animeViewModel.applySort()
+        }
+        .onAppear {
+            // TODO: use user saved defaults
             animeViewModel.applySort()
         }
         
@@ -73,7 +73,7 @@ struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             HomeView()
-                .environmentObject(AnimeViewModel())
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

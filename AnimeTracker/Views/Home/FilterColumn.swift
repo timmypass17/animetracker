@@ -21,6 +21,6 @@ struct FilterColumn: View {
 struct FilterColumn_Previews: PreviewProvider {
     static var previews: some View {
         FilterColumn()
-            .environmentObject(AnimeViewModel())
+            .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
     }
 }

@@ -11,15 +11,18 @@ protocol MyAnimeListApiService {
     
     func fetchAnimeByID(id: Int) async throws -> AnimeNode
     
-    func fetchAnimesByTitle(title: String) async throws
-
+    func fetchAnimesByTitle(title: String, limit: Int) async throws
+    
+    func fetchAnimeByRank(rankingType: Ranking) async throws -> [AnimeNode]
+    
+    func fetchAnimeBySeason(season: Season, year: Int, limit: Int) async throws -> [AnimeNode]
 }
 
 protocol CloudKitService {
     
     func addAnime(animeNode: AnimeNode) async
 
-    func fetchAnimes() async
+    func fetchAnimesFromCloudKit() async
     
     func deleteAnime(animeNode: AnimeNode) async
 }
