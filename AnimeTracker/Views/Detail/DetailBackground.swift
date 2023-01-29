@@ -12,7 +12,7 @@ struct DetailBackground: View {
     
     let gradient = LinearGradient(
         gradient: Gradient(stops: [
-            .init(color: .black, location: 0),
+            .init(color: Color.ui.background, location: 0),
             .init(color: .clear, location: 1.0) // 1.5 height of gradient
         ]),
         startPoint: .bottom,

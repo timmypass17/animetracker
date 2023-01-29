@@ -35,6 +35,11 @@ struct Synopsis: View {
             }
             .buttonStyle(.plain)
         }
+        .padding()
+        .background {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(.regularMaterial)
+        }
     }
 }
 

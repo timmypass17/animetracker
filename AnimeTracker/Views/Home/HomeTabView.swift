@@ -13,7 +13,7 @@ struct HomeTabView: View {
     var body: some View {
         Picker("View Mode", selection: $animeViewModel.selectedViewMode) {
             ForEach(ViewMode.allCases) { mode in
-                Text(mode.rawValue.capitalized)
+                Text(mode.rawValue.capitalized.replacingOccurrences(of: "_", with: " "))
             }
         }
         .pickerStyle(.segmented)

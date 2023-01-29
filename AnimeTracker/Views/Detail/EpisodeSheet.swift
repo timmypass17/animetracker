@@ -9,11 +9,10 @@ import SwiftUI
 import CloudKit
 
 struct EpisodeSheet: View {
-    @EnvironmentObject var homeViewModel: AnimeViewModel
+    @EnvironmentObject var animeViewModel: AnimeViewModel
     @State var isEditing = false
     @Binding var isShowingSheet: Bool
     @Binding var animeNode: AnimeNode
-//    @Binding var isBookmarked: Bool
     @Binding var current_episode: Float
     
     var body: some View {
@@ -28,7 +27,7 @@ struct EpisodeSheet: View {
             AnimeCell(animeNode: $animeNode)
             
             HStack {
-                Button(action: { animeNode.episodes_seen = max(animeNode.episodes_seen - 1, 0) }) {
+                Button(action: { current_episode = max(current_episode - 1, 0) }) {
                     Image(systemName: "minus")
                 }
                 
@@ -47,7 +46,7 @@ struct EpisodeSheet: View {
                     isEditing = editing
                 }
                 
-                Button(action: { animeNode.episodes_seen = min(animeNode.episodes_seen + 1, animeNode.node.num_episodes) }) {
+                Button(action: { current_episode = min(current_episode + 1, Float(animeNode.node.num_episodes)) }) {
                     Image(systemName: "plus")
                 }
             }
@@ -74,6 +73,7 @@ struct EpisodeSheet: View {
         .padding(.top) // sheet needs extra top padding
         .onAppear {
             current_episode = Float(animeNode.episodes_seen)
+            print(animeNode.node.status)
         }
     }
     
@@ -81,7 +81,7 @@ struct EpisodeSheet: View {
         Task {
             isShowingSheet = false
             animeNode.episodes_seen = Int(current_episode)
-            await homeViewModel.addAnime(animeNode: animeNode)
+            await animeViewModel.addAnime(animeNode: animeNode)
         }
     }
 }
@@ -90,6 +90,7 @@ struct EpisodeSheet_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(100.0))
+                .environmentObject(AnimeViewModel())
         }
     }
 }

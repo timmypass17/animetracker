@@ -16,12 +16,13 @@ struct GenreRow: View {
                 ForEach(animeNode.node.genres, id: \.name) { tag in
                     Text(tag.name)
                         .font(.caption)
-                        .padding(.horizontal, 7)
+                        .foregroundColor(Color.ui.tag_text)
                         .padding(.vertical, 2)
-                        .font(.body)
-                        .background(.secondary)
-                        .foregroundColor(Color.white)
-                        .cornerRadius(3)
+                        .padding(.horizontal, 4)
+                        .background{
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(Color.ui.tag)
+                        }
                 }
             }
         }

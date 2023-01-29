@@ -20,7 +20,7 @@ struct AnimeList: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding([.horizontal])
+//            .padding([.horizontal])
         }
     }
 }

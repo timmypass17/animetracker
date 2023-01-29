@@ -7,14 +7,6 @@
 
 import SwiftUI
 
-enum SortBy: String, CaseIterable, Identifiable {
-    case alphabetical
-    case newest
-    case date_created = "Date Created"
-    case last_modified = "Last Modified"
-    var id: Self { self }
-}
-
 struct HomeView: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
 
@@ -27,6 +19,7 @@ struct HomeView: View {
                 Divider()
                 
                 AnimeList(animeData: $animeViewModel.selectedAnimeData)
+                    .padding([.horizontal])
             }
             .searchable(
                 text: $animeViewModel.filterText,
@@ -61,15 +54,17 @@ struct HomeView: View {
                 }
             }
         }
+        .background(Color.ui.background)
         .onAppear {
-            animeViewModel.sortData()
+            animeViewModel.applySort()
         }
         .onChange(of: animeViewModel.selectedViewMode) { newValue in
-            animeViewModel.sortData()
+            animeViewModel.applySort()
         }
         .onChange(of: animeViewModel.selectedSort) { newValue in
-            animeViewModel.sortData()
+            animeViewModel.applySort()
         }
+        
     }
 }
 

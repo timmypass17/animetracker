@@ -28,11 +28,11 @@ class AnimeViewModel: ObservableObject {
         Task {
             // request api call only once. Every "addition" is done locally, abstracted from user
             await fetchAnimes()
-            sortData()
+            applySort()
         }
     }
     
-    func sortData() {
+    func applySort() {
         sortByMode()
         sortBySorting()
     }
@@ -41,13 +41,13 @@ class AnimeViewModel: ObservableObject {
         switch selectedViewMode {
         case .all:
             selectedAnimeData = animeData
-        case .watching:
-            // Get animes between range 0 to num_episodes - 1
-            selectedAnimeData = animeData.filter { 0 ... $0.node.num_episodes - 1 ~= ($0.record["episodes_seen"] as? Int ?? 0) }
-        case .completed:
+        case .in_progress:
+            // Get animes between range 1 to num_episodes - 1
+            selectedAnimeData = animeData.filter { 1 ... $0.node.num_episodes - 1 ~= ($0.record["episodes_seen"] as? Int ?? 0) }
+        case .finished:
             selectedAnimeData = animeData.filter { ($0.record["episodes_seen"] as? Int ?? 0) == $0.node.num_episodes}
-        case .planning:
-            selectedAnimeData = animeData.filter { $0.record["bookmarked"] as? Bool ?? false }
+        case .not_started:
+            selectedAnimeData = animeData.filter { $0.record["episodes_seen"] as? Int == 0 }
         }
     }
     
@@ -81,13 +81,16 @@ class AnimeViewModel: ObservableObject {
         return AnimeNode(node: anime)
     }
     
-    func fetchAnimesByTitle(title: String) async throws {
-        guard title != "" else { return }
+    func fetchAnimesByTitle(title: String, limit: Int = 15) async throws {
+        guard title != "" else {
+            searchResults = []
+            return
+        }
         
         // Create query url
         let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
         let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(fieldValue)") else { return }
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(fieldValue)&limit=\(limit)") else { return }
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
         
@@ -133,7 +136,7 @@ class AnimeViewModel: ObservableObject {
             record.setValuesForKeys([
                 "id": animeNode.node.id,
                 "episodes_seen": animeNode.episodes_seen,
-                "bookmarked": animeNode.bookmarked
+//                "bookmarked": animeNode.bookmarked
             ])
         }
         
@@ -222,7 +225,7 @@ class AnimeViewModel: ObservableObject {
 }
 
 enum ViewMode: String, CaseIterable, Identifiable {
-    case all, watching, completed, planning
+    case all, not_started, in_progress, finished
     var id: Self { self } // forEach
 }
 
@@ -240,4 +243,12 @@ enum Tab {
     case list
     case search
     case chart
+}
+
+enum SortBy: String, CaseIterable, Identifiable {
+    case alphabetical
+    case newest
+    case date_created = "Date Created"
+    case last_modified = "Last Modified"
+    var id: Self { self }
 }

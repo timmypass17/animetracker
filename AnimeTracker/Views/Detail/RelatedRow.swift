@@ -9,7 +9,7 @@ import SwiftUI
 
 struct RelatedRow: View {
     let title: String
-    let relatedAnimes: [Anime.RelatedNode]
+    let relatedAnimes: [RelatedNode]
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -38,7 +38,7 @@ struct RelatedRow: View {
 }
 
 struct RelatedRowCell: View {
-    let relatedAnimeNode: Anime.RelatedNode
+    let relatedAnimeNode: RelatedNode
     
     var body: some View {
         VStack(alignment: .leading) {

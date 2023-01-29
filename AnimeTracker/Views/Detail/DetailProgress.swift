@@ -16,7 +16,7 @@ struct DetailProgress: View {
             
             ProgressView(value: Float(animeNode.episodes_seen), total: Float(animeNode.node.num_episodes)) {
                 HStack(spacing: 4) {
-                    Text("Status: \(animeNode.node.status.capitalized.replacingOccurrences(of: "_", with: " "))")
+                    AnimeStatus(animeNode: animeNode)
                         .font(.caption)
                     
                     Spacer()
@@ -33,7 +33,8 @@ struct DetailProgress: View {
             }
             .progressViewStyle(.linear)
             
-            Label("Next episode: \(Date().formatted(date: .abbreviated, time: .shortened))", systemImage: "clock")
+            Label("Next episode: \(animeNode.node.broadcastFormatted())", systemImage: "clock")
+                .foregroundColor(.secondary)
                 .font(.caption)
         }
     }

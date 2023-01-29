@@ -1,5 +1,5 @@
 //
-//  SearchTabView.swift
+//  DiscoverTabView.swift
 //  AnimeTracker
 //
 //  Created by Timmy Nguyen on 1/11/23.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct SearchTabView: View {
+struct DiscoverTabView: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
 
     var body: some View {
@@ -20,9 +20,9 @@ struct SearchTabView: View {
     }
 }
 
-struct SearchTabView_Previews: PreviewProvider {
+struct DiscoverTabView_Previews: PreviewProvider {
     static var previews: some View {
-        SearchTabView()
+        DiscoverTabView()
             .environmentObject(AnimeViewModel())
     }
 }

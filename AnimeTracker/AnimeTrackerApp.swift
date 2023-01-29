@@ -12,7 +12,8 @@ import SwiftUI
 struct AnimeTrackerApp: App {
     @StateObject var authViewModel = AuthViewModel()
     @StateObject var animeViewModel = AnimeViewModel()
-    
+    @StateObject var discoverViewModel = DiscoverViewModel()
+
     var body: some Scene {
         WindowGroup {
             TabView {
@@ -24,10 +25,10 @@ struct AnimeTrackerApp: App {
                 }
                 
                 NavigationStack {
-                    SearchView()
+                    DiscoverView()
                 }
                 .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
+                    Label("Discover", systemImage: "magnifyingglass")
                 }
                 
                 Text("Friend View")
@@ -37,6 +38,7 @@ struct AnimeTrackerApp: App {
             }
             .environmentObject(authViewModel)
             .environmentObject(animeViewModel)
+            .environmentObject(discoverViewModel)
         }
     }
 }

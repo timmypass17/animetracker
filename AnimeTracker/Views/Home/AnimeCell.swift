@@ -9,6 +9,8 @@ import SwiftUI
 
 struct AnimeCell: View {
     @Binding var animeNode: AnimeNode
+    let width = 85.0
+    let height = 135.0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -18,7 +20,7 @@ struct AnimeCell: View {
                     image
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 75, height: 125)
+                        .frame(width: width, height: height)
                         .clipShape(RoundedRectangle(cornerRadius: 5))
                         .overlay {
                             RoundedRectangle(cornerRadius: 5)
@@ -27,7 +29,7 @@ struct AnimeCell: View {
                         .shadow(radius: 2)
                 } placeholder: {
                     ProgressView()
-                        .frame(width: 75, height: 125)
+                        .frame(width: width, height: height)
                 }
                 .padding(.trailing)
                 
@@ -38,7 +40,7 @@ struct AnimeCell: View {
                             .font(.caption)
                         
                         HStack(spacing: 4){
-                            Text(animeNode.node.title)
+                            Text(animeNode.node.alternative_titles.en)
                         }
                         .lineLimit(1)
                         .truncationMode(.tail)
@@ -47,14 +49,8 @@ struct AnimeCell: View {
                         HStack(spacing: 4) {
                             let maxTags = 2
                             ForEach(animeNode.node.genres.prefix(maxTags), id: \.name) { tag in
-                                Text(tag.name)
+                                TagView(text: tag.name)
                                     .font(.caption)
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 2)
-                                    .font(.body)
-                                    .background(Color.accentColor)
-                                    .foregroundColor(Color.white)
-                                    .cornerRadius(3)
                             }
                             if animeNode.node.genres.count > maxTags {
                                 HStack(spacing: 0) {
@@ -71,8 +67,7 @@ struct AnimeCell: View {
                     // progressiveView likes float
                     ProgressView(value: Float(animeNode.episodes_seen), total: Float(animeNode.node.num_episodes)) {
                         HStack(spacing: 4) {
-                            Text("Score: \(animeNode.node.meanFormatted()) | Rank: \(animeNode.node.rankFormatted())")
-                                .foregroundColor(.secondary)
+                            AnimeStatus(animeNode: animeNode)
                                 .font(.caption)
                             
                             Spacer()
@@ -81,19 +76,19 @@ struct AnimeCell: View {
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
-                            Text("\(animeNode.episodes_seen)")
+                            Text("\(animeNode.episodes_seen) /")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
-//                                .border(.orange)
-                                                    
-                            Text(verbatim: "/ \(animeNode.node.num_episodes.description)")
+                            
+                            Text(animeNode.node.numEpisodesFormatted())
                                 .foregroundColor(.secondary)
                                 .font(.caption)
+                            
                         }
                     }
                     .progressViewStyle(.linear)
                     
-                    Label("Next episode: \(Date().formatted(date: .abbreviated, time: .shortened))", systemImage: "clock")
+                    Label("Next episode: \(animeNode.node.broadcastFormatted())", systemImage: "clock")
                         .foregroundColor(.secondary)
                         .font(.caption)
                     
