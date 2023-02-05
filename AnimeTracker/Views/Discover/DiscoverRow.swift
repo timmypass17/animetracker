@@ -8,19 +8,19 @@
 import SwiftUI
 
 struct DiscoverRow: View {
-    var animeNodes: [AnimeNode]
-    var season: Season
-    var year: Int
+    @Binding var animeCollection: AnimeCollection
+//    @Binding var animeNodes: [AnimeNode]
+//    var title: String
     var geometry: GeometryProxy
+    var animeType: AnimeType
     
     var body: some View {
         VStack(alignment: .leading) {
             NavigationLink {
-                DiscoverDetailView(animeData: animeNodes, season: season, year: year, geometry: geometry)
-                    .navigationTitle(Text(verbatim: "\(season.rawValue.capitalized) \(year)"))
+                DiscoverDetailView(animeCollection: animeCollection, geometry: geometry, animeType: animeType)
             } label: {
                 HStack {
-                    Text(verbatim: "\(season.rawValue.capitalized) \(year)")
+                    Text(animeCollection.seasonFormatted())
                     
                     Spacer()
                     
@@ -34,9 +34,9 @@ struct DiscoverRow: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top) {
-                    ForEach(animeNodes, id: \.node.id) { animeNode in
+                    ForEach(animeCollection.data, id: \.node.id) { animeNode in
                         NavigationLink {
-                            AnimeDetail(animeID: animeNode.node.id)
+                            AnimeDetail(id: animeNode.node.id, animeType: animeType)
                         } label: {
                             DiscoverCell(animeNode: animeNode, geometry: geometry, width: 0.25)
                             
@@ -56,7 +56,7 @@ struct DiscoverRow: View {
 struct DiscoverRow_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverRow(animeNodes: AnimeCollection.sampleData, season: .fall, year: 2021, geometry: geometry)
+            DiscoverRow(animeCollection: .constant(AnimeCollection(data: AnimeCollection.sampleData)), geometry: geometry, animeType: .anime)
         }
     }
 }

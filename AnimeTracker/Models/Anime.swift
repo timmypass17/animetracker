@@ -10,13 +10,23 @@ import CloudKit
 
 
 struct AnimeCollection: Codable {
-    var data: [AnimeNode]
+    var data: [AnimeNode] = []
+    var paging: Paging = Paging(next: "")
+    var season: AnimeSeason = AnimeSeason(year: 0, season: .fall)
+    
+    struct Paging: Codable {
+        var next: String?
+    }
+    
+    func seasonFormatted() -> String {
+        return "\(season.season.rawValue.capitalized) \(season.year)"
+    }
 }
 
 struct AnimeNode: Codable {
     
     // put stuff in json tree here.
-    enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey {
         case node
     }
     
@@ -31,7 +41,7 @@ struct AnimeNode: Codable {
     }
 }
 
-struct Anime: WeebItem, Codable {
+struct Anime: Codable {
     var id: Int
     var title: String
     var main_picture: Poster
@@ -46,7 +56,7 @@ struct Anime: WeebItem, Codable {
     var media_type: String
     var status: String
     var genres: [Genre]
-    var num_episodes: Int
+    var num_episodes: Int?
     var start_season: AnimeSeason?
     var broadcast: Broadcast?
     var source: String?
@@ -55,9 +65,21 @@ struct Anime: WeebItem, Codable {
     var related_anime: [RelatedNode]?
     var related_manga: [RelatedNode]?
     var recommendations: [RelatedNode]?
-    var studios: [Studio]
+    var studios: [Studio]?
     
-    init(id: Int = 0, title: String = "", main_picture: Poster = Poster(medium: "", large: ""), alternative_titles: AlternativeTitle = AlternativeTitle(synonyms: [], en: "", ja: ""), start_date: String? = nil, end_date: String? = nil, synopsis: String = "", mean: Float? = nil, rank: Int? = nil, popularity: Int = 0, num_list_users: Int = 0, media_type: String = "", status: String = "", genres: [Genre] = [], num_episodes: Int = 0, start_season: AnimeSeason? = nil, broadcast: Broadcast? = nil, source: String? = nil, average_episode_duration: Int? = nil, rating: String? = nil, related_anime: [RelatedNode]? = nil, related_manga: [RelatedNode]? = nil, recommendations: [RelatedNode]? = nil, studios: [Studio] = []) {
+    /** manga only  */
+    var num_volumes: Int?
+    var num_chapters: Int?
+    var authors: [Author]?
+    var serialization: [Publisher]?
+    
+    var animeType: AnimeType?
+    
+    enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, title, main_picture, alternative_titles, start_date, end_date, synopsis, mean, rank, popularity, num_list_users, media_type, status, genres, num_episodes, start_season, broadcast, source, average_episode_duration, rating, related_anime, related_manga, recommendations, studios, num_volumes, num_chapters, authors, serialization
+    }
+    
+    init(id: Int = 0, title: String = "", main_picture: Poster = Poster(medium: "", large: ""), alternative_titles: AlternativeTitle = AlternativeTitle(synonyms: [], en: "", ja: ""), start_date: String? = nil, end_date: String? = nil, synopsis: String = "", mean: Float? = nil, rank: Int? = nil, popularity: Int = 0, num_list_users: Int = 0, media_type: String = "", status: String = "", genres: [Genre] = [], num_episodes: Int? = 0, start_season: AnimeSeason? = nil, broadcast: Broadcast? = nil, source: String? = nil, average_episode_duration: Int? = nil, rating: String? = nil, related_anime: [RelatedNode]? = nil, related_manga: [RelatedNode]? = nil, recommendations: [RelatedNode]? = nil, studios: [Studio]? = [], num_volumes: Int? = nil, num_chapters: Int? = nil, authors: [Author]? = nil, serialization: [Publisher]? = nil, animeType: AnimeType = .anime) {
         self.id = id
         self.title = title
         self.main_picture = main_picture
@@ -82,6 +104,11 @@ struct Anime: WeebItem, Codable {
         self.related_manga = related_manga
         self.recommendations = recommendations
         self.studios = studios
+        self.num_volumes = num_volumes
+        self.num_chapters = num_chapters
+        self.authors = authors
+        self.serialization = serialization
+        self.animeType = animeType
     }
 }
 
@@ -115,21 +142,52 @@ extension Anime {
             return "TBA"
         }
         
-        return "\(start_season.season.capitalized) \(start_season.year)"
+        return "\(start_season.season.rawValue.capitalized) \(start_season.year)"
     }
     
     func numEpisodesFormatted() -> String {
-        if num_episodes == 0 {
+        guard let animeType = animeType else {
             return "?"
         }
         
-        return String(num_episodes)
+        switch animeType {
+        case .anime:
+            guard let num_episodes = num_episodes else { return "0" }
+            return "\(num_episodes)"
+        default:
+            guard let num_chapters = num_chapters else { return "0" }
+            return "\(num_chapters)"
+        }
+    }
+    
+    func episodeTypeFormatted() -> String {
+        guard let animeType = animeType else {
+            return "?"
+        }
+        
+        switch animeType {
+        case .all:
+            return "?"
+        case .anime:
+            return "Episodes"
+        default:
+            return "Chapters"
+        }
+    }
+    
+    func cellLabel() -> String {
+        switch animeType {
+        case .anime:
+            return "\(media_type.uppercased()) - \(numEpisodesFormatted()) \(episodeTypeFormatted())"
+        default:
+            return "\(media_type.capitalized) - Ch. \(numEpisodesFormatted())"
+        }
     }
     
     func statusFormatted() -> String {
         return status.capitalized.replacingOccurrences(of: "_", with: " ")
     }
-
+    
     func averageEpisodeDurationFormatted() -> String {
         guard let seconds = average_episode_duration else {
             return "?"
@@ -142,7 +200,7 @@ extension Anime {
         if status == "finished_airing"{
             return "Finished Airing"
         }
-            
+        
         if let broadcast = broadcast {
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "HH:mm"
@@ -152,7 +210,7 @@ extension Anime {
             
             if let date = date {
                 let newDate = dateFormatter.string(from: date)
-                return "\(broadcast.day_of_the_week.capitalized), \(newDate) (JSP)"
+                return "\(broadcast.day_of_the_week?.capitalized ?? "?"), \(newDate) (JSP)"
             }
         }
         
@@ -160,6 +218,8 @@ extension Anime {
     }
     
     func studiosFormatted() -> String {
+        guard let studios = studios else { return "No studios found." }
+        
         return studios.map( { $0.name } ).joined(separator: ", ")
     }
     
@@ -226,14 +286,53 @@ extension AnimeCollection {
                 status: "currently_airing",
                 genres: [Genre(name: "Action"), Genre(name: "Adventure"), Genre(name: "Comedy")],
                 num_episodes: 0,
-                start_season: AnimeSeason(year: 1999, season: "fall"),
+                start_season: AnimeSeason(year: 1999, season: .fall),
                 broadcast: Broadcast(day_of_the_week: "monday", start_time: "18:00"),
                 source: "manga",
                 average_episode_duration: 1440,
                 rating: "pg_13",
                 related_anime: [AnimeCollection.relatedAnime],
+                related_manga: nil,
                 recommendations: [],
-                studios: [Studio(name: "Toei Animation")]
+                studios: [Studio(name: "Toei Animation")],
+                //num_volumes, num_chapters, authors, serialization
+                num_volumes: nil,
+                num_chapters: nil,
+                authors: nil,
+                serialization: nil
+            )
+        ),
+        AnimeNode(
+            node: Anime(
+                id: 2,
+                title: "Berserk",
+                main_picture: Poster(medium: "https://myanimelist.cdn-dena.com/images/manga/1/157931.jpg", large: "https://myanimelist.cdn-dena.com/images/manga/1/157931l.jpg"),
+                alternative_titles: AlternativeTitle(synonyms: ["Berserk: The Prototype"], en: "Berserk", ja: "ベルセルク"),
+                start_date: "1989-08-25",
+                end_date: nil,
+                synopsis: "Guts, a former mercenary now known as the \"Black Swordsman,\" is out for revenge. After a tumultuous childhood, he finally finds someone he respects and believes he can trust, only to have everything fall apart when this person takes away everything important to Guts for the purpose of fulfilling his own desires. Now marked for death, Guts becomes condemned to a fate in which he is relentlessly pursued by demonic beings.\n\nSetting out on a dreadful quest riddled with misfortune, Guts, armed with a massive sword and monstrous strength, will let nothing stop him, not even death itself, until he is finally able to take the head of the one who stripped him—and his loved one—of their humanity.\n\n[Written by MAL Rewrite]\n\nIncluded one-shot:\nVolume 14: Berserk: The Prototype",
+                mean: 9.3,
+                rank: 1,
+                popularity: 7,
+                num_list_users: 189296,
+                media_type: "manga",
+                status: "currently_publishing",
+                genres: [Genre(name: "Action"), Genre(name: "Adventure"), Genre(name: "Fantasy")],
+                num_episodes: nil,
+                start_season: nil,
+                broadcast: nil,
+                source: nil,
+                average_episode_duration: nil,
+                rating: nil,
+                related_anime: [],
+                related_manga: [],
+                recommendations: [],
+                studios: nil,
+                //num_volumes, num_chapters, authors, serialization
+                num_volumes: 0,
+                num_chapters: 0,
+                authors: [Author(node: AuthorDetail(first_name: "Kentarou", last_name: "Miura"), role: "Story & Art")],
+                serialization: [Publisher(node: PublisherDetail(name: "Young Animal"))]
             )
         )
     ]
@@ -251,7 +350,7 @@ struct Genre: Codable, Equatable {
 
 struct AnimeSeason: Codable {
     var year: Int
-    var season: String
+    var season: Season
 }
 
 struct Studio: Codable, Equatable {
@@ -276,10 +375,10 @@ struct AnimeNodeSmall: Codable {
 }
 
 struct Broadcast: Codable {
-    var day_of_the_week: String
-    var start_time: String
+    var day_of_the_week: String?
+    var start_time: String?
 }
-    
+
 
 extension Double {
     func reduceScale(to places: Int) -> Double {
@@ -294,26 +393,26 @@ extension Double {
 func formatNumber(_ n: Int) -> String {
     let num = abs(Double(n))
     let sign = (n < 0) ? "-" : ""
-
+    
     switch num {
     case 1_000_000_000...:
         var formatted = num / 1_000_000_000
         formatted = formatted.reduceScale(to: 1)
         return "\(sign)\(formatted)B"
-
+        
     case 1_000_000...:
         var formatted = num / 1_000_000
         formatted = formatted.reduceScale(to: 1)
         return "\(sign)\(formatted)M"
-
+        
     case 1_000...:
         var formatted = num / 1_000
         formatted = formatted.reduceScale(to: 1)
         return "\(sign)\(formatted)K"
-
+        
     case 0...:
         return "\(n)"
-
+        
     default:
         return "\(sign)\(n)"
     }

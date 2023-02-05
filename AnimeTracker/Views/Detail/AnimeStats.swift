@@ -12,7 +12,7 @@ struct AnimeStats: View {
         
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Statistic".uppercased())
+            Text("Information".uppercased())
                 .foregroundColor(.white.opacity(0.6))
             
             Group {
@@ -47,7 +47,7 @@ struct StatsCell: View {
         VStack {
             Divider()
             
-            HStack {
+            HStack(alignment: .top) {
                 Label(title, systemImage: image)
                 Spacer()
                 Text(value)

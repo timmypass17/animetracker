@@ -46,8 +46,8 @@ struct Author: Codable {
 }
 
 struct AuthorDetail: Codable {
-    var first_name: String
-    var last_name: String
+    var first_name: String?
+    var last_name: String?
 }
 
 struct Publisher: Codable {

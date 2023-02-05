@@ -9,43 +9,44 @@ import SwiftUI
 
 struct DiscoverDetailView: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    var animeData: [AnimeNode] = []
-    let season: Season
-    let year: Int
+    var animeCollection: AnimeCollection
     let geometry: GeometryProxy
-    let columns: [GridItem]
-    
-    init(animeData: [AnimeNode], season: Season, year: Int, geometry: GeometryProxy) {
-        self.animeData = animeData
-        self.season = season
-        self.year = year
-        self.geometry = geometry
-        self.columns = [GridItem(), GridItem(), GridItem()]
-    }
+    let animeType: AnimeType
+    let columns = [GridItem(), GridItem(), GridItem()]
     
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(animeData, id: \.node.id) { animeNode in
+                ForEach(animeCollection.data, id: \.node.id) { animeNode in
                     NavigationLink {
-                        AnimeDetail(animeID: animeNode.node.id)
+                        AnimeDetail(id: animeNode.node.id, animeType: animeType)
                     } label: {
-                        DiscoverCell(animeNode: animeNode, geometry: geometry, width: 0.3)
+                        DiscoverCell(animeNode: animeNode, geometry: geometry, width: 0.29)
                     }
                     .buttonStyle(.plain)
                 }
+                
+                if animeCollection.paging.next != nil {
+                    ProgressView()
+                        .onAppear {
+                            Task {
+                                try await discoverViewModel.loadMore(season: animeCollection.season.season, year: animeCollection.season.year)
+                            }
+                        }
+                }
             }
-            .padding(.top)
         }
+        .navigationTitle(animeCollection.seasonFormatted())
         .padding()
         .background(Color.ui.background)
+
     }
 }
 
 struct DiscoverDetailView_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverDetailView(animeData: AnimeCollection.sampleData, season: .fall, year: 2021, geometry: geometry)
+            DiscoverDetailView(animeCollection: AnimeCollection(data: AnimeCollection.sampleData), geometry: geometry, animeType: .anime)
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }

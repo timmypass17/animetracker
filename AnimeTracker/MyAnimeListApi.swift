@@ -13,9 +13,13 @@ protocol MyAnimeListApiService {
     
     func fetchAnimesByTitle(title: String, limit: Int) async throws
     
-    func fetchAnimeByRank(rankingType: Ranking) async throws -> [AnimeNode]
+    func fetchAnimesByRanking(rankingType: Ranking) async throws -> [AnimeNode]
     
-    func fetchAnimeBySeason(season: Season, year: Int, limit: Int) async throws -> [AnimeNode]
+    func fetchAnimesBySeason(season: Season, year: Int) async throws -> AnimeCollection
+    
+    func fetchMangaByID(id: Int) async throws -> AnimeNode
+
+    func fetchMangasByRanking(rankingType: Ranking, limit: Int) async throws -> [AnimeNode]
 }
 
 protocol CloudKitService {
@@ -29,7 +33,16 @@ protocol CloudKitService {
 
 
 struct MyAnimeListApi {
-    static var fieldValues: [String] = ["id", "title", "main_picture", "alternative_titles", "start_date", "end_date", "synopsis", "mean", "rank", "popularity", "num_list_users", "media_type", "status", "genres", "num_episodes", "start_season", "broadcast", "source", "average_episode_duration", "rating", "related_anime", "related_manga", "recommendations", "studios"]
+    static var fieldValues: [String] = Anime.CodingKeys.allCases.map { $0.rawValue }
     static var baseUrl = "https://api.myanimelist.net/v2"
     static var apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
+}
+
+enum Ranking: String {
+    case all, airing, upcoming, bypopularity
+    case manga, novels, oneshots, doujin, manhwa, manhua
+}
+
+enum Season: String, CaseIterable, Codable {
+    case winter, spring, summer, fall
 }

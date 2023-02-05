@@ -10,7 +10,7 @@ import SwiftUI
 struct DiscoverView: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-
+    
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
@@ -19,19 +19,25 @@ struct DiscoverView: View {
                         .padding([.horizontal, .bottom])
                     
                     Divider()
-
-                    DiscoverRow(animeNodes: discoverViewModel.fallData, season: .fall, year: discoverViewModel.fallYear, geometry: geometry)
-                        .padding(.top)
                     
-                    DiscoverRow(animeNodes: discoverViewModel.summerData, season: .summer, year: discoverViewModel.summerYear, geometry: geometry)
-                        .padding(.top)
+                    switch discoverViewModel.selectedAnimeType {
+                    case .all:
+                        DiscoverAnimeContent(geometry: geometry)
+                    case .anime:
+                        DiscoverAnimeContent(geometry: geometry)
+                    case .manga:
+                        DiscoverMangaContent(geometry: geometry, animeType: .manga)
+                    }
                     
-                    DiscoverRow(animeNodes: discoverViewModel.springData, season: .spring, year: discoverViewModel.springYear, geometry: geometry)
-                        .padding(.top)
-                    
-                    DiscoverRow(animeNodes: discoverViewModel.winterData, season: .winter, year: discoverViewModel.winterYear, geometry: geometry)
-                        .padding(.top)
                 }
+            }
+            .toolbar {
+                ToolbarItem {
+                    Button(action: {}) {
+                        Image(systemName: "info.circle")
+                    }
+                }
+                
             }
             .searchable(
                 text: $discoverViewModel.searchText,
@@ -51,7 +57,7 @@ struct DiscoverView: View {
                     try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
                 }
             }
-        .navigationTitle("Discover Animes")
+            .navigationTitle("Discover Animes")
         }
         .background(Color.ui.background)
     }

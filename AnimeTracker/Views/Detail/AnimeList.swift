@@ -14,7 +14,7 @@ struct AnimeList: View {
         VStack(spacing: 0) {
             ForEach($animeData, id: \.record.recordID) { $animeNode in
                 NavigationLink {
-                    AnimeDetail(animeID: animeNode.node.id)
+                    AnimeDetail(id: animeNode.node.id, animeType: .anime)
                 } label: {
                     AnimeCell(animeNode: $animeNode)
                 }

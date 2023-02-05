@@ -16,8 +16,10 @@ struct AnimeStatus: View {
                 .fill(selectColor)
                 .frame(width: 5)
                 .padding(.top, 2)
+            
             Text(animeNode.node.statusFormatted())
                 .font(.system(size: 10))
+                .lineLimit(1)
         }
         .foregroundColor(Color.ui.tag_text)
         .padding(.vertical, 2)
@@ -31,10 +33,10 @@ struct AnimeStatus: View {
     var selectColor: Color {
         switch animeNode.node.status {
             
-        case "currently_airing":
+        case "currently_airing", "on_hiatus", "currently_publishing":
             return .yellow
             
-        case "finished_airing":
+        case "finished_airing", "finished":
             return .green
         default:
             return .red

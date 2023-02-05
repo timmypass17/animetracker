@@ -10,6 +10,7 @@ import SwiftUI
 struct RelatedRow: View {
     let title: String
     let relatedAnimes: [RelatedNode]
+    let animeType: AnimeType
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -23,7 +24,7 @@ struct RelatedRow: View {
                     HStack(alignment: .top) {
                         ForEach(relatedAnimes, id: \.node.id) { animeNode in
                             NavigationLink {
-                                AnimeDetail(animeID: animeNode.node.id)
+                                AnimeDetail(id: animeNode.node.id, animeType: animeType)
                             } label: {
                                 RelatedRowCell(relatedAnimeNode: animeNode)
                             }
@@ -78,7 +79,7 @@ struct RelatedRow_Previews: PreviewProvider {
     static var previews: some View {
         RelatedRow(
             title: "Related Anime",
-            relatedAnimes: AnimeCollection.sampleData[0].node.related_anime ?? []
+            relatedAnimes: AnimeCollection.sampleData[0].node.related_anime ?? [], animeType: .anime
         )
     }
 }

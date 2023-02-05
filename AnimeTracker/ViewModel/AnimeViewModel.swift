@@ -18,7 +18,7 @@ class AnimeViewModel: ObservableObject {
     
     @Published var filterResults: [AnimeNode] = []
     @Published var selectedViewMode: ViewMode = .all
-    @Published var selectedSearchMode: SearchMode = .all
+    @Published var selectedAnimeType: AnimeType = .all
     @Published var selectedSort: SortBy = .last_modified
     @Published var filterText = ""
 
@@ -65,7 +65,7 @@ class AnimeViewModel: ObservableObject {
                 selectedAnimeData = animeData
             case .in_progress:
                 // Get animes between range 1 to num_episodes - 1
-                selectedAnimeData = animeData.filter { 1 ... $0.node.num_episodes - 1 ~= ($0.record["episodes_seen"] as? Int ?? 0) }
+                selectedAnimeData = animeData.filter { 1 ... ($0.node.num_episodes ?? 0) - 1 ~= ($0.record["episodes_seen"] as? Int ?? 0) }
             case .finished:
                 selectedAnimeData = animeData.filter { ($0.record["episodes_seen"] as? Int ?? 0) == $0.node.num_episodes}
             case .not_started:
@@ -94,7 +94,7 @@ enum ViewMode: String, CaseIterable, Identifiable {
     var id: Self { self } // forEach
 }
 
-enum SearchMode: String, CaseIterable, Identifiable {
+enum AnimeType: String, CaseIterable, Identifiable, Codable {
     case all, anime, manga
     var id: Self { self } // forEach
 }
@@ -102,6 +102,7 @@ enum SearchMode: String, CaseIterable, Identifiable {
 enum FetchError: Error {
     case badRequest
     case badJson
+    case badURL
 }
 
 enum Tab {

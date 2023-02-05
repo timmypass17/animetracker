@@ -34,25 +34,25 @@ struct EpisodeSheet: View {
                 // TODO: Some animes don't have num count (ex. One Piece)
                 Slider(
                     value: $current_episode,
-                    in: 0...Float(animeNode.node.num_episodes),
+                    in: 0...Float(animeNode.node.num_episodes ?? 0),
                     step: 1
                 ) {
                     Text("Episode")
                 } minimumValueLabel: {
                     Text("0")
                 } maximumValueLabel: {
-                    Text("\(animeNode.node.num_episodes)")
+                    Text("\(animeNode.node.numEpisodesFormatted())")
                 } onEditingChanged: { editing in
                     isEditing = editing
                 }
                 
-                Button(action: { current_episode = min(current_episode + 1, Float(animeNode.node.num_episodes)) }) {
+                Button(action: { current_episode = min(current_episode + 1, Float(animeNode.node.num_episodes ?? 0)) }) {
                     Image(systemName: "plus")
                 }
             }
             .padding(.top, 10)
             
-            Text("Currently on episode: \(Int(current_episode)) / \(animeNode.node.num_episodes)")
+            Text("Currently on episode: \(Int(current_episode)) / \(animeNode.node.numEpisodesFormatted())")
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .font(.caption)
@@ -73,14 +73,15 @@ struct EpisodeSheet: View {
         .padding(.top) // sheet needs extra top padding
         .onAppear {
             current_episode = Float(animeNode.episodes_seen)
-            print(animeNode.node.status)
         }
     }
     
     func handleSaveAction() {
         Task {
             isShowingSheet = false
-            animeNode.episodes_seen = Int(current_episode)
+            if animeNode.node.animeType == .anime {
+                animeNode.episodes_seen = Int(current_episode)
+            }
             await animeViewModel.addAnime(animeNode: animeNode)
         }
     }

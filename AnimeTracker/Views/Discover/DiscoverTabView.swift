@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct DiscoverTabView: View {
-    @EnvironmentObject var animeViewModel: AnimeViewModel
+    @EnvironmentObject var discoverViewModel: DiscoverViewModel
 
     var body: some View {
-        Picker("View Mode", selection: $animeViewModel.selectedSearchMode) {
-            ForEach(SearchMode.allCases) { mode in
+        Picker("View Mode", selection: $discoverViewModel.selectedAnimeType) {
+            ForEach(AnimeType.allCases) { mode in
                 Text(mode.rawValue.capitalized)
             }
         }

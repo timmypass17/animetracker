@@ -10,13 +10,15 @@ import SwiftUI
 // Note: Could have multible anime detail screens so we store state seperately
 struct AnimeDetail: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
+    @EnvironmentObject var discoverViewModel: DiscoverViewModel
     @Environment(\.dismiss) private var dismiss
     @State var animationAmount = 1.0
     @State var animeNode: AnimeNode = AnimeNode(node: Anime())
     @State var isShowingSheet = false
     @State var currentEpisode: Float = 0.0
     @State var selectedTab: DetailTab = .background
-    let animeID: Int
+    let id: Int
+    let animeType: AnimeType
     
     var body: some View {
         ScrollView(.vertical) {
@@ -36,12 +38,13 @@ struct AnimeDetail: View {
                 case .background:
                     Synopsis(animeNode: animeNode)
                         .padding(.top)
-                    
+
                     if let related_animes = animeNode.node.related_anime {
                         if related_animes.count > 0 {
                             RelatedRow(
                                 title: "Related Anime",
-                                relatedAnimes: related_animes
+                                relatedAnimes: related_animes,
+                                animeType: animeType
                             )
                             .padding(.top)
                         }
@@ -54,7 +57,8 @@ struct AnimeDetail: View {
                         if recommended_animes.count > 0 {
                             RelatedRow(
                                 title: "Recommendations",
-                                relatedAnimes: animeNode.node.recommendations ?? []
+                                relatedAnimes: animeNode.node.recommendations ?? [],
+                                animeType: animeType
                             )
                             .padding(.top)
                         }
@@ -106,20 +110,27 @@ struct AnimeDetail: View {
         }
         .background(Color.ui.background)
         .onAppear {
-            print("AnimeDetail onAppear()")
             Task {
                 try await handleFetchingData()
+                
             }
         }
     }
     
     func handleFetchingData() async throws {
         // get anime data from local cache
-        if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == animeID }) {
+        if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == id }) {
             animeNode = existingNode
         } else {
             // send api network request
-            animeNode = try await animeViewModel.fetchAnimeByID(id: animeID)
+            
+            // is anime
+            switch animeType {
+            case .anime:
+                animeNode = try await animeViewModel.fetchAnimeByID(id: id)
+            default:
+                animeNode = try await discoverViewModel.fetchMangaByID(id: id)
+            }
         }
     }
 }
@@ -132,8 +143,9 @@ enum DetailOption: String, CaseIterable, Identifiable {
 struct AnimeDetail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            AnimeDetail(animeNode: AnimeCollection.sampleData[0], animeID: 0)
+            AnimeDetail(animeNode: AnimeCollection.sampleData[1], id: 0, animeType: .anime)
                 .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+                .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

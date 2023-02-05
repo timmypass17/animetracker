@@ -43,8 +43,8 @@ struct DiscoverCell: View {
                 .font(.system(size: 14))
                 .lineLimit(1)
                 .padding(.top, 4)
-            
-            Text("\(animeNode.node.media_type.uppercased()) - \(animeNode.node.numEpisodesFormatted()) Episodes")
+
+            Text(animeNode.node.cellLabel())
                 .foregroundColor(.white.opacity(0.6))
                 .font(.system(size: 10))
             
