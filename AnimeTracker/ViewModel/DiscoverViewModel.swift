@@ -31,7 +31,7 @@ class DiscoverViewModel: ObservableObject {
 
 
     @Published var searchText = ""
-    @Published var selectedAnimeType: AnimeType = .all
+    @Published var selectedAnimeType: AnimeType = .anime
     
     private var cancellables = Set<AnyCancellable>()
     var recentSeasons: [(Season, Int)] = []
@@ -111,8 +111,8 @@ class DiscoverViewModel: ObservableObject {
         try await animeRepository.loadMore(season: season.season, year: season.year)
     }
     
-    func loadMoreManga(ranking: String) async throws {
-        try await animeRepository.loadMoreManga(ranking: ranking)
+    func loadMoreManga(page: Int) async throws -> AnimeCollection {
+        return try await animeRepository.fetchMangas(page: page)
     }
 }
 

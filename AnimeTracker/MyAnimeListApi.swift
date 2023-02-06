@@ -39,8 +39,7 @@ struct MyAnimeListApi {
 }
 
 enum Ranking: String {
-    case all, airing, upcoming, bypopularity
-    case manga, novels, oneshots, doujin, manhwa, manhua
+    case manga, novels, manhwa, manhua
 }
 
 enum Season: String, CaseIterable, Codable {

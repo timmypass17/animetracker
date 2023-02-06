@@ -34,7 +34,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         container.publicCloudDatabase
     }
     let TAG = "[AnimeRepository]"
-    let limit = 20
+    let limit = 10
     
     init() {
         Task {
@@ -550,104 +550,129 @@ extension AnimeRepository {
         }
     }
     
-    func loadMoreManga(ranking: String) async throws {
-        if ranking == "manga" {
-            guard let query = mangaData.paging.next else { return }
-            guard let url = URL(string: query) else { throw FetchError.badRequest }
-            var request = URLRequest(url: url)
-            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                print("bad response")
-                return
-            }
-            
-            do {
-                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
-                var mangas = result.data
-                mangas.indices.forEach {
-                    mangas[$0].node.animeType = .anime
-                }
-                for manga in mangas {
-                    mangaData.data.append(manga)
-                    //                fallData.append(anime)
-                }
-                mangaData.paging.next = result.paging.next
-            } catch {
-                print(error)
-            }
-        } else if ranking == "novels" {
-            guard let query = novelData.paging.next else { return }
-            guard let url = URL(string: query) else { throw FetchError.badRequest }
-            var request = URLRequest(url: url)
-            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                print("bad response")
-                return
-            }
-            
-            do {
-                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
-                var mangas = result.data
-                mangas.indices.forEach {
-                    mangas[$0].node.animeType = .anime
-                }
-                for manga in mangas {
-                    novelData.data.append(manga)
-                }
-                novelData.paging.next = result.paging.next
-            } catch {
-                print(error)
-            }
-        } else if ranking == "manhwa" {
-            guard let query = manhwaData.paging.next else { return }
-            guard let url = URL(string: query) else { throw FetchError.badRequest }
-            var request = URLRequest(url: url)
-            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                print("bad response")
-                return
-            }
-            
-            do {
-                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
-                var mangas = result.data
-                mangas.indices.forEach {
-                    mangas[$0].node.animeType = .anime
-                }
-                for manga in mangas {
-                    manhwaData.data.append(manga)
-                }
-                manhwaData.paging.next = result.paging.next
-            } catch {
-                print(error)
-            }
-        } else {
-            guard let query = manhuaData.paging.next else { return }
-            guard let url = URL(string: query) else { throw FetchError.badRequest }
-            var request = URLRequest(url: url)
-            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                print("bad response")
-                return
-            }
-            
-            do {
-                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
-                var mangas = result.data
-                mangas.indices.forEach {
-                    mangas[$0].node.animeType = .anime
-                }
-                for manga in mangas {
-                    manhuaData.data.append(manga)
-                }
-                manhuaData.paging.next = result.paging.next
-            } catch {
-                print(error)
-            }
+    func fetchMangas(page: Int) async throws -> AnimeCollection {
+        print(page)
+        let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
+        let offset = page * limit
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=manga&fields=\(fieldValue)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
+        
+        var request = URLRequest(url: url)
+        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw FetchError.badRequest
         }
+        
+        do {
+            var mangaData = try JSONDecoder().decode(AnimeCollection.self, from: data)
+            mangaData.data.indices.forEach { mangaData.data[$0].node.animeType = .manga }
+            return mangaData
+        } catch {
+            print(error)
+        }
+        return AnimeCollection()
     }
+    
+//    func loadMoreManga(ranking: String) async throws {
+//        if ranking == "manga" {
+//            guard let query = mangaData.paging.next else { return }
+//            guard let url = URL(string: query) else { throw FetchError.badRequest }
+//            var request = URLRequest(url: url)
+//            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+//            let (data, response) = try await URLSession.shared.data(for: request)
+//            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+//                print("bad response")
+//                return
+//            }
+//
+//            do {
+//                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
+//                var mangas = result.data
+//                mangas.indices.forEach {
+//                    mangas[$0].node.animeType = .anime
+//                }
+//                for manga in mangas {
+//                    mangaData.data.append(manga)
+//                    //                fallData.append(anime)
+//                }
+//                mangaData.paging.next = result.paging.next
+//            } catch {
+//                print(error)
+//            }
+//        } else if ranking == "novels" {
+//            guard let query = novelData.paging.next else { return }
+//            guard let url = URL(string: query) else { throw FetchError.badRequest }
+//            var request = URLRequest(url: url)
+//            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+//            let (data, response) = try await URLSession.shared.data(for: request)
+//            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+//                print("bad response")
+//                return
+//            }
+//
+//            do {
+//                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
+//                var mangas = result.data
+//                mangas.indices.forEach {
+//                    mangas[$0].node.animeType = .anime
+//                }
+//                for manga in mangas {
+//                    novelData.data.append(manga)
+//                }
+//                novelData.paging.next = result.paging.next
+//            } catch {
+//                print(error)
+//            }
+//        } else if ranking == "manhwa" {
+//            guard let query = manhwaData.paging.next else { return }
+//            guard let url = URL(string: query) else { throw FetchError.badRequest }
+//            var request = URLRequest(url: url)
+//            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+//            let (data, response) = try await URLSession.shared.data(for: request)
+//            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+//                print("bad response")
+//                return
+//            }
+//
+//            do {
+//                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
+//                var mangas = result.data
+//                mangas.indices.forEach {
+//                    mangas[$0].node.animeType = .anime
+//                }
+//                for manga in mangas {
+//                    manhwaData.data.append(manga)
+//                }
+//                manhwaData.paging.next = result.paging.next
+//            } catch {
+//                print(error)
+//            }
+//        } else {
+//            guard let query = manhuaData.paging.next else { return }
+//            guard let url = URL(string: query) else { throw FetchError.badRequest }
+//            var request = URLRequest(url: url)
+//            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+//            let (data, response) = try await URLSession.shared.data(for: request)
+//            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+//                print("bad response")
+//                return
+//            }
+//
+//            do {
+//                let result = try JSONDecoder().decode(AnimeCollection.self, from: data)
+//                var mangas = result.data
+//                mangas.indices.forEach {
+//                    mangas[$0].node.animeType = .anime
+//                }
+//                for manga in mangas {
+//                    manhuaData.data.append(manga)
+//                }
+//                manhuaData.paging.next = result.paging.next
+//            } catch {
+//                print(error)
+//            }
+//        }
+    
 }
+

@@ -169,8 +169,6 @@ extension Anime {
         }
         
         switch animeType {
-        case .all:
-            return "?"
         case .anime:
             return "Episodes"
         default:

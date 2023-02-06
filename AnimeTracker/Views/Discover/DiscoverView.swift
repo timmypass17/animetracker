@@ -21,11 +21,9 @@ struct DiscoverView: View {
                     Divider()
                     
                     switch discoverViewModel.selectedAnimeType {
-                    case .all:
-                        DiscoverAnimeContent(geometry: geometry)
                     case .anime:
                         DiscoverAnimeContent(geometry: geometry)
-                    case .manga:
+                    default:
                         DiscoverMangaContent(geometry: geometry)
                     }
                     

@@ -18,7 +18,7 @@ class AnimeViewModel: ObservableObject {
     
     @Published var filterResults: [AnimeNode] = []
     @Published var selectedViewMode: ViewMode = .all
-    @Published var selectedAnimeType: AnimeType = .all
+    @Published var selectedAnimeType: AnimeType = .anime
     @Published var selectedSort: SortBy = .last_modified
     @Published var filterText = ""
 
@@ -95,7 +95,7 @@ enum ViewMode: String, CaseIterable, Identifiable {
 }
 
 enum AnimeType: String, CaseIterable, Identifiable, Codable {
-    case all, anime, manga
+    case anime, manga, novels, manhwa, manhua
     var id: Self { self } // forEach
 }
 

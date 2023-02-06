@@ -8,17 +8,18 @@
 import SwiftUI
 
 struct DiscoverRow: View {
-    @Binding var animeCollection: AnimeCollection
+    @EnvironmentObject var discoverViewModel: DiscoverViewModel
+    @State var animeCollection = AnimeCollection()
     var title: String
-    var geometry: GeometryProxy
     var animeType: AnimeType
-    var ranking: String = ""
-    
+    var geometry: GeometryProxy
+    var loadMore: (Int) async throws -> AnimeCollection
+
     var body: some View {
         VStack(alignment: .leading) {
             NavigationLink {
-                DiscoverDetailView(animeCollection: animeCollection, geometry: geometry, animeType: animeType, ranking: ranking)
-                    .navigationTitle(title)
+                DiscoverDetailView(animeType: animeType, geometry: geometry, loadMore: loadMore)
+                .navigationTitle(title)
             } label: {
                 HStack {
                     Text(title)
@@ -51,13 +52,18 @@ struct DiscoverRow: View {
             Divider()
                 .padding(.top)
         }
+        .onAppear {
+            Task {
+                animeCollection = try await discoverViewModel.loadMoreManga(page: 0)
+            }
+        }
     }
 }
 
 struct DiscoverRow_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverRow(animeCollection: .constant(AnimeCollection(data: AnimeCollection.sampleData)), title: "Fall 2023", geometry: geometry, animeType: .anime)
+            DiscoverRow(title: "Spring 2023", animeType: .anime, geometry: geometry, loadMore: { _ in return AnimeCollection() }) 
         }
     }
 }

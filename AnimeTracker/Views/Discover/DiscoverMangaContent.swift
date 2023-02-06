@@ -10,20 +10,22 @@ import SwiftUI
 struct DiscoverMangaContent: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
     var geometry: GeometryProxy
-    
+
     var body: some View {
         VStack {
-            DiscoverRow(animeCollection: $discoverViewModel.mangaData, title: "Mangas", geometry: geometry, animeType: .manga, ranking: "manga")
+            DiscoverRow(title: "Mangas", animeType: .manga, geometry: geometry) { page in
+                try await discoverViewModel.loadMoreManga(page: page)
+            }
                 .padding(.top)
             
-            DiscoverRow(animeCollection: $discoverViewModel.novelData, title: "Novels", geometry: geometry, animeType: .manga, ranking: "novels")
-                .padding(.top)
-            
-            DiscoverRow(animeCollection: $discoverViewModel.manhwaData, title: "Manhwas", geometry: geometry, animeType: .manga, ranking: "manhwa")
-                .padding(.top)
-            
-            DiscoverRow(animeCollection: $discoverViewModel.manhuaData, title: "Manhuas", geometry: geometry, animeType: .manga, ranking: "manhua")
-                .padding(.top)
+//            DiscoverRow(animeCollection: $discoverViewModel.novelData, title: "Novels", geometry: geometry, animeType: .manga, ranking: "novels")
+//                .padding(.top)
+//            
+//            DiscoverRow(animeCollection: $discoverViewModel.manhwaData, title: "Manhwas", geometry: geometry, animeType: .manga, ranking: "manhwa")
+//                .padding(.top)
+//            
+//            DiscoverRow(animeCollection: $discoverViewModel.manhuaData, title: "Manhuas", geometry: geometry, animeType: .manga, ranking: "manhua")
+//                .padding(.top)
         }
         
     }
