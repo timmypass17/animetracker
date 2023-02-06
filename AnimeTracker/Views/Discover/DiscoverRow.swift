@@ -9,18 +9,19 @@ import SwiftUI
 
 struct DiscoverRow: View {
     @Binding var animeCollection: AnimeCollection
-//    @Binding var animeNodes: [AnimeNode]
-//    var title: String
+    var title: String
     var geometry: GeometryProxy
     var animeType: AnimeType
+    var ranking: String = ""
     
     var body: some View {
         VStack(alignment: .leading) {
             NavigationLink {
-                DiscoverDetailView(animeCollection: animeCollection, geometry: geometry, animeType: animeType)
+                DiscoverDetailView(animeCollection: animeCollection, geometry: geometry, animeType: animeType, ranking: ranking)
+                    .navigationTitle(title)
             } label: {
                 HStack {
-                    Text(animeCollection.seasonFormatted())
+                    Text(title)
                     
                     Spacer()
                     
@@ -56,7 +57,7 @@ struct DiscoverRow: View {
 struct DiscoverRow_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverRow(animeCollection: .constant(AnimeCollection(data: AnimeCollection.sampleData)), geometry: geometry, animeType: .anime)
+            DiscoverRow(animeCollection: .constant(AnimeCollection(data: AnimeCollection.sampleData)), title: "Fall 2023", geometry: geometry, animeType: .anime)
         }
     }
 }

@@ -12,14 +12,17 @@ import CloudKit
 struct AnimeCollection: Codable {
     var data: [AnimeNode] = []
     var paging: Paging = Paging(next: "")
-    var season: AnimeSeason = AnimeSeason(year: 0, season: .fall)
+    var season: AnimeSeason?
     
     struct Paging: Codable {
         var next: String?
     }
     
     func seasonFormatted() -> String {
-        return "\(season.season.rawValue.capitalized) \(season.year)"
+        guard let season = self.season?.season.rawValue.capitalized else { return "?" }
+        guard let year =  self.season?.year else { return "?" }
+
+        return "\(season) \(year)"
     }
 }
 
@@ -197,21 +200,21 @@ extension Anime {
     }
     
     func broadcastFormatted() -> String {
-        if status == "finished_airing"{
-            return "Finished Airing"
-        }
+        guard status != "finished_airing" else { return "Finished Airing" }
         
-        if let broadcast = broadcast {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "HH:mm"
-            var date = dateFormatter.date(from: "\(broadcast.start_time)") // create date object
-            
-            dateFormatter.dateFormat = "H:mm a" // add am,pm
-            
-            if let date = date {
-                let newDate = dateFormatter.string(from: date)
-                return "\(broadcast.day_of_the_week?.capitalized ?? "?"), \(newDate) (JSP)"
-            }
+        guard let broadcast = broadcast else { return "TBA" }
+        guard let weekday = broadcast.day_of_the_week else { return "TBA" }
+        guard let start_time = broadcast.start_time else { return "TBA" }
+                
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "HH:mm"
+        let date = dateFormatter.date(from: "\(start_time)") // create date object
+        
+        dateFormatter.dateFormat = "H:mm a" // add am,pm
+        
+        if let date = date {
+            let newDate = dateFormatter.string(from: date)
+            return "\(weekday.capitalized), \(newDate) (JSP)"
         }
         
         return "TBA"

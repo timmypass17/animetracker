@@ -24,10 +24,10 @@ class DiscoverViewModel: ObservableObject {
     
     @Published var searchResults: [AnimeNode] = []
     
-    @Published var mangaData: [AnimeNode] = []
-    @Published var novelData: [AnimeNode] = []
-    @Published var manhwaData: [AnimeNode] = []
-    @Published var manhuaData: [AnimeNode] = []
+    @Published var mangaData = AnimeCollection()
+    @Published var novelData = AnimeCollection()
+    @Published var manhwaData = AnimeCollection()
+    @Published var manhuaData = AnimeCollection()
 
 
     @Published var searchText = ""
@@ -106,8 +106,13 @@ class DiscoverViewModel: ObservableObject {
         try await animeRepository.fetchAnimesByTitle(title: title, limit: limit)
     }
     
-    func loadMore(season: Season, year: Int) async throws {
-        try await animeRepository.loadMore(season: season, year: year)
+    func loadMore(animeCollection: AnimeCollection) async throws {
+        guard let season = animeCollection.season else { return }
+        try await animeRepository.loadMore(season: season.season, year: season.year)
+    }
+    
+    func loadMoreManga(ranking: String) async throws {
+        try await animeRepository.loadMoreManga(ranking: ranking)
     }
 }
 

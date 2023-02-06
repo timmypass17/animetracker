@@ -13,6 +13,7 @@ struct DiscoverDetailView: View {
     let geometry: GeometryProxy
     let animeType: AnimeType
     let columns = [GridItem(), GridItem(), GridItem()]
+    var ranking: String = ""
     
     var body: some View {
         ScrollView {
@@ -30,13 +31,16 @@ struct DiscoverDetailView: View {
                     ProgressView()
                         .onAppear {
                             Task {
-                                try await discoverViewModel.loadMore(season: animeCollection.season.season, year: animeCollection.season.year)
+                                if animeType == .anime {
+                                    try await discoverViewModel.loadMore(animeCollection: animeCollection)
+                                } else {
+                                    try await discoverViewModel.loadMoreManga(ranking: ranking)
+                                }
                             }
                         }
                 }
             }
         }
-        .navigationTitle(animeCollection.seasonFormatted())
         .padding()
         .background(Color.ui.background)
 
@@ -46,7 +50,7 @@ struct DiscoverDetailView: View {
 struct DiscoverDetailView_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverDetailView(animeCollection: AnimeCollection(data: AnimeCollection.sampleData), geometry: geometry, animeType: .anime)
+            DiscoverDetailView(animeCollection: AnimeCollection(data: AnimeCollection.sampleData), geometry: geometry, animeType: .anime, ranking: "manga")
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }

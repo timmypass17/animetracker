@@ -26,7 +26,7 @@ struct DiscoverView: View {
                     case .anime:
                         DiscoverAnimeContent(geometry: geometry)
                     case .manga:
-                        DiscoverMangaContent(geometry: geometry, animeType: .manga)
+                        DiscoverMangaContent(geometry: geometry)
                     }
                     
                 }

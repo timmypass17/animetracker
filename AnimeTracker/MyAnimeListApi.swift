@@ -19,7 +19,7 @@ protocol MyAnimeListApiService {
     
     func fetchMangaByID(id: Int) async throws -> AnimeNode
 
-    func fetchMangasByRanking(rankingType: Ranking, limit: Int) async throws -> [AnimeNode]
+    func fetchMangasByRanking(rankingType: Ranking, limit: Int) async throws -> AnimeCollection
 }
 
 protocol CloudKitService {
