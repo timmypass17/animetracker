@@ -24,7 +24,7 @@ struct DiscoverView: View {
                     case .anime:
                         DiscoverAnimeContent(geometry: geometry)
                     default:
-                        DiscoverMangaContent(geometry: geometry)
+                        MangaList(geometry: geometry, mangaTypes: [.manga, .novels, .manhwa, .manhua])
                     }
                     
                 }

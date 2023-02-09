@@ -12,9 +12,11 @@ struct DiscoverTabView: View {
 
     var body: some View {
         Picker("View Mode", selection: $discoverViewModel.selectedAnimeType) {
-            ForEach(AnimeType.allCases) { mode in
-                Text(mode.rawValue.capitalized)
-            }
+            Text(AnimeType.anime.rawValue.capitalized)
+                .tag(AnimeType.anime)
+
+            Text(AnimeType.manga.rawValue.capitalized)
+                .tag(AnimeType.manga)
         }
         .pickerStyle(.segmented)
     }

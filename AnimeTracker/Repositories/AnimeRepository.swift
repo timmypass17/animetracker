@@ -41,15 +41,15 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             await fetchAnimesFromCloudKit()
             do {
                 let currentYear = getCurrentYear()
-                fallData = try await fetchAnimesBySeason(season: .fall, year: currentYear)
-                summerData = try await fetchAnimesBySeason(season: .summer, year: currentYear)
-                springData = try await fetchAnimesBySeason(season: .spring, year: currentYear)
-                winterData = try await fetchAnimesBySeason(season: .winter, year: currentYear)
-
-                fallDataPrev = try await fetchAnimesBySeason(season: .fall, year: currentYear - 1)
-                summerDataPrev = try await fetchAnimesBySeason(season: .summer, year: currentYear - 1)
-                springDataPrev = try await fetchAnimesBySeason(season: .spring, year: currentYear - 1)
-                winterDataPrev = try await fetchAnimesBySeason(season: .winter, year: currentYear - 1)
+//                fallData = try await fetchAnimesBySeason(season: .fall, year: currentYear)
+//                summerData = try await fetchAnimesBySeason(season: .summer, year: currentYear)
+//                springData = try await fetchAnimesBySeason(season: .spring, year: currentYear)
+//                winterData = try await fetchAnimesBySeason(season: .winter, year: currentYear)
+//
+//                fallDataPrev = try await fetchAnimesBySeason(season: .fall, year: currentYear - 1)
+//                summerDataPrev = try await fetchAnimesBySeason(season: .summer, year: currentYear - 1)
+//                springDataPrev = try await fetchAnimesBySeason(season: .spring, year: currentYear - 1)
+//                winterDataPrev = try await fetchAnimesBySeason(season: .winter, year: currentYear - 1)
 
                 mangaData = try await fetchMangasByRanking(rankingType: .manga, limit: 10)
                 novelData = try await fetchMangasByRanking(rankingType: .novels, limit: 10)
@@ -261,7 +261,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
                     }
                     
                 case .failure(let error):
-                    print(error)
+                    print("Failed to fetch anime from cloudkit: \(error)")
                 }
             }
             
@@ -331,7 +331,7 @@ extension AnimeRepository {
             request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
             let (data, response) = try await URLSession.shared.data(for: request)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                print("bad response")
+                print("loadmore bad response")
                 return
             }
             
@@ -550,11 +550,10 @@ extension AnimeRepository {
         }
     }
     
-    func fetchMangas(page: Int) async throws -> AnimeCollection {
-        print(page)
+    func fetchMangas(page: Int, animeType: AnimeType) async throws -> AnimeCollection {
         let fieldValue = MyAnimeListApi.fieldValues.joined(separator: ",")
         let offset = page * limit
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=manga&fields=\(fieldValue)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=\(animeType.rawValue)&fields=\(fieldValue)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
         
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")

@@ -39,7 +39,7 @@ class DiscoverViewModel: ObservableObject {
     init(animeRepository: AnimeRepository) {
         self.animeRepository = animeRepository
         recentSeasons = getRecentSeasonYear()
-        print(recentSeasons)
+        
         // fall data listen to changes in repository's fall data
         self.animeRepository.$fallData
             .assign(to: \.fallData, on: self)
@@ -111,8 +111,8 @@ class DiscoverViewModel: ObservableObject {
         try await animeRepository.loadMore(season: season.season, year: season.year)
     }
     
-    func loadMoreManga(page: Int) async throws -> AnimeCollection {
-        return try await animeRepository.fetchMangas(page: page)
+    func loadMoreManga(page: Int, animeType: AnimeType) async throws -> AnimeCollection {
+        return try await animeRepository.fetchMangas(page: page, animeType: animeType)
     }
 }
 

@@ -50,8 +50,7 @@ struct DiscoverAnimeContent: View {
     }
     
     func isRelevant(season: Season, year: Int) -> Bool {
-        let relevant = discoverViewModel.getRecentSeasonYear()
-        return relevant.contains { $0 == (season, year) }
+        return discoverViewModel.recentSeasons.contains { $0 == (season, year) }
     }
 }
 

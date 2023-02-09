@@ -26,6 +26,7 @@ struct AnimeDetail: View {
                 DetailTopSection(animeNode: animeNode)
                 
                 GenreRow(animeNode: animeNode)
+                    .font(.caption)
                     .padding(.top)
                 
                 DetailProgress(animeNode: $animeNode, current_episode: $currentEpisode)

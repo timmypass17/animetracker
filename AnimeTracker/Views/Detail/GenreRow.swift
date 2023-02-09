@@ -9,20 +9,22 @@ import SwiftUI
 
 struct GenreRow: View {
     let animeNode: AnimeNode
+    var maxTags = Int.max
     
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 4) {
-                ForEach(animeNode.node.genres, id: \.name) { tag in
-                    Text(tag.name)
-                        .font(.caption)
-                        .foregroundColor(Color.ui.tag_text)
-                        .padding(.vertical, 2)
-                        .padding(.horizontal, 4)
-                        .background{
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.ui.tag)
-                        }
+                ForEach(animeNode.node.genres.prefix(maxTags), id: \.name) { tag in
+                    TagView(text: tag.name)
+                }
+                
+                if animeNode.node.genres.count > maxTags {
+                    HStack(spacing: 0) {
+                        Image(systemName: "plus")
+                        Text("\(animeNode.node.genres.count - maxTags) more")
+                    }
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 2)
                 }
             }
         }

@@ -13,8 +13,8 @@ struct DiscoverRow: View {
     var title: String
     var animeType: AnimeType
     var geometry: GeometryProxy
-    var loadMore: (Int) async throws -> AnimeCollection
-
+    var loadMore: (Int, AnimeType) async throws -> AnimeCollection
+    
     var body: some View {
         VStack(alignment: .leading) {
             NavigationLink {
@@ -41,7 +41,6 @@ struct DiscoverRow: View {
                             AnimeDetail(id: animeNode.node.id, animeType: animeType)
                         } label: {
                             DiscoverCell(animeNode: animeNode, geometry: geometry, width: 0.25)
-                            
                         }
                         .buttonStyle(.plain)
                     }
@@ -54,7 +53,7 @@ struct DiscoverRow: View {
         }
         .onAppear {
             Task {
-                animeCollection = try await discoverViewModel.loadMoreManga(page: 0)
+                animeCollection = try await loadMore(0, animeType)
             }
         }
     }
@@ -63,7 +62,7 @@ struct DiscoverRow: View {
 struct DiscoverRow_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverRow(title: "Spring 2023", animeType: .anime, geometry: geometry, loadMore: { _ in return AnimeCollection() }) 
+            DiscoverRow(title: "Spring 2023", animeType: .anime, geometry: geometry, loadMore: { _, _ in return AnimeCollection() }) 
         }
     }
 }

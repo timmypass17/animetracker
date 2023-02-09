@@ -14,7 +14,7 @@ struct AnimeCell: View {
     
     var body: some View {
         VStack(spacing: 0) {
-
+            
             HStack(alignment: .top, spacing: 0) {
                 AsyncImage(url: URL(string: animeNode.node.main_picture.medium)) { image in
                     image
@@ -35,9 +35,15 @@ struct AnimeCell: View {
                 
                 VStack(alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(animeNode.node.startSeasonFormatted())
-                            .foregroundColor(.secondary)
-                            .font(.caption)
+                        HStack {
+                            Text(animeNode.node.startSeasonFormatted())
+                            
+                            Spacer()
+                            
+                            Image(systemName: "ellipsis")
+                        }
+                        .foregroundColor(.secondary)
+                        .font(.caption)
                         
                         HStack(spacing: 4){
                             Text(animeNode.node.titleFormatted())
@@ -46,22 +52,8 @@ struct AnimeCell: View {
                         .truncationMode(.tail)
                         .padding(.bottom, 5)
                         
-                        HStack(spacing: 4) {
-                            let maxTags = 2
-                            ForEach(animeNode.node.genres.prefix(maxTags), id: \.name) { tag in
-                                TagView(text: tag.name)
-                                    .font(.caption)
-                            }
-                            if animeNode.node.genres.count > maxTags {
-                                HStack(spacing: 0) {
-                                    Image(systemName: "plus")
-                                    Text("\(animeNode.node.genres.count - maxTags) more")
-                                }
-                                .foregroundColor(.secondary)
-                                .font(.caption)
-                                .padding(.leading, 2)
-                            }
-                        }
+                        GenreRow(animeNode: animeNode, maxTags: 2)
+                            .font(.caption)
                     }
                     
                     // progressiveView likes float
@@ -71,12 +63,11 @@ struct AnimeCell: View {
                                 .font(.caption)
                             
                             Spacer()
-
                             Text("Episodes:")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
-                            Text("\(animeNode.episodes_seen) /")
+                            Text("\(animeNode.episodes_seen) / ")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
@@ -85,6 +76,7 @@ struct AnimeCell: View {
                                 .font(.caption)
                             
                         }
+                        
                     }
                     .progressViewStyle(.linear)
                     
@@ -93,7 +85,7 @@ struct AnimeCell: View {
                         .font(.caption)
                     
                 }
-
+                
                 Spacer()
             }
             .padding(.vertical)
