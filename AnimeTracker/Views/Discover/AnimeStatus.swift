@@ -17,7 +17,7 @@ struct AnimeStatus: View {
                 .frame(width: 5)
                 .padding(.top, 2)
             
-            Text(animeNode.node.statusFormatted())
+            Text(animeNode.node.getStatus())
                 .font(.system(size: 10))
                 .lineLimit(1)
         }

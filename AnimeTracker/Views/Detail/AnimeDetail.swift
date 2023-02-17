@@ -9,11 +9,11 @@ import SwiftUI
 
 // Note: Could have multible anime detail screens so we store state seperately
 struct AnimeDetail: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var animeViewModel: AnimeViewModel
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    @Environment(\.dismiss) private var dismiss
     @State var animationAmount = 1.0
-    @State var animeNode: AnimeNode = AnimeNode(node: Anime())
+    @State var animeNode: AnimeNode = AnimeNode(node: Anime(id: 0))
     @State var isShowingSheet = false
     @State var currentEpisode: Float = 0.0
     @State var selectedTab: DetailTab = .background
@@ -45,10 +45,36 @@ struct AnimeDetail: View {
                             RelatedRow(
                                 title: "Related Anime",
                                 relatedAnimes: related_animes,
-                                animeType: animeType
+                                animeType: .anime
                             )
                             .padding(.top)
                         }
+                    }
+                    
+                    if let related_mangas = animeNode.node.related_manga {
+                        if related_mangas.count > 0 {
+                            RelatedRow(
+                                title: "Related Mangas",
+                                relatedAnimes: related_mangas,
+                                animeType: .manga
+                            )
+                            .padding(.top)
+                        }
+                    }
+                    
+                    if animeViewModel.animeData.contains(where: { $0.node.id == id }) {
+                        Button(action: {
+                            Task {
+                                dismiss()
+                                await animeViewModel.deleteAnime(animeNode: animeNode)
+                                animeViewModel.applySort()
+                            }
+                        }) {
+                            Text("Delete Anime")
+                                .foregroundColor(.red)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top)
                     }
                 case .statistic:
                     AnimeStats(animeNode: animeNode)
@@ -69,23 +95,11 @@ struct AnimeDetail: View {
                 }
                 
 
-                Button(action: {
-                    Task {
-                        dismiss()
-                        await animeViewModel.deleteAnime(animeNode: animeNode)
-                    }
-                }) {
-                    Text("Delete Anime")
-                        .foregroundColor(.red)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top)
-
             }
             .padding()
             .padding(.top, 115) // 45
             .background(alignment: .top) {
-                DetailBackground(animeNode: $animeNode)
+                DetailBackground(poster: animeNode.node.main_picture)
             }
             
             Spacer()
@@ -93,7 +107,7 @@ struct AnimeDetail: View {
         
         .foregroundColor(.white)
         .edgesIgnoringSafeArea(.top)
-        .navigationTitle(animeNode.node.title)
+        .navigationTitle(animeNode.node.getTitle())
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isShowingSheet, onDismiss: { /** Save data **/ }, content: {
             NavigationView {
@@ -130,7 +144,7 @@ struct AnimeDetail: View {
             case .anime:
                 animeNode = try await animeViewModel.fetchAnimeByID(id: id)
             default:
-                animeNode = try await discoverViewModel.fetchMangaByID(id: id)
+                animeNode = try await discoverViewModel.fetchMangaByID(id: id, animeType: animeType)
             }
         }
     }

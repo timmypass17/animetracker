@@ -14,18 +14,17 @@ struct AnimeList: View {
         VStack(spacing: 0) {
             ForEach($animeData, id: \.record.recordID) { $animeNode in
                 NavigationLink {
-                    AnimeDetail(id: animeNode.node.id, animeType: .anime)
+                    AnimeDetail(id: animeNode.node.id, animeType: animeNode.node.animeType ?? .anime)
                 } label: {
                     AnimeCell(animeNode: $animeNode)
                 }
                 .buttonStyle(.plain)
             }
-//            .padding([.horizontal])
         }
     }
 }
 
-struct HomeColumn_Previews: PreviewProvider {
+struct AnimeList_Previews: PreviewProvider {
     static var previews: some View {
         AnimeList(animeData: .constant(AnimeCollection.sampleData))
     }

@@ -14,7 +14,10 @@ struct DetailProgress: View {
     var body: some View {
         VStack(alignment: .leading) {
             
-            ProgressView(value: Float(animeNode.episodes_seen), total: Float(animeNode.node.num_episodes ?? 0)) {
+            ProgressView(
+                value: Float(animeNode.episodes_seen),
+                total: Float(animeNode.node.getNumEpisodesOrChapters())
+            ) {
                 HStack(spacing: 4) {
                     AnimeStatus(animeNode: animeNode)
                         .font(.caption)
@@ -24,24 +27,24 @@ struct DetailProgress: View {
                     Text("Episodes:")
                         .font(.caption)
                     
-                    Text("\(animeNode.episodes_seen)")
+                    Text("\(animeNode.episodes_seen) /")
                         .font(.caption)
                     
-                    Text(verbatim: "/ \(animeNode.node.numEpisodesFormatted())")
+                    Text("\(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?" : String(animeNode.node.getNumEpisodesOrChapters()))")
                         .font(.caption)
                 }
             }
             .progressViewStyle(.linear)
             
-            Label("Next episode: \(animeNode.node.broadcastFormatted())", systemImage: "clock")
+            Label("Next episode: \(animeNode.node.getBroadcast())", systemImage: "clock")
                 .foregroundColor(.secondary)
                 .font(.caption)
         }
     }
 }
 
-struct DetailProgress_Previews: PreviewProvider {
-    static var previews: some View {
-        DetailProgress(animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(5.0))
-    }
-}
+//struct DetailProgress_Previews: PreviewProvider {
+//    static var previews: some View {
+//        DetailProgress(animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(5.0))
+//    }
+//}

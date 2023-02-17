@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @EnvironmentObject var appState: AppState
     @EnvironmentObject var animeViewModel: AnimeViewModel
 
     var body: some View {

@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct DetailBackground: View {
-    @Binding var animeNode: AnimeNode
-    
+    let poster: Poster?
+
     let gradient = LinearGradient(
         gradient: Gradient(stops: [
             .init(color: Color.ui.background, location: 0),
@@ -20,46 +20,27 @@ struct DetailBackground: View {
     )
     
     var body: some View {
-        // slightly hacky. Using scaledToFill() may cause affect layout.
-//        Color.clear
-//            .overlay {
-//                AsyncImage(url: URL(string: animeNode.node.main_picture.large)) { image in
-//                    image
-//                        .resizable()
-//                        .scaledToFill()
-////                        .frame(height: 350)
-//                        .clipShape(Rectangle())
-//                        .overlay {
-//                            gradient
-//                        }
-//                        .clipped()
-//                } placeholder: {
-//                    ProgressView()
-////                        .frame(height: 350)
-//                }
-//            }
-//            .frame(height: 350)
-//            .clipped()
-        
-        AsyncImage(url: URL(string: animeNode.node.main_picture.large)) { image in
-            image
-                .resizable()
-                .scaledToFill()
-                .frame(height: 350)
-                .clipShape(Rectangle())
-                .overlay {
-                    gradient
-                }
-                .clipped()
-        } placeholder: {
-            ProgressView()
-                .frame(height: 350)
+        if let poster = poster {
+            AsyncImage(url: URL(string: poster.medium)) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 350)
+                    .clipShape(Rectangle())
+                    .overlay {
+                        gradient
+                    }
+                    .clipped()
+            } placeholder: {
+                ProgressView()
+                    .frame(height: 350)
+            }
         }
     }
 }
-
-struct DetailBackground_Previews: PreviewProvider {
-    static var previews: some View {
-        DetailBackground(animeNode: .constant(AnimeCollection.sampleData[0]))
-    }
-}
+//
+//struct DetailBackground_Previews: PreviewProvider {
+//    static var previews: some View {
+//        DetailBackground(poster: AnimeCollection.sampleData[0].node.main_picture)
+//    }
+//}

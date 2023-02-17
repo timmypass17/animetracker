@@ -9,22 +9,28 @@ import Foundation
 
 protocol MyAnimeListApiService {
     
-    func fetchAnimeByID(id: Int) async throws -> AnimeNode
-    
-    func fetchAnimesByTitle(title: String, limit: Int) async throws
-    
-    func fetchAnimesByRanking(rankingType: Ranking) async throws -> [AnimeNode]
-    
-    func fetchAnimesBySeason(season: Season, year: Int) async throws -> AnimeCollection
-    
-    func fetchMangaByID(id: Int) async throws -> AnimeNode
+    /// Retrieves specific anime from MyAnimeList database using anime's id.
+    /// - Parameters:
+    ///     - animeID: Anime's identifier.
+    /// - Returns: Anime from MyAnimeList.
+    func fetchAnime(animeID: Int) async throws -> AnimeNode
 
-    func fetchMangasByRanking(rankingType: Ranking, limit: Int) async throws -> AnimeCollection
+    /// Retrieves animes from MyAnimeList with title to query with.
+    /// - Parameters:
+    ///     - title: Name of anime.
+    /// - Returns: List of animes from MyAnimeList relating to title query.
+    func fetchAnimes(title: String) async throws
+    
+    func fetchAnimesBySeason(page: Int, season: Season, year: Int) async throws -> AnimeCollection
+    
+    func fetchMangaByID(id: Int, animeType: AnimeType) async throws -> AnimeNode
+
+    func fetchMangasByType(page: Int, animeType: AnimeType) async throws -> AnimeCollection 
 }
 
 protocol CloudKitService {
     
-    func addAnime(animeNode: AnimeNode) async
+    func saveAnime(animeNode: AnimeNode) async
 
     func fetchAnimesFromCloudKit() async
     
@@ -33,15 +39,7 @@ protocol CloudKitService {
 
 
 struct MyAnimeListApi {
-    static var fieldValues: [String] = Anime.CodingKeys.allCases.map { $0.rawValue }
+    static var fieldValues: String = Anime.CodingKeys.allCases.map { $0.rawValue }.joined(separator: ",")
     static var baseUrl = "https://api.myanimelist.net/v2"
     static var apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
-}
-
-enum Ranking: String {
-    case manga, novels, manhwa, manhua
-}
-
-enum Season: String, CaseIterable, Codable {
-    case winter, spring, summer, fall
 }

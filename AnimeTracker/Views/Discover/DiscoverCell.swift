@@ -11,6 +11,7 @@ struct DiscoverCell: View {
     let animeNode: AnimeNode
     let geometry: GeometryProxy
     let width: CGFloat
+    var isScaled: Bool = false
     
     var posterWidth: CGFloat {
         geometry.size.width * width // 0.25
@@ -21,13 +22,22 @@ struct DiscoverCell: View {
         posterWidth / 0.69
     }
     
+    var description: String {
+        guard let animeType = animeNode.node.animeType else { return "?" }
+        if animeType == .anime {
+            return "\(animeNode.node.getMediaType().uppercased()) - \(animeNode.node.getNumEpisodesOrChapters()) Episodes"
+        } else {
+            return "\(animeNode.node.getMediaType().capitalized) - Ch. \(animeNode.node.getNumEpisodesOrChapters())"
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            AsyncImage(url: URL(string: animeNode.node.main_picture.medium)) { image in
+            AsyncImage(url: URL(string: animeNode.node.main_picture?.medium ?? "")) { image in
                 image
                     .resizable()
                     .scaledToFill()
-                    .frame(width: posterWidth, height: posterHeight)
+                    .frame(width: isScaled ? posterWidth : 100, height: isScaled ?  posterHeight : 150)
                     .clipShape(RoundedRectangle(cornerRadius: 5))
                     .overlay {
                         RoundedRectangle(cornerRadius: 5)
@@ -36,22 +46,22 @@ struct DiscoverCell: View {
                     .shadow(radius: 2)
             } placeholder: {
                 ProgressView()
-                    .frame(width: posterWidth, height: posterHeight)
+                    .frame(width: isScaled ? posterWidth : 100, height: isScaled ?  posterHeight : 150)
             }
             
-            Text(animeNode.node.titleFormatted())
+            Text(animeNode.node.getTitle())
                 .font(.system(size: 14))
                 .lineLimit(1)
                 .padding(.top, 4)
 
-            Text(animeNode.node.cellLabel())
+            Text(description)
                 .foregroundColor(.white.opacity(0.6))
                 .font(.system(size: 10))
             
             AnimeStatus(animeNode: animeNode)
                 .padding(.top, 2)
         }
-        .frame(width: posterWidth)
+        .frame(width: isScaled ? posterWidth : 100)
         .contentShape(RoundedRectangle(cornerRadius: 5)) // fixes overlap click area
     }
 }

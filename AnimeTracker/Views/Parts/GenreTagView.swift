@@ -82,8 +82,8 @@ struct GenreTagView: View {
     }
 }
 
-struct GenreTagView_Previews: PreviewProvider {
-    static var previews: some View {
-        GenreTagView(genre: AnimeCollection.sampleData[0].node.genres.map{ $0.name })
-    }
-}
+//struct GenreTagView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        GenreTagView(genre: AnimeCollection.sampleData[0].node.genres.map{ $0.name })
+//    }
+//}

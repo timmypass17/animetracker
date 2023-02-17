@@ -12,27 +12,28 @@ struct DetailTopSection: View {
     
     var body: some View {
         HStack(alignment: .top) {
-            DetailPoster(animeNode: animeNode)
+            DetailPoster(poster: animeNode.node.main_picture, height: 200)
+
             
             VStack(alignment: .leading, spacing: 0) {
-                Text(animeNode.node.startSeasonFormatted())
+                Text(animeNode.node.animeCellHeader())
                     .foregroundColor(.white.opacity(0.6))
-
-                Text(animeNode.node.alternative_titles.en)
+                
+                Text(animeNode.node.getTitle())
                     .font(.system(size: 24))
                 
-                Text(animeNode.node.alternative_titles.ja)
+                Text(animeNode.node.getJapaneseTitle())
                     .foregroundColor(.white.opacity(0.6))
                 
                 HStack {
-                    Label("\(animeNode.node.numEpisodesFormatted()) Episodes", systemImage: "tv")
+                    Label("\(animeNode.node.getNumEpisodesOrChapters()) Episodes", systemImage: "tv")
                         .font(.system(size: 12))
                     
                     
                     Circle()
                         .frame(width: 3 )
                     
-                    Label("\(animeNode.node.averageEpisodeDurationFormatted())", systemImage: "clock")
+                    Label("\(animeNode.node.getEpisodeMinutes())", systemImage: "clock")
                         .font(.system(size: 12))
                 }
                 .padding(.top, 8)
@@ -42,15 +43,15 @@ struct DetailTopSection: View {
                         Text("Score".uppercased())
                             .fontWeight(.semibold)
                             .padding(.vertical, 2)
-                            .padding(.horizontal, 6)
+                            .padding(.horizontal, 5)
                             .background(RoundedRectangle(cornerRadius: 2).fill(.blue))
                         
                         HStack(spacing: 4) {
-                            if animeNode.node.mean != nil {
-                                Image(systemName: "star")
-                            }
+//                            if animeNode.node.mean != nil {
+//                                Image(systemName: "star")
+//                            }
                             
-                            Text(animeNode.node.meanFormatted())
+                            Text(animeNode.node.getMean())
                                 .font(.system(size: 16))
                         }
                     }
@@ -59,7 +60,7 @@ struct DetailTopSection: View {
                         Text("Rank".uppercased())
                             .fontWeight(.semibold)
                             .padding(.vertical, 2)
-                            .padding(.horizontal, 6)
+                            .padding(.horizontal, 5)
                             .background(RoundedRectangle(cornerRadius: 2).fill(.blue))
                         
                         HStack(spacing: 0) {
@@ -67,7 +68,7 @@ struct DetailTopSection: View {
                                 Image(systemName: "number")
                             }
                             
-                            Text(animeNode.node.rankFormatted())
+                            Text(animeNode.node.getRank())
                                 .font(.system(size: 16))
                         }
                     }
@@ -75,12 +76,12 @@ struct DetailTopSection: View {
                         Text("Popularity".uppercased())
                             .fontWeight(.semibold)
                             .padding(.vertical, 2)
-                            .padding(.horizontal, 6)
+                            .padding(.horizontal, 5)
                             .background(RoundedRectangle(cornerRadius: 2).fill(.blue))
                         
                         HStack(spacing: 4) {
                             Image(systemName: "person.2")
-                            Text("\(formatNumber(animeNode.node.num_list_users))")
+                            Text("\(animeNode.node.getNumListUser())")
                                 .font(.system(size: 16))
                         }
                     }

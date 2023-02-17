@@ -10,16 +10,24 @@ import SwiftUI
 struct DiscoverRow: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
     @State var animeCollection = AnimeCollection()
-    var title: String
+    var title: String = ""
+    var year: Int = 0
+    var season: Season = .fall
     var animeType: AnimeType
     var geometry: GeometryProxy
-    var loadMore: (Int, AnimeType) async throws -> AnimeCollection
+    var loadMore: (Int, Season, Int, AnimeType) async throws -> AnimeCollection
     
     var body: some View {
-        VStack(alignment: .leading) {
+        LazyVStack {
             NavigationLink {
-                DiscoverDetailView(animeType: animeType, geometry: geometry, loadMore: loadMore)
-                .navigationTitle(title)
+                DiscoverDetailView(
+                    year: year,
+                    season: season,
+                    animeType: animeType,
+                    geometry: geometry,
+                    loadMore: loadMore
+                )
+                    .navigationTitle(title)
             } label: {
                 HStack {
                     Text(title)
@@ -33,7 +41,7 @@ struct DiscoverRow: View {
                 .padding(.horizontal)
             }
             .buttonStyle(.plain)
-
+            
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top) {
                     ForEach(animeCollection.data, id: \.node.id) { animeNode in
@@ -47,13 +55,18 @@ struct DiscoverRow: View {
                 }
                 .padding(.horizontal)
             }
+            .frame(minHeight: 175)
             
             Divider()
                 .padding(.top)
         }
+//        .background(.blue)
         .onAppear {
             Task {
-                animeCollection = try await loadMore(0, animeType)
+                if animeCollection.data.isEmpty {
+                    animeCollection = try await loadMore(0, season, year, animeType)
+                    print("fetching \(season) \(year) \(animeType)")
+                }
             }
         }
     }
@@ -62,7 +75,7 @@ struct DiscoverRow: View {
 struct DiscoverRow_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverRow(title: "Spring 2023", animeType: .anime, geometry: geometry, loadMore: { _, _ in return AnimeCollection() }) 
+            DiscoverRow(title: "Spring 2023", year: 2022, animeType: .anime, geometry: geometry, loadMore: { _, _,_,_ in return AnimeCollection() })
         }
     }
 }

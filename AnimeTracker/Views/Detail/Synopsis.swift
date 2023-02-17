@@ -16,7 +16,7 @@ struct Synopsis: View {
             Text("Synopsis".uppercased())
                 .foregroundColor(.white.opacity(0.6))
             
-            Text(animeNode.node.synopsis)
+            Text(animeNode.node.getSynopsis())
                 .fixedSize(horizontal: false, vertical: true) // fixes text from being truncated "..." somehow
                 .lineLimit(showMore ? nil : 4)
             

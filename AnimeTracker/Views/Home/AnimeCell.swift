@@ -8,45 +8,34 @@
 import SwiftUI
 
 struct AnimeCell: View {
+    @EnvironmentObject var animeViewModel: AnimeViewModel
     @Binding var animeNode: AnimeNode
     let width = 85.0
     let height = 135.0
     
     var body: some View {
         VStack(spacing: 0) {
-            
+
             HStack(alignment: .top, spacing: 0) {
-                AsyncImage(url: URL(string: animeNode.node.main_picture.medium)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: width, height: height)
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(.secondary)
-                        }
-                        .shadow(radius: 2)
-                } placeholder: {
-                    ProgressView()
-                        .frame(width: width, height: height)
+                if let poster = animeNode.node.main_picture {
+                    DetailPoster(poster: poster, width: width, height: height)
+                        .padding(.trailing)
                 }
-                .padding(.trailing)
                 
                 VStack(alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack {
-                            Text(animeNode.node.startSeasonFormatted())
+//                            Text(animeNode.node.media_type)
+                            Text(animeNode.node.animeCellHeader())
                             
                             Spacer()
-                            
-                            Image(systemName: "ellipsis")
+
                         }
                         .foregroundColor(.secondary)
                         .font(.caption)
                         
                         HStack(spacing: 4){
-                            Text(animeNode.node.titleFormatted())
+                            Text(animeNode.node.getTitle())
                         }
                         .lineLimit(1)
                         .truncationMode(.tail)
@@ -57,21 +46,24 @@ struct AnimeCell: View {
                     }
                     
                     // progressiveView likes float
-                    ProgressView(value: Float(animeNode.episodes_seen), total: Float(animeNode.node.num_episodes ?? 0)) {
+                    ProgressView(
+                        value: Float(animeNode.episodes_seen),
+                        total: Float(animeNode.node.getNumEpisodesOrChapters())
+                    ) {
                         HStack(spacing: 4) {
                             AnimeStatus(animeNode: animeNode)
                                 .font(.caption)
                             
                             Spacer()
-                            Text("Episodes:")
+                            Text("\(animeNode.node.getEpisodeOrChapter()):")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
-                            Text("\(animeNode.episodes_seen) / ")
+                            Text("\(animeNode.episodes_seen) /")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
-                            Text(animeNode.node.numEpisodesFormatted())
+                            Text("\(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?" : String(animeNode.node.getNumEpisodesOrChapters()))")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
@@ -80,7 +72,7 @@ struct AnimeCell: View {
                     }
                     .progressViewStyle(.linear)
                     
-                    Label("Next episode: \(animeNode.node.broadcastFormatted())", systemImage: "clock")
+                    Label("Next \(animeNode.node.getEpisodeOrChapter()): \(animeNode.node.getBroadcast())", systemImage: "clock")
                         .foregroundColor(.secondary)
                         .font(.caption)
                     

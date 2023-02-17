@@ -22,11 +22,10 @@ struct DiscoverView: View {
                     
                     switch discoverViewModel.selectedAnimeType {
                     case .anime:
-                        DiscoverAnimeContent(geometry: geometry)
+                        DiscoverAnimeList(geometry: geometry)
                     default:
-                        MangaList(geometry: geometry, mangaTypes: [.manga, .novels, .manhwa, .manhua])
+                        MangaList(geometry: geometry, mangaTypes: [.manga, .novels, .manhwa, .manhua, .oneshots, .doujin])
                     }
-                    
                 }
             }
             .toolbar {
@@ -39,20 +38,29 @@ struct DiscoverView: View {
             }
             .searchable(
                 text: $discoverViewModel.searchText,
-                prompt: "Search Anime"
+                prompt: discoverViewModel.selectedAnimeType == .anime ? "Search Anime" : "Search Mangas, Novels, etc"
             ) {
                 AnimeList(animeData: $discoverViewModel.searchResults)
             }
+            .autocorrectionDisabled(true)
             .onSubmit(of: .search) {
                 Task {
-                    try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                    if discoverViewModel.selectedAnimeType == .anime {
+                        try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                    } else {
+                        try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText)
+                    }
                 }
             }
             .onReceive(discoverViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
             ) { _ in
                 // Debounce. Fetch api calls after 0.5 seconds of not typing.
                 Task {
-                    try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                    if discoverViewModel.selectedAnimeType == .anime {
+                        try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                    } else {
+                        try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText)
+                    }
                 }
             }
             .navigationTitle("Discover Animes")

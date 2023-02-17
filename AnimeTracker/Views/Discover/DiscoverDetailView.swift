@@ -12,9 +12,11 @@ struct DiscoverDetailView: View {
     @State var animeCollection = AnimeCollection()
     @State var page = 0
     let columns = [GridItem(), GridItem(), GridItem()]
+    var year: Int = 0
+    var season: Season = .fall
     var animeType: AnimeType
     let geometry: GeometryProxy
-    var loadMore: (Int, AnimeType) async throws -> AnimeCollection
+    var loadMore: (Int, Season, Int, AnimeType) async throws -> AnimeCollection
     
     var body: some View {
         ScrollView {
@@ -23,21 +25,22 @@ struct DiscoverDetailView: View {
                     NavigationLink {
                         AnimeDetail(id: animeNode.node.id, animeType: animeType)
                     } label: {
-                        DiscoverCell(animeNode: animeNode, geometry: geometry, width: 0.29)
+                        DiscoverCell(animeNode: animeNode, geometry: geometry, width: 0.29, isScaled: true)
                     }
                     .buttonStyle(.plain)
                 }
                 
-                if animeCollection.paging.next != nil {
+//                if animeCollection.paging.next != nil {
                     ProgressView()
                         .onAppear {
                             Task {
-                                let temp = try await loadMore(page, animeType)
+                                print("OnAppear() \(page) \(season) \(year) \(animeType)")
+                                let temp = try await loadMore(page, season, year, animeType)
                                 animeCollection.data.append(contentsOf: temp.data)
                                 page += 1
                             }
                         }
-                }
+//                }
             }
         }
         .padding()
@@ -49,7 +52,7 @@ struct DiscoverDetailView: View {
 struct DiscoverDetailView_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverDetailView(page: 0, animeType: .anime, geometry: geometry, loadMore: { _, _ in return AnimeCollection() })
+            DiscoverDetailView(year: 0, animeType: .anime, geometry: geometry, loadMore: { _, _, _, _ in return AnimeCollection() })
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }

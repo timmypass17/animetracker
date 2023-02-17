@@ -25,9 +25,16 @@ class AnimeViewModel: ObservableObject {
     let TAG = "[AnimeViewModel]" // for debugging
     private var cancellables = Set<AnyCancellable>()
     
+//    @Published var appState: AppState
+    @Published var showErrorAlert = false
+    @Published var showSucessAlert = false
+
+    
     // request api call only once. Every "addition" is done locally, abstracted from user
     init(animeRepository: AnimeRepository) {
         self.animeRepository = animeRepository
+//        self.appState = appState
+        
         // subscribe to changes in repository. Connect publisher to another publisher
         self.animeRepository.$animeData
             .assign(to: \.animeData, on: self)
@@ -40,11 +47,11 @@ class AnimeViewModel: ObservableObject {
     }
     
     func fetchAnimeByID(id: Int) async throws -> AnimeNode {
-        try await animeRepository.fetchAnimeByID(id: id)
+        try await animeRepository.fetchAnime(animeID: id)
     }
     
     func addAnime(animeNode: AnimeNode) async {
-        await animeRepository.addAnime(animeNode: animeNode)
+        await animeRepository.saveAnime(animeNode: animeNode)
     }
     
     func deleteAnime(animeNode: AnimeNode) async {
@@ -52,7 +59,7 @@ class AnimeViewModel: ObservableObject {
     }
     
     func filterDataByTitle(query: String) {
-        filterResults = animeRepository.animeData.filter { $0.node.title.lowercased().contains(query.lowercased()) }
+        filterResults = animeRepository.animeData.filter { $0.node.getTitle().lowercased().contains(query.lowercased()) }
     }
     
     func applySort() {
@@ -65,7 +72,34 @@ class AnimeViewModel: ObservableObject {
                 selectedAnimeData = animeData
             case .in_progress:
                 // Get animes between range 1 to num_episodes - 1
-                selectedAnimeData = animeData.filter { 1 ... ($0.node.num_episodes ?? 0) - 1 ~= ($0.record["episodes_seen"] as? Int ?? 0) }
+                var temp: [AnimeNode] = []
+                
+                for animeNode in animeData {
+                    // is anime
+                    if animeNode.node.animeType == .anime {
+                        // has num episodes
+                        if let numEpisodes = animeNode.node.num_episodes {
+                            if numEpisodes == 0 {
+                                temp.append(animeNode)
+                            }
+                            else if 0 < animeNode.episodes_seen && animeNode.episodes_seen < numEpisodes {
+                                temp.append(animeNode)
+                            }
+                        }
+                    } else { // is manga
+                        if let numChapters = animeNode.node.num_chapters {
+                            if numChapters == 0 {
+                                temp.append(animeNode)
+                            }
+                            else if 0 < animeNode.episodes_seen && animeNode.episodes_seen < numChapters {
+                                temp.append(animeNode)
+                            }
+                        }
+                    }
+                }
+                
+                selectedAnimeData = temp
+                
             case .finished:
                 selectedAnimeData = animeData.filter { ($0.record["episodes_seen"] as? Int ?? 0) == $0.node.num_episodes}
             case .not_started:
@@ -76,7 +110,7 @@ class AnimeViewModel: ObservableObject {
         func sortBySorting() {
             switch selectedSort {
             case .alphabetical:
-                selectedAnimeData = selectedAnimeData.sorted { $0.node.title < $1.node.title }
+                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
             case .newest:
                 selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? 9999 > $1.node.start_season?.year ?? 9999 }
             case .date_created:
@@ -95,7 +129,7 @@ enum ViewMode: String, CaseIterable, Identifiable {
 }
 
 enum AnimeType: String, CaseIterable, Identifiable, Codable {
-    case anime, manga, novels, manhwa, manhua
+    case anime, manga, novels, manhwa, manhua, oneshots, doujin
     var id: Self { self } // forEach
 }
 

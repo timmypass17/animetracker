@@ -11,24 +11,7 @@ import Combine
 @MainActor
 class DiscoverViewModel: ObservableObject {
     @Published var animeRepository: AnimeRepository
-    @Published var fallData = AnimeCollection()
-    @Published var summerData = AnimeCollection()
-    @Published var springData = AnimeCollection()
-    @Published var winterData = AnimeCollection()
-    
-    @Published var fallDataPrev = AnimeCollection()
-    @Published var summerDataPrev = AnimeCollection()
-    @Published var springDataPrev = AnimeCollection()
-    @Published var winterDataPrev = AnimeCollection()
-
-    
     @Published var searchResults: [AnimeNode] = []
-    
-    @Published var mangaData = AnimeCollection()
-    @Published var novelData = AnimeCollection()
-    @Published var manhwaData = AnimeCollection()
-    @Published var manhuaData = AnimeCollection()
-
 
     @Published var searchText = ""
     @Published var selectedAnimeType: AnimeType = .anime
@@ -40,80 +23,31 @@ class DiscoverViewModel: ObservableObject {
         self.animeRepository = animeRepository
         recentSeasons = getRecentSeasonYear()
         
-        // fall data listen to changes in repository's fall data
-        self.animeRepository.$fallData
-            .assign(to: \.fallData, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$summerData
-            .assign(to: \.summerData, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$springData
-            .assign(to: \.springData, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$winterData
-            .assign(to: \.winterData, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$fallDataPrev
-            .assign(to: \.fallDataPrev, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$summerDataPrev
-            .assign(to: \.summerDataPrev, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$springDataPrev
-            .assign(to: \.springDataPrev, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$winterDataPrev
-            .assign(to: \.winterDataPrev, on: self)
-            .store(in: &cancellables)
-        
         self.animeRepository.$searchResults
             .assign(to: \.searchResults, on: self)
             .store(in: &cancellables)
-        
-        self.animeRepository.$mangaData
-            .assign(to: \.mangaData, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$novelData
-            .assign(to: \.novelData, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$manhwaData
-            .assign(to: \.manhwaData, on: self)
-            .store(in: &cancellables)
-        
-        self.animeRepository.$manhuaData
-            .assign(to: \.manhuaData, on: self)
-            .store(in: &cancellables)
     }
     
-    func fetchAnimesBySeason(season: Season, year: Int) async throws -> AnimeCollection {
-        return try await animeRepository.fetchAnimesBySeason(season: season, year: year)
+    func fetchMangaByID(id: Int, animeType: AnimeType) async throws -> AnimeNode {
+        return try await animeRepository.fetchMangaByID(id: id, animeType: animeType)
     }
     
-    func fetchMangaByID(id: Int) async throws -> AnimeNode {
-        return try await animeRepository.fetchMangaByID(id: id)
+    func fetchAnimesByTitle(title: String) async throws {
+        try await animeRepository.fetchAnimes(title: title)
     }
     
-    func fetchAnimesByTitle(title: String, limit: Int = 15) async throws {
-        try await animeRepository.fetchAnimesByTitle(title: title, limit: limit)
+    func fetchMangasByTitle(title: String, limit: Int = 15) async throws {
+        try await animeRepository.fetchMangasByTitle(title: title, limit: limit)
     }
     
-    func loadMore(animeCollection: AnimeCollection) async throws {
-        guard let season = animeCollection.season else { return }
-        try await animeRepository.loadMore(season: season.season, year: season.year)
+    func loadMoreAnimes(page: Int, season: Season, year: Int, animeType: AnimeType = .anime) async throws -> AnimeCollection {
+        return try await animeRepository.fetchAnimesBySeason(page: page, season: season, year: year)
     }
     
-    func loadMoreManga(page: Int, animeType: AnimeType) async throws -> AnimeCollection {
-        return try await animeRepository.fetchMangas(page: page, animeType: animeType)
+    func loadMoreManga(page: Int, season: Season = .fall, year: Int = 0, animeType: AnimeType) async throws -> AnimeCollection {
+        return try await animeRepository.fetchMangasByType(page: page, animeType: animeType)
     }
+
 }
 
 extension DiscoverViewModel {
@@ -125,7 +59,7 @@ extension DiscoverViewModel {
         
         var res: [(Season, Int)] = []
         
-        var date = Date()
+        let date = Date()
         let dateFormatterGet = DateFormatter()
         dateFormatterGet.dateFormat = "yyyy-MM-dd HH:mm:ss Z" // 2023-02-05 00:39:33 +0000
         

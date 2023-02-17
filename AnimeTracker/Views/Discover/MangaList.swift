@@ -13,7 +13,7 @@ struct MangaList: View {
     let mangaTypes: [AnimeType]
     
     var body: some View {
-        VStack {
+        LazyVStack {
             ForEach(mangaTypes) { mangaType in
                 DiscoverRow(
                     title: mangaType.rawValue.capitalized,
@@ -22,10 +22,7 @@ struct MangaList: View {
                     loadMore: discoverViewModel.loadMoreManga
                 )
                 .padding(.top)
-                
             }
-
-
         }
         
     }

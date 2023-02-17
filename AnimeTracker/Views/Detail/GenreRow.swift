@@ -14,14 +14,14 @@ struct GenreRow: View {
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 4) {
-                ForEach(animeNode.node.genres.prefix(maxTags), id: \.name) { tag in
+                ForEach(animeNode.node.genres?.prefix(maxTags) ?? [], id: \.name) { tag in
                     TagView(text: tag.name)
                 }
                 
-                if animeNode.node.genres.count > maxTags {
+                if animeNode.node.genres?.count ?? 0 > maxTags {
                     HStack(spacing: 0) {
                         Image(systemName: "plus")
-                        Text("\(animeNode.node.genres.count - maxTags) more")
+                        Text("\((animeNode.node.genres?.count ?? 0) - maxTags) more")
                     }
                     .foregroundColor(.secondary)
                     .padding(.leading, 2)
