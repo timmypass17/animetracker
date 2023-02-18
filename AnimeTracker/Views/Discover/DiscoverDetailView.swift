@@ -16,8 +16,8 @@ struct DiscoverDetailView: View {
     var season: Season = .fall
     var animeType: AnimeType
     let geometry: GeometryProxy
-    var loadMore: (Int, Season, Int, AnimeType) async throws -> AnimeCollection
-    
+    var loadMore: (Season, Int, AnimeType, Int) async throws -> AnimeCollection
+
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
@@ -35,7 +35,7 @@ struct DiscoverDetailView: View {
                         .onAppear {
                             Task {
                                 print("OnAppear() \(page) \(season) \(year) \(animeType)")
-                                let temp = try await loadMore(page, season, year, animeType)
+                                let temp = try await loadMore(season, year, animeType, page)
                                 animeCollection.data.append(contentsOf: temp.data)
                                 page += 1
                             }

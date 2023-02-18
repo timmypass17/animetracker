@@ -23,8 +23,8 @@ struct DiscoverCell: View {
     }
     
     var description: String {
-        guard let animeType = animeNode.node.animeType else { return "?" }
-        if animeType == .anime {
+//        guard let animeType = animeNode.node.animeType else { return "?" }
+        if animeNode.node.animeType == .anime {
             return "\(animeNode.node.getMediaType().uppercased()) - \(animeNode.node.getNumEpisodesOrChapters()) Episodes"
         } else {
             return "\(animeNode.node.getMediaType().capitalized) - Ch. \(animeNode.node.getNumEpisodesOrChapters())"
@@ -60,6 +60,7 @@ struct DiscoverCell: View {
             
             AnimeStatus(animeNode: animeNode)
                 .padding(.top, 2)
+                        
         }
         .frame(width: isScaled ? posterWidth : 100)
         .contentShape(RoundedRectangle(cornerRadius: 5)) // fixes overlap click area

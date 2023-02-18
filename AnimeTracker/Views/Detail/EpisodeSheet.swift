@@ -75,11 +75,6 @@ struct EpisodeSheet: View {
                       dismissButton: .default(Text("Got it!"))
                 )
             }
-            .alert(isPresented: $animeViewModel.showSucessAlert) {
-                Alert(title: Text("Saved record successfully!"),
-                      dismissButton: .default(Text("Got it!"))
-                )
-            }
         }
         .padding()
         .padding(.top) // sheet needs extra top padding
@@ -103,10 +98,12 @@ struct EpisodeSheet: View {
             // user may relog into icloud so we need to check again.
             await appState.getiCloudUser()
             if appState.isSignedInToiCloud {
+                print("Is signed in")
                 isShowingSheet = false
                 animeNode.episodes_seen = Int(current_episode)
                 await animeViewModel.addAnime(animeNode: animeNode)
             } else {
+                print("Not signed in")
                 animeViewModel.showErrorAlert = true
             }
         }

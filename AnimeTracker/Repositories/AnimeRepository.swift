@@ -34,7 +34,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest } // 200 indicates successful request
         
         var anime = try JSONDecoder().decode(Anime.self, from: data)
-        anime.animeType = .anime
+//        anime.animeType = .anime
         return AnimeNode(node: anime)
     }
     
@@ -62,7 +62,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         
         // Update record for each search item using existing record in animeData!
         for (index, animeNode) in searchResults.enumerated() {
-            searchResults[index].node.animeType = .anime
+//            searchResults[index].node.animeType = .anime
             for item in animeData {
                 if item.node.id == animeNode.node.id {
                     searchResults[index].record = item.record
@@ -96,23 +96,24 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         
         // Update record for each search item using existing record in animeData!
         for (index, animeNode) in searchResults.enumerated() {
-            // set corresponding type (
-            switch animeNode.node.media_type {
-            case "manga":
-                searchResults[index].node.animeType = .manga
-            case "light_novel":
-                searchResults[index].node.animeType = .novels
-            case "manhwa":
-                searchResults[index].node.animeType = .manhwa
-            case "manhua":
-                searchResults[index].node.animeType = .manhua
-            case "one_shot":
-                searchResults[index].node.animeType = .oneshots
-            case "doujinshi":
-                searchResults[index].node.animeType = .doujin
-            default:
-                searchResults[index].node.animeType = .anime
-            }
+//            // set corresponding type (
+//            switch animeNode.node.media_type {
+//            case "manga":
+//                searchResults[index].node.animeType = .manga
+//            case "light_novel":
+//                searchResults[index].node.animeType = .novels
+//            case "manhwa":
+//                searchResults[index].node.animeType = .manhwa
+//            case "manhua":
+//                searchResults[index].node.animeType = .manhua
+//            case "one_shot":
+//                searchResults[index].node.animeType = .oneshots
+//            case "doujinshi":
+//                searchResults[index].node.animeType = .doujin
+//            default:
+//                searchResults[index].node.animeType = .anime
+//            }
+//            searchResults[index].node.animeType = MediaType(rawValue: animeNode.node.media_type!.rawValue)
             
             for item in animeData {
                 if item.node.id == animeNode.node.id {
@@ -122,8 +123,8 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         }
     }
     
-    func fetchMangaByID(id: Int, animeType: AnimeType) async throws -> AnimeNode {
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/\(id)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badRequest }
+    func fetchMangaByID(mangaID: Int) async throws -> AnimeNode {
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/\(mangaID)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badRequest }
         
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
@@ -135,7 +136,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         
         // get anime data from rest api
         var manga = try JSONDecoder().decode(Anime.self, from: data)
-        manga.animeType = animeType
+//        manga.animeType = animeType
         return AnimeNode(node: manga)
     }
     
@@ -159,7 +160,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             record.setValuesForKeys([
                 "id": animeNode.node.id,
                 "episodes_seen": animeNode.episodes_seen,
-                "type": animeNode.node.animeType?.rawValue ?? "wtf" // update animeType field during every network request
+                "type": animeNode.node.animeType.rawValue
             ])
         }
         
@@ -190,7 +191,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
                             animeNode.record = record   // save record into anime object
                             animeNodes.append(animeNode)
                         } else {
-                            var mangaNode = try await fetchMangaByID(id: id, animeType: type)
+                            var mangaNode = try await fetchMangaByID(mangaID: id)
                             mangaNode.record = record
                             animeNodes.append(mangaNode)
                         }
@@ -248,7 +249,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
 
 extension AnimeRepository {
     
-    func fetchAnimesBySeason(page: Int, season: Season, year: Int) async throws -> AnimeCollection {
+    func fetchAnimesBySeason(season: Season, year: Int, page: Int) async throws -> AnimeCollection {
         let offset = page * limit
         guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/season/\(year)/\(season.rawValue)?&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)&sort=anime_num_list_users") else { throw FetchError.badRequest }
         
@@ -262,7 +263,7 @@ extension AnimeRepository {
         
         do {
             var animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
-            animeCollection.data.indices.forEach { animeCollection.data[$0].node.animeType = .anime } // add aditional field
+//            animeCollection.data.indices.forEach { animeCollection.data[$0].node.animeType = .anime } // add aditional field
             return animeCollection
         } catch {
             print(error)
@@ -271,7 +272,8 @@ extension AnimeRepository {
         return AnimeCollection()
     }
     
-    func fetchMangasByType(page: Int, animeType: AnimeType) async throws -> AnimeCollection {
+    func fetchMangasByType(animeType: AnimeType, page: Int) async throws -> AnimeCollection {
+        print(TAG, animeType)
         let offset = page * limit
         guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=\(animeType.rawValue)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
         
@@ -285,7 +287,7 @@ extension AnimeRepository {
         
         do {
             var mangaData = try JSONDecoder().decode(AnimeCollection.self, from: data)
-            mangaData.data.indices.forEach { mangaData.data[$0].node.animeType = animeType }
+//            mangaData.data.indices.forEach { mangaData.data[$0].node.animeType = animeType }
             return mangaData
         } catch {
             print(error)

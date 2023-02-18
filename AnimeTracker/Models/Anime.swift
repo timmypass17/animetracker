@@ -35,6 +35,12 @@ struct AnimeNode: Codable {
     }
 }
 
+enum MediaType: String, Codable {
+    case tv, ova, ona, movie, special, music
+    case manga, manhwa, manhua, one_shot, doujinshi
+    case light_novel, novel // these are 2 different things (light novels are short, novels are long)
+}
+
 struct Anime: Codable {
     var id: Int
     var title: String?
@@ -47,8 +53,8 @@ struct Anime: Codable {
     var rank: Int?
     var popularity: Int?
     var num_list_users: Int?
-    var media_type: String?
-    var status: String?
+    var media_type: MediaType?
+    var status: String? // TODO: use enum
     var genres: [Genre]?
     var num_episodes: Int?
     var start_season: AnimeSeason?
@@ -65,14 +71,35 @@ struct Anime: Codable {
     var num_chapters: Int?
     var authors: [Author]?
     var serialization: [Publisher]?
-    
-    var animeType: AnimeType? // TODO: might remove, can maybe infer media type using other fields
+        
+    // infer either anime, manga, novel, etc.. from media type (ex. 'tv' is an 'anime')
+    var animeType: AnimeType {
+        guard let media_type = media_type else { return .anime }
+        
+        switch media_type {
+        case .tv, .ova, .ona, .movie, .special, .music:
+            return .anime
+        case .manga:
+            return .manga
+        case .light_novel, .novel:
+            return .novels
+        case .manhwa:
+            return .manhwa
+        case .manhua:
+            return .manhua
+        case .doujinshi:
+            return .doujin
+        case .one_shot:
+            return .oneshots
+        }
+    }
     
     enum CodingKeys: String, CodingKey, CaseIterable {
         case id, title, main_picture, alternative_titles, start_date, end_date, synopsis, mean, rank, popularity, num_list_users, media_type, status, genres, num_episodes, start_season, broadcast, source, average_episode_duration, rating, related_anime, related_manga, recommendations, studios, num_volumes, num_chapters, authors, serialization
     }
 }
 
+/// Getters
 extension Anime {
     
     func getMean() -> String {
@@ -115,8 +142,7 @@ extension Anime {
     }
     
     func getMediaType() -> String {
-        guard let media_type = media_type else { return "?" }
-        return media_type
+        return media_type?.rawValue ?? "?"
     }
     
     func getBroadcast() -> String {
@@ -190,11 +216,11 @@ extension Anime {
     }
     
     func animeCellHeader() -> String {
-        if let type = animeType {
-            if type == .anime {
-                return getSeasonYear()
-            } else {
-                return type.rawValue.capitalized
+        if animeType == .anime {
+            return getSeasonYear()
+        } else {
+            if let media_type = media_type {
+                return media_type.rawValue.capitalized
             }
         }
         return "?"
@@ -304,7 +330,7 @@ extension AnimeCollection {
                 rank: 58,
                 popularity: 21,
                 num_list_users: 2072905,
-                media_type: "tv",
+                media_type: .tv,
                 status: "currently_airing",
                 genres: [Genre(name: "Action"), Genre(name: "Adventure"), Genre(name: "Comedy")],
                 num_episodes: 0,
@@ -337,7 +363,7 @@ extension AnimeCollection {
                 rank: 1,
                 popularity: 7,
                 num_list_users: 189296,
-                media_type: "manga",
+                media_type: .manga,
                 status: "currently_publishing",
                 genres: [Genre(name: "Action"), Genre(name: "Adventure"), Genre(name: "Fantasy")],
                 num_episodes: nil,

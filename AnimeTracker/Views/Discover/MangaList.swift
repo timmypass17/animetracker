@@ -19,7 +19,7 @@ struct MangaList: View {
                     title: mangaType.rawValue.capitalized,
                     animeType: mangaType,
                     geometry: geometry,
-                    loadMore: discoverViewModel.loadMoreManga
+                    loadMore: discoverViewModel.loadMoreMangas
                 )
                 .padding(.top)
             }

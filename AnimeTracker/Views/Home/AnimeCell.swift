@@ -15,7 +15,6 @@ struct AnimeCell: View {
     
     var body: some View {
         VStack(spacing: 0) {
-
             HStack(alignment: .top, spacing: 0) {
                 if let poster = animeNode.node.main_picture {
                     DetailPoster(poster: poster, width: width, height: height)

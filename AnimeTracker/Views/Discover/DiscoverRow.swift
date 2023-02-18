@@ -15,7 +15,7 @@ struct DiscoverRow: View {
     var season: Season = .fall
     var animeType: AnimeType
     var geometry: GeometryProxy
-    var loadMore: (Int, Season, Int, AnimeType) async throws -> AnimeCollection
+    var loadMore: (Season, Int, AnimeType, Int) async throws -> AnimeCollection
     
     var body: some View {
         LazyVStack {
@@ -64,7 +64,7 @@ struct DiscoverRow: View {
         .onAppear {
             Task {
                 if animeCollection.data.isEmpty {
-                    animeCollection = try await loadMore(0, season, year, animeType)
+                    animeCollection = try await loadMore(season, year, animeType, 0)
                     print("fetching \(season) \(year) \(animeType)")
                 }
             }

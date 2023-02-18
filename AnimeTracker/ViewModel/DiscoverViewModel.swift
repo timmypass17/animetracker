@@ -29,7 +29,7 @@ class DiscoverViewModel: ObservableObject {
     }
     
     func fetchMangaByID(id: Int, animeType: AnimeType) async throws -> AnimeNode {
-        return try await animeRepository.fetchMangaByID(id: id, animeType: animeType)
+        return try await animeRepository.fetchMangaByID(mangaID: id)
     }
     
     func fetchAnimesByTitle(title: String) async throws {
@@ -40,12 +40,12 @@ class DiscoverViewModel: ObservableObject {
         try await animeRepository.fetchMangasByTitle(title: title, limit: limit)
     }
     
-    func loadMoreAnimes(page: Int, season: Season, year: Int, animeType: AnimeType = .anime) async throws -> AnimeCollection {
-        return try await animeRepository.fetchAnimesBySeason(page: page, season: season, year: year)
+    func loadMoreAnimes(season: Season, year: Int, animeType: AnimeType = .anime, page: Int) async throws -> AnimeCollection {
+        return try await animeRepository.fetchAnimesBySeason(season: season, year: year, page: page)
     }
     
-    func loadMoreManga(page: Int, season: Season = .fall, year: Int = 0, animeType: AnimeType) async throws -> AnimeCollection {
-        return try await animeRepository.fetchMangasByType(page: page, animeType: animeType)
+    func loadMoreMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType, page: Int) async throws -> AnimeCollection {
+        return try await animeRepository.fetchMangasByType(animeType: animeType, page: page)
     }
 
 }

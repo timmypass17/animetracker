@@ -13,7 +13,8 @@ import CloudKit
 class AppState: ObservableObject {
     @Published var isSignedInToiCloud: Bool = false
     @Published var user: CKUserIdentity?
-    
+    private lazy var container: CKContainer = CKContainer.default()
+
     var username: String {
         return user?.nameComponents?.givenName ?? "No username."
     }
@@ -23,15 +24,15 @@ class AppState: ObservableObject {
         
     init() {
         Task {
-            try await getiCloudStatus()     // Check if user is logged into iCloud
+            await getiCloudStatus()     // Check if user is logged into iCloud
             await getiCloudUser()  // Fetch iCloud data about user
         }
     }
 
     // User needs to be signed into an iCloud Account
-    func getiCloudStatus() async throws {
+    func getiCloudStatus() async {
         do {
-            let status = try await CKContainer.default().accountStatus()
+            let status = try await container.accountStatus()
             switch status {
             case .available:
                 print("\(TAG) iCloud available") // user may still need to login password
@@ -41,6 +42,7 @@ class AppState: ObservableObject {
             }
         } catch {
             print(error)
+            isSignedInToiCloud = false
         }
 
     }
@@ -48,15 +50,14 @@ class AppState: ObservableObject {
     // note: Can discover users by record id, email, phone number. Can look up multible users at once.
     func getiCloudUser() async {
         do {
-            let uid = try await CKContainer.default().userRecordID()    // get id of current user
-            if let user = try await CKContainer.default().userIdentity(forUserRecordID: uid) {
+            let uid = try await container.userRecordID()
+            if let user = try await container.userIdentity(forUserRecordID: uid) {
                 self.user = user
                 isSignedInToiCloud = true
             }
-            
-            // user?.lookupInfo?.emailAddress (Note: can't get user's email unless we get user identity using email. we currently looking up users using userRecordID)
         } catch {
-            print("\(TAG) Error calling discoveriCloudUser: \(error)")
+            print("\(TAG) Error calling getiCloudUser")
+            isSignedInToiCloud = false
         }
     }
     

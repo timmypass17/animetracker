@@ -6,3 +6,12 @@
 //
 
 import Foundation
+
+protocol CloudKitService {
+    
+    func saveAnime(animeNode: AnimeNode) async
+
+    func fetchAnimesFromCloudKit() async
+    
+    func deleteAnime(animeNode: AnimeNode) async
+}
