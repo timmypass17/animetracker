@@ -138,11 +138,10 @@ struct AnimeDetail: View {
             animeNode = existingNode
         } else {
             // send api network request
-            
             // is anime
             switch animeType {
             case .anime:
-                animeNode = try await animeViewModel.fetchAnimeByID(id: id)
+                animeNode = try await animeViewModel.fetchAnime(id: id)
             default:
                 animeNode = try await discoverViewModel.fetchMangaByID(id: id, animeType: animeType)
             }

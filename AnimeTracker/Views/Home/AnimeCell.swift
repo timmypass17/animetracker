@@ -46,7 +46,7 @@ struct AnimeCell: View {
                     
                     // progressiveView likes float
                     ProgressView(
-                        value: Float(animeNode.episodes_seen),
+                        value: Float(animeNode.record[.seen] as? Int ?? 0),
                         total: Float(animeNode.node.getNumEpisodesOrChapters())
                     ) {
                         HStack(spacing: 4) {
@@ -58,7 +58,7 @@ struct AnimeCell: View {
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             
-                            Text("\(animeNode.episodes_seen) /")
+                            Text("\(animeNode.record[.seen] as? Int ?? 0) /")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                             

@@ -79,7 +79,7 @@ struct EpisodeSheet: View {
         .padding()
         .padding(.top) // sheet needs extra top padding
         .onAppear {
-            current_episode = Float(animeNode.episodes_seen)
+            current_episode = Float(animeNode.record[.seen] as? Int ?? 0)
             print(maxSlider)
         }
     }
@@ -100,8 +100,8 @@ struct EpisodeSheet: View {
             if appState.isSignedInToiCloud {
                 print("Is signed in")
                 isShowingSheet = false
-                animeNode.episodes_seen = Int(current_episode)
-                await animeViewModel.addAnime(animeNode: animeNode)
+                animeNode.record[.seen] = Int(current_episode)
+                await animeViewModel.saveAnime(animeNode: animeNode)
             } else {
                 print("Not signed in")
                 animeViewModel.showErrorAlert = true

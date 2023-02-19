@@ -15,7 +15,7 @@ struct DetailProgress: View {
         VStack(alignment: .leading) {
             
             ProgressView(
-                value: Float(animeNode.episodes_seen),
+                value: Float(animeNode.record[.seen] as? Int ?? 0),
                 total: Float(animeNode.node.getNumEpisodesOrChapters())
             ) {
                 HStack(spacing: 4) {
@@ -27,7 +27,7 @@ struct DetailProgress: View {
                     Text("Episodes:")
                         .font(.caption)
                     
-                    Text("\(animeNode.episodes_seen) /")
+                    Text("\(animeNode.record[.seen] as? Int ?? 0)")
                         .font(.caption)
                     
                     Text("\(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?" : String(animeNode.node.getNumEpisodesOrChapters()))")

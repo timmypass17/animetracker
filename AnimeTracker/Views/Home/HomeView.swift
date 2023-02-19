@@ -16,7 +16,7 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 HomeTabView()
                     .padding([.horizontal, .bottom])
-                
+
                 Divider()
                 
                 AnimeList(animeData: $animeViewModel.selectedAnimeData)

@@ -46,9 +46,9 @@ struct DiscoverView: View {
             .onSubmit(of: .search) {
                 Task {
                     if discoverViewModel.selectedAnimeType == .anime {
-                        try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
                     } else {
-                        try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText)
+                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
                     }
                 }
             }
@@ -57,9 +57,9 @@ struct DiscoverView: View {
                 // Debounce. Fetch api calls after 0.5 seconds of not typing.
                 Task {
                     if discoverViewModel.selectedAnimeType == .anime {
-                        try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
                     } else {
-                        try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText)
+                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
                     }
                 }
             }

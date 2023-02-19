@@ -11,7 +11,7 @@ protocol CloudKitService {
     
     func saveAnime(animeNode: AnimeNode) async
 
-    func fetchAnimesFromCloudKit() async
+    func fetchAnimesFromCloudKit() async -> [AnimeNode]
     
     func deleteAnime(animeNode: AnimeNode) async
 }

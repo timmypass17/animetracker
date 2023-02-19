@@ -13,29 +13,20 @@ import Combine
 @MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
 class AnimeViewModel: ObservableObject {
     @Published var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
-    @Published var animeData: [AnimeNode] = []
-    @Published var selectedAnimeData: [AnimeNode] = []
-    
+    @Published var animeData: [AnimeNode] = []  // original anime data
+    @Published var selectedAnimeData: [AnimeNode] = []  // filtered version of anime data
     @Published var filterResults: [AnimeNode] = []
     @Published var selectedViewMode: ViewMode = .all
-    @Published var selectedAnimeType: AnimeType = .anime
     @Published var selectedSort: SortBy = .last_modified
     @Published var filterText = ""
-
-    let TAG = "[AnimeViewModel]" // for debugging
-    private var cancellables = Set<AnyCancellable>()
-    
-//    @Published var appState: AppState
     @Published var showErrorAlert = false
-    @Published var showSucessAlert = false
-
+    private var cancellables = Set<AnyCancellable>()
+    let TAG = "[AnimeViewModel]"
     
-    // request api call only once. Every "addition" is done locally, abstracted from user
     init(animeRepository: AnimeRepository) {
         self.animeRepository = animeRepository
-//        self.appState = appState
         
-        // subscribe to changes in repository. Connect publisher to another publisher
+        // subscribe to changes in repository. Connects publisher to another publisher
         self.animeRepository.$animeData
             .assign(to: \.animeData, on: self)
             .store(in: &cancellables)
@@ -46,11 +37,11 @@ class AnimeViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func fetchAnimeByID(id: Int) async throws -> AnimeNode {
+    func fetchAnime(id: Int) async throws -> AnimeNode {
         try await animeRepository.fetchAnime(animeID: id)
     }
     
-    func addAnime(animeNode: AnimeNode) async {
+    func saveAnime(animeNode: AnimeNode) async {
         await animeRepository.saveAnime(animeNode: animeNode)
     }
     
@@ -71,39 +62,15 @@ class AnimeViewModel: ObservableObject {
             case .all:
                 selectedAnimeData = animeData
             case .in_progress:
-                // Get animes between range 1 to num_episodes - 1
-                var temp: [AnimeNode] = []
-                
-                for animeNode in animeData {
-                    // is anime
-                    if animeNode.node.animeType == .anime {
-                        // has num episodes
-                        if let numEpisodes = animeNode.node.num_episodes {
-                            if numEpisodes == 0 {
-                                temp.append(animeNode)
-                            }
-                            else if 0 < animeNode.episodes_seen && animeNode.episodes_seen < numEpisodes {
-                                temp.append(animeNode)
-                            }
-                        }
-                    } else { // is manga
-                        if let numChapters = animeNode.node.num_chapters {
-                            if numChapters == 0 {
-                                temp.append(animeNode)
-                            }
-                            else if 0 < animeNode.episodes_seen && animeNode.episodes_seen < numChapters {
-                                temp.append(animeNode)
-                            }
-                        }
-                    }
+                selectedAnimeData = animeData.filter {
+                    var n = $0.node.getNumEpisodesOrChapters()
+                    if n == 0 { n = Int.max } // 0 episodes means series is ongoing
+                    return 1..<n ~= $0.record[.seen] as? Int ?? 0
                 }
-                
-                selectedAnimeData = temp
-                
             case .finished:
-                selectedAnimeData = animeData.filter { ($0.record["episodes_seen"] as? Int ?? 0) == $0.node.num_episodes}
+                selectedAnimeData = animeData.filter { ($0.record[.seen] as? Int) == $0.node.getNumEpisodesOrChapters() && ($0.record[.seen] as? Int) != 0 }
             case .not_started:
-                selectedAnimeData = animeData.filter { $0.record["episodes_seen"] as? Int == 0 }
+                selectedAnimeData = animeData.filter { $0.record[.seen] as? Int == 0 }
             }
         }
         
@@ -112,15 +79,15 @@ class AnimeViewModel: ObservableObject {
             case .alphabetical:
                 selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
             case .newest:
-                selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? 9999 > $1.node.start_season?.year ?? 9999 }
+                selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? Int.max > $1.node.start_season?.year ?? Int.max }
             case .date_created:
-                selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate! > $1.record.creationDate! } // most recent on top
+                selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate! > $1.record.creationDate! }
             case .last_modified:
                 selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate! > $1.record.modificationDate! }
             }
         }
     }
-
+    
 }
 
 enum ViewMode: String, CaseIterable, Identifiable {
@@ -128,22 +95,6 @@ enum ViewMode: String, CaseIterable, Identifiable {
     var id: Self { self } // forEach
 }
 
-enum AnimeType: String, CaseIterable, Identifiable, Codable {
-    case anime, manga, novels, manhwa, manhua, oneshots, doujin
-    var id: Self { self } // forEach
-}
-
-enum FetchError: Error {
-    case badRequest
-    case badJson
-    case badURL
-}
-
-enum Tab {
-    case list
-    case search
-    case chart
-}
 
 enum SortBy: String, CaseIterable, Identifiable {
     case alphabetical

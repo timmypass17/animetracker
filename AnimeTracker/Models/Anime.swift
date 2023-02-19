@@ -8,13 +8,6 @@
 import Foundation
 import CloudKit
 
-enum AnimeRecordKeys: String {
-    case recordType = "Anime"
-    case seen
-    case animeID
-    case mediaType
-}
-
 struct AnimeCollection: Codable {
     var data: [AnimeNode] = []
     var season: AnimeSeason?
@@ -22,23 +15,17 @@ struct AnimeCollection: Codable {
 
 struct AnimeNode: Codable {
     var node: Anime
-    var record: CKRecord = CKRecord(recordType: AnimeRecordKeys.recordType.rawValue) // TODO: might remove this
+    var record: CKRecord = CKRecord(recordType: Anime.RecordKey.recordType.rawValue) // TODO: might remove this
     
     // put stuff in json tree here.
     private enum CodingKeys: CodingKey {
         case node
     }
     // unwrap record fields
-    var episodes_seen: Int {
-        get { record[AnimeRecordKeys.seen.rawValue] as? Int ?? 0 }
-        set { record[AnimeRecordKeys.seen.rawValue] = newValue }
-    }
-}
-
-enum MediaType: String, Codable {
-    case tv, ova, ona, movie, special, music
-    case manga, manhwa, manhua, one_shot, doujinshi
-    case light_novel, novel // these are 2 different things (light novels are short, novels are long)
+//    var episodes_seen: Int {
+//        get { record[AnimeRecordKeys.seen.rawValue] as? Int ?? 0 }
+//        set { record[AnimeRecordKeys.seen.rawValue] = newValue }
+//    }
 }
 
 struct Anime: Codable {
@@ -98,6 +85,28 @@ struct Anime: Codable {
         case id, title, main_picture, alternative_titles, start_date, end_date, synopsis, mean, rank, popularity, num_list_users, media_type, status, genres, num_episodes, start_season, broadcast, source, average_episode_duration, rating, related_anime, related_manga, recommendations, studios, num_volumes, num_chapters, authors, serialization
     }
 }
+
+extension Anime {
+    enum RecordKey: String {
+        case recordType = "Anime"
+        case seen
+        case animeID
+        case animeType
+    }
+}
+
+extension CKRecord {
+    subscript(key: Anime.RecordKey) -> Any? {
+        get {
+            // TODO: add default case so i dont have to explicity declare default, record[.seen] as? Int ?? 0
+            return self[key.rawValue]
+        }
+        set {
+            self[key.rawValue] = newValue as? CKRecordValue
+        }
+    }
+}
+
 
 /// Getters
 extension Anime {
@@ -310,6 +319,17 @@ enum Ranking: String {
 enum Season: String, CaseIterable, Codable, Identifiable {
     case fall, summer, spring, winter
     var id: Self { self }
+}
+
+enum AnimeType: String, CaseIterable, Identifiable, Codable {
+    case anime, manga, novels, manhwa, manhua, oneshots, doujin
+    var id: Self { self } // forEach
+}
+
+enum MediaType: String, Codable {
+    case tv, ova, ona, movie, special, music
+    case manga, manhwa, manhua, one_shot, doujinshi
+    case light_novel, novel // these are 2 different things (light novels are short, novels are long)
 }
 
 extension AnimeCollection {

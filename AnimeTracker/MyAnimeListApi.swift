@@ -8,34 +8,18 @@
 import Foundation
 
 protocol MyAnimeListApiService {
-    
-    /// Retrieves specific anime from MyAnimeList database using anime's id.
-    /// - Parameters:
-    ///     - animeID: Anime's unique identifier.
-    /// - Returns: Anime from MyAnimeList with that id.
+
     func fetchAnime(animeID: Int) async throws -> AnimeNode
 
-    /// Retrieves animes from MyAnimeList with title to query with.
-    /// - Parameters:
-    ///     - title: Name of anime.
-    /// - Returns: List of animes from MyAnimeList relating to title query.
-    func fetchAnimes(title: String) async throws
-    
-    /// Retrieves animes from MyAnimeList from that season and year.
-    /// - Parameters:
-    ///     - season: Starting season of anime. (ex. fall)
-    ///     - year: Starting year of anime.
-    /// - Returns: List of animes from MyAnimeList from that season and year.
-    func fetchAnimesBySeason(season: Season, year: Int, page: Int) async throws -> AnimeCollection
-    
-    /// Retrieves mangas from MyAnimeList using manga's id.
-    /// - Parameters:
-    ///     - mangaID: Manga's unique identifier
-    ///     - animeType: manga, novel, etc..
-    /// - Returns: List of mangas from MyAnimeList using that id.
-    func fetchMangaByID(mangaID: Int) async throws -> AnimeNode
+    func fetchAnimes(title: String) async throws -> AnimeCollection
 
-    func fetchMangasByType(animeType: AnimeType, page: Int) async throws -> AnimeCollection
+    func fetchAnimes(season: Season, year: Int, page: Int) async throws -> AnimeCollection
+
+    func fetchManga(mangaID: Int) async throws -> AnimeNode
+    
+    func fetchMangas(title: String) async throws -> AnimeCollection
+
+    func fetchMangas(animeType: AnimeType, page: Int) async throws -> AnimeCollection
 }
 
 struct MyAnimeListApi {

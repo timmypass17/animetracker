@@ -12,7 +12,6 @@ import Combine
 class DiscoverViewModel: ObservableObject {
     @Published var animeRepository: AnimeRepository
     @Published var searchResults: [AnimeNode] = []
-
     @Published var searchText = ""
     @Published var selectedAnimeType: AnimeType = .anime
     
@@ -29,23 +28,23 @@ class DiscoverViewModel: ObservableObject {
     }
     
     func fetchMangaByID(id: Int, animeType: AnimeType) async throws -> AnimeNode {
-        return try await animeRepository.fetchMangaByID(mangaID: id)
+        return try await animeRepository.fetchManga(mangaID: id)
     }
     
-    func fetchAnimesByTitle(title: String) async throws {
-        try await animeRepository.fetchAnimes(title: title)
+    func fetchAnimesByTitle(title: String) async throws -> AnimeCollection {
+        return try await animeRepository.fetchAnimes(title: title)
     }
     
-    func fetchMangasByTitle(title: String, limit: Int = 15) async throws {
-        try await animeRepository.fetchMangasByTitle(title: title, limit: limit)
+    func fetchMangasByTitle(title: String, limit: Int = 15) async throws -> AnimeCollection {
+        return try await animeRepository.fetchMangas(title: title)
     }
     
     func loadMoreAnimes(season: Season, year: Int, animeType: AnimeType = .anime, page: Int) async throws -> AnimeCollection {
-        return try await animeRepository.fetchAnimesBySeason(season: season, year: year, page: page)
+        return try await animeRepository.fetchAnimes(season: season, year: year, page: page)
     }
     
     func loadMoreMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType, page: Int) async throws -> AnimeCollection {
-        return try await animeRepository.fetchMangasByType(animeType: animeType, page: page)
+        return try await animeRepository.fetchMangas(animeType: animeType, page: page)
     }
 
 }

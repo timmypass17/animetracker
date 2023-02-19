@@ -20,10 +20,14 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     
     init() {
         Task {
-            await fetchAnimesFromCloudKit()
+            animeData = await fetchAnimesFromCloudKit()
         }
     }
     
+    /// Retrieves specific anime from MyAnimeList database using anime's id.
+    /// - Parameters:
+    ///     - animeID: Anime's unique identifier.
+    /// - Returns: Anime from MyAnimeList with that id.
     func fetchAnime(animeID: Int) async throws -> AnimeNode {
         guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(animeID)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badURL }
         
@@ -33,97 +37,81 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest } // 200 indicates successful request
         
-        var anime = try JSONDecoder().decode(Anime.self, from: data)
-//        anime.animeType = .anime
-        return AnimeNode(node: anime)
-    }
-    
-    func fetchAnimes(title: String) async throws {
-        guard title != "" else {
-            searchResults = []
-            return
+        do {
+            let anime = try JSONDecoder().decode(Anime.self, from: data)
+            return AnimeNode(node: anime)
+        } catch {
+            print("\(TAG) Error calling fetchAnime(animeID: \(animeID)) \n \(error)")
         }
         
-        // Create query url
+        return AnimeNode(node: Anime(id: 0))
+    }
+    
+    /// Retrieves animes from MyAnimeList matchinig title query.
+    /// - Parameters:
+    ///     - title: Name of anime.
+    /// - Returns: List of animes from MyAnimeList relating to title query.
+    func fetchAnimes(title: String) async throws -> AnimeCollection {
+        guard !title.isEmpty else { return AnimeCollection() }
+        
         let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { return }
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { return AnimeCollection() }
+        
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
         
-        // Send network request to get anime data
         let (data, response) = try await URLSession.shared.data(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
         
         do {
-            searchResults = try JSONDecoder().decode(AnimeCollection.self, from: data).data
-        } catch {
-            print(error)
-        }
-        
-        // Update record for each search item using existing record in animeData!
-        for (index, animeNode) in searchResults.enumerated() {
-//            searchResults[index].node.animeType = .anime
-            for item in animeData {
-                if item.node.id == animeNode.node.id {
-                    searchResults[index].record = item.record
-                }
-            }
-        }
-    }
-    
-    func fetchMangasByTitle(title: String, limit: Int = 15) async throws {
-        print(title)
-        guard title != "" else {
-            searchResults = []
-            return
-        }
-        
-        // Create query url
-        let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { return }
-        var request = URLRequest(url: url)
-        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-        
-        // Send network request to get anime data
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
-        
-        do {
-            searchResults = try JSONDecoder().decode(AnimeCollection.self, from: data).data
-        } catch {
-            print(error)
-        }
-        
-        // Update record for each search item using existing record in animeData!
-        for (index, animeNode) in searchResults.enumerated() {
-//            // set corresponding type (
-//            switch animeNode.node.media_type {
-//            case "manga":
-//                searchResults[index].node.animeType = .manga
-//            case "light_novel":
-//                searchResults[index].node.animeType = .novels
-//            case "manhwa":
-//                searchResults[index].node.animeType = .manhwa
-//            case "manhua":
-//                searchResults[index].node.animeType = .manhua
-//            case "one_shot":
-//                searchResults[index].node.animeType = .oneshots
-//            case "doujinshi":
-//                searchResults[index].node.animeType = .doujin
-//            default:
-//                searchResults[index].node.animeType = .anime
-//            }
-//            searchResults[index].node.animeType = MediaType(rawValue: animeNode.node.media_type!.rawValue)
+            var animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
             
-            for item in animeData {
-                if item.node.id == animeNode.node.id {
-                    searchResults[index].record = item.record
+            // Update record for each search item using user's list.
+            for (index, searchItem) in animeCollection.data.enumerated() {
+                if let existingAnime = animeData.first(where: { searchItem.node.id == $0.node.id}) {
+                    animeCollection.data[index].record = existingAnime.record
                 }
             }
+            
+            return animeCollection
+        } catch {
+            print("\(TAG) Error calling fetchAnimes(title: \(title)) \n \(error)")
         }
+        
+        return AnimeCollection()
     }
     
-    func fetchMangaByID(mangaID: Int) async throws -> AnimeNode {
+    /// Retrieves animes from MyAnimeList from that season and year.
+    /// - Parameters:
+    ///     - season: Starting season of anime.
+    ///     - year: Starting year of anime.
+    ///     - page: For paging
+    /// - Returns: List of animes from MyAnimeList from that season and year.
+    func fetchAnimes(season: Season, year: Int, page: Int) async throws -> AnimeCollection {
+        let offset = page * limit
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/season/\(year)/\(season.rawValue)?&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)&sort=anime_num_list_users") else { throw FetchError.badRequest }
+        
+        var request = URLRequest(url: url)
+        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
+        
+        do {
+            let animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
+            return animeCollection
+        } catch {
+            print("\(TAG) Error calling fetchAnimes(season: \(season), year: \(year), page: \(page)) \n \(error)")
+        }
+        
+        return AnimeCollection()
+    }
+    
+    /// Retrieves mangas from MyAnimeList using manga's id.
+    /// - Parameters:
+    ///     - mangaID: Manga's unique identifier
+    /// - Returns: List of mangas from MyAnimeList using that id.
+    func fetchManga(mangaID: Int) async throws -> AnimeNode {
         guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/\(mangaID)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badRequest }
         
         var request = URLRequest(url: url)
@@ -134,146 +122,58 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             throw FetchError.badRequest
         }
         
-        // get anime data from rest api
-        var manga = try JSONDecoder().decode(Anime.self, from: data)
-//        manga.animeType = animeType
-        return AnimeNode(node: manga)
-    }
-    
-    
-    func saveAnime(animeNode: AnimeNode) async {        
-        // local updates
-        if let index = searchResults.firstIndex(where: { $0.node.id == animeNode.node.id }) {
-            searchResults[index] = animeNode
-        }
-        
-        var record: CKRecord
-        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
-            // 1. Update existing record
-            animeData[index] = AnimeNode(node: animeNode.node, record: animeNode.record)
-            record = animeData[index].record
-        } else {
-            // 2. Add new record
-            animeData.append(animeNode)
-            record = animeNode.record
-            
-            record.setValuesForKeys([
-                "id": animeNode.node.id,
-                "episodes_seen": animeNode.episodes_seen,
-                "type": animeNode.node.animeType.rawValue
-            ])
-        }
-        
-        await saveItem(record: record)
-    }
-    
-    // Fetches user's anime list from CloudKit
-    func fetchAnimesFromCloudKit() async {
         do {
-            // Fetch animes of current user
-            let userID = try await container.userRecordID()
-            let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
-            // different name from cloudkit dashboard for some reason... Also need to add index to make it queryable
-            let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
-            let query = CKQuery(recordType: "Anime", predicate: predicate)
-            //            let queryOp = CKQueryOperation(query: query)
-            
-            let (animeResults, cursor) = try await database.records(matching: query)
-            
-            var animeNodes: [AnimeNode] = []
-            for (recordID, result) in animeResults { // result is (CKRecord, error)
-                switch result {
-                case .success(let record):
-                    if let id = record["id"] as? Int, let type = AnimeType(rawValue: record["type"] as? String ?? "anime") {
-                        if type == .anime {
-                            // MAL api call to get anime data
-                            var animeNode = try await fetchAnime(animeID: id)
-                            animeNode.record = record   // save record into anime object
-                            animeNodes.append(animeNode)
-                        } else {
-                            var mangaNode = try await fetchMangaByID(mangaID: id)
-                            mangaNode.record = record
-                            animeNodes.append(mangaNode)
-                        }
-                    }
-                    
-                case .failure(let error):
-                    print("Failed to fetch anime from cloudkit: \(error)")
-                }
-            }
-            
-            // update user's list with new data
-            self.animeData = animeNodes.sorted { $0.record.modificationDate! > $1.record.modificationDate! } // sort by last modified, use user defaults
-        } catch let operationError {
-            // Handle error.
-            print("\(TAG) Error fetching anime ids: \(operationError)")
-            return
-        }
-    }
-    
-    // Delete anime record from CloudKit. Note: only OP can delete post, no one else can.
-    func deleteAnime(animeNode: AnimeNode) async {
-        let container = CKContainer.default()
-        let database = container.publicCloudDatabase
-        
-        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
-            animeData.remove(at: index)
-        }
-        
-        do {
-            let recordToDelete = animeNode.record
-            try await database.deleteRecord(withID: recordToDelete.recordID)
-            // delete post locally aswell (better than re-fetching data to update ui)
-            self.animeData = self.animeData.filter {$0.record.recordID != recordToDelete.recordID}
-            print("\(TAG) Successfully deleted anime.")
+            let manga = try JSONDecoder().decode(Anime.self, from: data)
+            return AnimeNode(node: manga)
         } catch {
-            print("\(TAG) Error deleting post: \(error)")
+            print("\(TAG) Error calling fetchManga(mangaID: \(mangaID)) \n \(error)")
         }
-    }
-    
-    
-    private func saveItem(record: CKRecord) async {
-        let container = CKContainer.default()
-        let database = container.publicCloudDatabase
-        do {
-            try await database.save(record) // slow, takes a few seconds for record to be saved onto cloudkit? skill diff
-            // Record saved sucessfully.
-            print("\(TAG) Added record successfully.")
-        } catch {
-            // Handle error.
-            print("\(TAG) Error saving record: \(error)")
-        }
-    }
-    
-}
-
-extension AnimeRepository {
-    
-    func fetchAnimesBySeason(season: Season, year: Int, page: Int) async throws -> AnimeCollection {
-        let offset = page * limit
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/season/\(year)/\(season.rawValue)?&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)&sort=anime_num_list_users") else { throw FetchError.badRequest }
         
+        return AnimeNode(node: Anime(id: 0))
+    }
+    
+    /// Retrieves mangas from MyAnimeList matching title query.
+    /// - Parameters:
+    ///     - title: Name of manga
+    /// - Returns: List of mangas from MyAnimeList relating to title query.
+    func fetchMangas(title: String) async throws -> AnimeCollection {
+        guard !title.isEmpty else {
+            return AnimeCollection()
+        }
+        
+        let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { return AnimeCollection() }
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
         
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw FetchError.badRequest
-        }
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
         
         do {
-            var animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
-//            animeCollection.data.indices.forEach { animeCollection.data[$0].node.animeType = .anime } // add aditional field
-            return animeCollection
+            var mangaCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
+            
+            // Update record for each search item using user's list.
+            for (index, searchItem) in mangaCollection.data.enumerated() {
+                if let existingAnime = animeData.first(where: { searchItem.node.id == $0.node.id}) {
+                    mangaCollection.data[index].record = existingAnime.record
+                }
+            }
+            
+            return mangaCollection
+            
         } catch {
-            print(error)
+            print("\(TAG) Error calling fetchMangas(title: \(title)) \n \(error)")
         }
         
         return AnimeCollection()
     }
     
-    func fetchMangasByType(animeType: AnimeType, page: Int) async throws -> AnimeCollection {
-        print(TAG, animeType)
+    /// Retrieves mangas from MyAnimeList using anime's type.
+    /// - Parameters:
+    ///     - animeType: Type of media. (ex. anime, manga, novels)
+    ///     - page: For paging
+    /// - Returns: List of mangas from MyAnimeList using that id.
+    func fetchMangas(animeType: AnimeType, page: Int) async throws -> AnimeCollection {
         let offset = page * limit
         guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=\(animeType.rawValue)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
         
@@ -286,14 +186,119 @@ extension AnimeRepository {
         }
         
         do {
-            var mangaData = try JSONDecoder().decode(AnimeCollection.self, from: data)
-//            mangaData.data.indices.forEach { mangaData.data[$0].node.animeType = animeType }
+            let mangaData = try JSONDecoder().decode(AnimeCollection.self, from: data)
             return mangaData
         } catch {
-            print(error)
+            print("\(TAG) Error calling fetchMangas(animeType: \(animeType), page: \(page)) \n \(error)")
         }
+        
         return AnimeCollection()
+    }
+    
+    /// Saves anime to public database as Anime records.
+    /// - Parameters:
+    ///     - animeNode: Anime that we using to extract relevant info
+    /// - Returns: List of mangas from MyAnimeList using that id.
+    func saveAnime(animeNode: AnimeNode) async {
+        if let index = searchResults.firstIndex(where: { $0.node.id == animeNode.node.id }) {
+            searchResults[index] = animeNode
+        }
+        
+        // Update existing record
+        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
+            animeData[index] = animeNode
+            
+            do {
+                let record = animeData[index].record
+                try await database.save(record)
+                print("\(TAG) Added record successfully.")
+                
+            } catch {
+                print("\(TAG) Error saving record: \(error)")
+            }
+        }
+        else {
+            // Create new record
+            animeData.append(animeNode)
+            let record = animeNode.record
+            record.setValuesForKeys([
+                Anime.RecordKey.animeID.rawValue: animeNode.node.id,
+                Anime.RecordKey.seen.rawValue: animeNode.record[.seen] as? Int ?? 0,
+                Anime.RecordKey.animeType.rawValue: animeNode.node.animeType.rawValue
+            ])
+            
+            do {
+                try await database.save(record)
+                print("\(TAG) Added record successfully.")
+            } catch {
+                print("\(TAG) Error saving record: \(error)")
+            }
+        }
+    }
+    
+    /// Retrieves animes from MyAnimeList using user's Anime records from public databse.
+    /// - Returns: List of animes from MyAnimeList.
+    func fetchAnimesFromCloudKit() async -> [AnimeNode] {
+        var animeNodes: [AnimeNode] = []
+
+        do {
+            let userID = try await container.userRecordID()
+            let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
+            // different name from cloudkit dashboard for some reason. Also need to add index to make it queryable
+            let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
+            let query = CKQuery(recordType: "Anime", predicate: predicate)
+            
+            let (animeResults, cursor) = try await database.records(matching: query)
+
+            for (recordID, result) in animeResults {
+                switch result {
+                case .success(let record):
+                    guard let id = record[.animeID] as? Int else { continue }
+                    guard let animeType = AnimeType(rawValue: record[.animeType] as? String ?? "anime") else { continue }
+                    
+                    var animeNode: AnimeNode
+                    if animeType == .anime {
+                        print("anime")
+                        animeNode = try await fetchAnime(animeID: id)
+                        print("a")
+                    } else {
+                        print(animeType.rawValue)
+                        animeNode = try await fetchManga(mangaID: id)
+                    }
+                    animeNode.record = record
+                    animeNodes.append(animeNode)
+                    
+                case .failure(let error):
+                    print("\(TAG) Failed to fetch anime from cloudkit: \(error)")
+                }
+            }
+            
+            return animeNodes.sorted { $0.record.modificationDate! > $1.record.modificationDate! }
+            
+        } catch {
+            print("\(TAG) Error calling fetchAnimesFromCloudKit(): \(error)")
+            return []
+        }
+    }
+    
+    /// Delete an Anime record.
+    /// - Parameters:
+    ///     - animeNode: Anime object containing record to delete from CloudKit.
+    func deleteAnime(animeNode: AnimeNode) async {
+        do {
+            let recordToDelete = animeNode.record
+            animeData = animeData.filter { $0.record.recordID != recordToDelete.recordID }
+            try await database.deleteRecord(withID: recordToDelete.recordID)
+            print("\(TAG) Successfully removed \(String(describing: animeNode.node.title)).")
+        } catch {
+            print("\(TAG) Failed to remove \(String(describing: animeNode.node.title)) \n \(error)")
+        }
     }
     
 }
 
+enum FetchError: Error {
+    case badRequest
+    case badJson
+    case badURL
+}
