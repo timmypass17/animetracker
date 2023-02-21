@@ -6,6 +6,18 @@
 //
 
 import Foundation
+import CloudKit
+
+extension CKRecord {
+    subscript(key: Anime.RecordKey) -> Any? {
+        get {
+            return self[key.rawValue]
+        }
+        set {
+            self[key.rawValue] = newValue as? CKRecordValue
+        }
+    }
+}
 
 extension Double {
     func reduceScale(to places: Int) -> Double {

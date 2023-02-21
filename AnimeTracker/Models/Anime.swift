@@ -15,17 +15,12 @@ struct AnimeCollection: Codable {
 
 struct AnimeNode: Codable {
     var node: Anime
-    var record: CKRecord = CKRecord(recordType: Anime.RecordKey.recordType.rawValue) // TODO: might remove this
+    var record: CKRecord = CKRecord(recordType: Anime.RecordKey.recordType.rawValue)
     
     // put stuff in json tree here.
     private enum CodingKeys: CodingKey {
         case node
     }
-    // unwrap record fields
-//    var episodes_seen: Int {
-//        get { record[AnimeRecordKeys.seen.rawValue] as? Int ?? 0 }
-//        set { record[AnimeRecordKeys.seen.rawValue] = newValue }
-//    }
 }
 
 struct Anime: Codable {
@@ -59,7 +54,7 @@ struct Anime: Codable {
     var authors: [Author]?
     var serialization: [Publisher]?
         
-    // infer either anime, manga, novel, etc.. from media type (ex. 'tv' is an 'anime')
+    // infer either anime, manga, novel, etc.. from media type (ex. 'tv' is an anime)
     var animeType: AnimeType {
         guard let media_type = media_type else { return .anime }
         
@@ -94,19 +89,6 @@ extension Anime {
         case animeType
     }
 }
-
-extension CKRecord {
-    subscript(key: Anime.RecordKey) -> Any? {
-        get {
-            // TODO: add default case so i dont have to explicity declare default, record[.seen] as? Int ?? 0
-            return self[key.rawValue]
-        }
-        set {
-            self[key.rawValue] = newValue as? CKRecordValue
-        }
-    }
-}
-
 
 /// Getters
 extension Anime {
