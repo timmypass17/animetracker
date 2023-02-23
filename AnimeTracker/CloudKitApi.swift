@@ -10,7 +10,7 @@ import CloudKit
 
 protocol CloudKitService {
     
-    func saveAnime(animeNode: AnimeNode) async
+    func addOrUpdate(animeNode: AnimeNode) async
 
 //    func fetchAnimesFromCloudKit() async -> [AnimeNode]
     

@@ -29,8 +29,10 @@ struct AnimeDetail: View {
                     .font(.caption)
                     .padding(.top)
                 
-                DetailProgress(animeNode: $animeNode, current_episode: $currentEpisode)
-                    .padding(.top)
+                DetailProgress(animeNode: $animeNode)
+                
+//                DetailProgress(animeNode: $animeNode, current_episode: $currentEpisode)
+//                    .padding(.top)
                 
                 DetailTabView(selectedTab: $selectedTab)
                     .padding(.top)
@@ -111,7 +113,8 @@ struct AnimeDetail: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isShowingSheet, onDismiss: { /** Save data **/ }, content: {
             NavigationView {
-                EpisodeSheet(isShowingSheet: $isShowingSheet, animeNode: $animeNode, current_episode: $currentEpisode)
+//                EpisodeSheet(isShowingSheet: $isShowingSheet, animeNode: $animeNode, current_episode: $currentEpisode)
+                EpisodeSheet(isShowingSheet: $isShowingSheet, animeNode: $animeNode)
             }
             .presentationDetents([.medium])
         })
@@ -126,19 +129,19 @@ struct AnimeDetail: View {
         .background(Color.ui.background)
         .onAppear {
             Task {
-                try await handleFetchingData()
+                try await loadAnimeData()
                 
             }
         }
     }
     
-    func handleFetchingData() async throws {
-        // get anime data from local cache
+    func loadAnimeData() async throws {
+        // Cached
         if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == id }) {
             animeNode = existingNode
+            print("Existing \(animeNode.record.recordID.recordName)")
         } else {
-            // send api network request
-            // is anime
+            // Send network request
             switch animeType {
             case .anime:
                 animeNode = try await animeViewModel.fetchAnime(id: id)

@@ -13,7 +13,7 @@ struct EpisodeSheet: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
     @Binding var isShowingSheet: Bool
     @Binding var animeNode: AnimeNode
-    @Binding var current_episode: Float
+    @State var progress: Float = 0.0
     
     var maxSlider: Float {
         return animeNode.node.getNumEpisodesOrChapters() == 0 ? 2000.0 : Float(animeNode.node.getNumEpisodesOrChapters())
@@ -37,9 +37,13 @@ struct EpisodeSheet: View {
                 
                 // TODO: Some animes don't have num count (ex. One Piece)
                 Slider(
-                    value: $current_episode,
-                    in: 0...maxSlider,
-                    step: 1
+                    value: $progress,
+//                    value: Binding<Float>(
+//                        get: { Float(animeNode.seen) },
+//                        set: { animeNode.seen = Int($0) }
+//                    ),
+                    in: 0.0...maxSlider,
+                    step: 1.0
                 ) {
                     Text("Episode")
                 } minimumValueLabel: {
@@ -53,10 +57,11 @@ struct EpisodeSheet: View {
             }
             .padding(.top, 10)
             
-            Text("Currently on episode: \(Int(current_episode)) / \(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?": String(animeNode.node.getNumEpisodesOrChapters())) ")
+            Text("Currently on episode: \(Int(progress)) / \(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?": String(animeNode.node.getNumEpisodesOrChapters())) ")
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .font(.caption)
+            
             
             Spacer()
             
@@ -79,49 +84,57 @@ struct EpisodeSheet: View {
         .padding()
         .padding(.top) // sheet needs extra top padding
         .onAppear {
-            current_episode = Float(animeNode.record[.seen] as? Int ?? 0)
-            print(maxSlider)
+            progress = Float(animeNode.record.seen)
         }
     }
     
     func handlePlus() {
-        current_episode = min(current_episode + 1, Float(animeNode.node.num_episodes ?? Int.max))
+        progress = min((progress) + 1, Float(animeNode.node.num_episodes ?? Int.max))
     }
     
     func handleMinus() {
-        current_episode = max(current_episode - 1, 0)
+        progress = max((progress) - 1, 0)
     }
     
-    // TODO: Bug
+    // capture user input 
     func handleSaveAction() {
         Task {
-            // user may relog into icloud so we need to check again.
             await appState.getiCloudUser()
             if appState.isSignedInToiCloud {
-                print("Is signed in")
                 isShowingSheet = false
-                animeNode.record[.seen] = Int(current_episode)
+                animeNode.record.animeID = animeNode.node.id
+                animeNode.record.seen = Int(progress)
+                animeNode.record.animeType = animeNode.node.animeType
                 await animeViewModel.saveAnime(animeNode: animeNode)
             } else {
-                print("Not signed in")
                 animeViewModel.showErrorAlert = true
             }
         }
     }
 }
 
-struct EpisodeSheet_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(100.0))
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
-        }
-    }
-}
+//struct EpisodeSheet_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationView {
+//            EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(100.0))
+//                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+//        }
+//    }
+//}
 
-extension Binding where Value == Int {
-    public func float() -> Binding<Float> {
-        return Binding<Float>(get:{ Float(self.wrappedValue) },
-            set: { self.wrappedValue = Int($0)})
+//extension Binding where Value == Int {
+//    public func float() -> Binding<Float> {
+//        return Binding<Float>(get:{ Float(self.wrappedValue) },
+//            set: { self.wrappedValue = Int($0)})
+//    }
+//}
+
+struct IntFromDoubleBinding {
+    var intValue: Binding<Int>
+    var doubleValue: Binding<Double>
+    
+    init(_ intValue: Binding<Int>) {
+        self.intValue = intValue
+        self.doubleValue = Binding<Double>(get: { Double(intValue.wrappedValue) }, set: { intValue.wrappedValue = Int($0)} )
     }
 }

@@ -9,13 +9,13 @@ import SwiftUI
 
 struct DetailProgress: View {
     @Binding var animeNode: AnimeNode
-    @Binding var current_episode: Float
+//    @Binding var current_episode: Float
     
     var body: some View {
         VStack(alignment: .leading) {
             
             ProgressView(
-                value: Float(animeNode.record[.seen] as? Int ?? 0),
+                value: Float(animeNode.record.seen),
                 total: Float(animeNode.node.getNumEpisodesOrChapters())
             ) {
                 HStack(spacing: 4) {
@@ -27,7 +27,7 @@ struct DetailProgress: View {
                     Text("Episodes:")
                         .font(.caption)
                     
-                    Text("\(animeNode.record[.seen] as? Int ?? 0)")
+                    Text("\(animeNode.record.seen) /")
                         .font(.caption)
                     
                     Text("\(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?" : String(animeNode.node.getNumEpisodesOrChapters()))")

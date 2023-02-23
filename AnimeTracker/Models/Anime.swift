@@ -15,11 +15,69 @@ struct AnimeCollection: Codable {
 
 struct AnimeNode: Codable {
     var node: Anime
-    var record: CKRecord = CKRecord(recordType: Anime.RecordKey.recordType.rawValue)
+    var record: AnimeRecord = AnimeRecord()
+
+//    var record: CKRecord = CKRecord(recordType: Anime.RecordKey.recordType.rawValue)
     
     // put stuff in json tree here.
     private enum CodingKeys: CodingKey {
         case node
+    }
+    
+    // note: explicity create variables for each record field. Updating record's field doesnt trigger ui.
+    // If value doesn't get modified ever, we can just create a computed value
+    // Better to store the data from the CKRecord in your model as individual fields or properties  instead of entire CKRecord
+    
+
+    // doesnt update ui if modified
+//    var seen: Int {
+//        get { record[Anime.RecordKey.seen] as? Int ?? 0 }
+//        set { record[Anime.RecordKey.seen] = newValue }
+//    }
+}
+
+// Same name as api so its confusing but this is the record model we use to store onto cloudkit
+struct AnimeRecord: Codable {
+    var id: String
+    var animeID: Int
+    var animeType: AnimeType
+    var seen: Int
+    
+    init(id: String = UUID().uuidString, animeID: Int = 0, animeType: AnimeType = .anime, seen: Int = 0) {
+        self.id = id
+        self.animeID = animeID
+        self.animeType = animeType
+        self.seen = seen
+    }
+    
+    init(record: CKRecord) {
+        id = record.recordID.recordName
+//        self.createdAt = record.creationDate
+        animeID = record[.animeID] as? Int ?? 0
+        animeType = AnimeType(rawValue: record[.animeType] as? String ?? "") ?? .anime
+        seen = record[.seen] as? Int ?? 0
+    }
+    
+    var recordID: CKRecord.ID {
+        CKRecord.ID(recordName: id)
+    }
+    
+    var record: CKRecord {
+        let record = CKRecord(recordType: .anime, recordID: recordID)
+        record[.animeID] = animeID
+        record[.animeType] = animeType.rawValue // can't store enum directly, unwrap it
+        record[.seen] = seen
+        
+        return record
+    }
+    
+}
+
+extension AnimeRecord {
+    enum RecordKey: String {
+        case seen
+        case animeID
+        case animeType
     }
 }
 
@@ -78,15 +136,6 @@ struct Anime: Codable {
     
     enum CodingKeys: String, CodingKey, CaseIterable {
         case id, title, main_picture, alternative_titles, start_date, end_date, synopsis, mean, rank, popularity, num_list_users, media_type, status, genres, num_episodes, start_season, broadcast, source, average_episode_duration, rating, related_anime, related_manga, recommendations, studios, num_volumes, num_chapters, authors, serialization
-    }
-}
-
-extension Anime {
-    enum RecordKey: String {
-        case recordType = "Anime"
-        case seen
-        case animeID
-        case animeType
     }
 }
 

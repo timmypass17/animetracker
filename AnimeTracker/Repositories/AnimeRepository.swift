@@ -11,7 +11,7 @@ import CloudKit
 
 @MainActor
 class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService {
-
+    
     @Published var animeData: [AnimeNode] = []
     @Published var searchResults: [AnimeNode] = []
     private lazy var container: CKContainer = CKContainer.default()
@@ -24,14 +24,14 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         Task {
             userID = try await container.userRecordID()
             fetchAnimesFromCloudKit()
+            //            let user = getCurrentUser()
         }
     }
+    
     
     func fetchAnimesFromCloudKit() {
         fetchRecords { [self] records in
             Task {
-                print("Done")
-                print(records.count)
                 animeData = await fetchAnimeManga(records: records)
             }
         }
@@ -45,19 +45,21 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         var animes: [AnimeNode] = []
         do {
             for record in records {
-                // unwrap record fields
-                guard let id = record[.animeID] as? Int else { continue }
-                guard let animeType = AnimeType(rawValue: record[.animeType] as? String ?? "anime") else { continue }
+                guard let type = record[.animeType] as? String else { continue }
+                guard let animeType = AnimeType(rawValue: type) else { continue }
+                guard let animeID = record[.animeID] as? Int else { continue }
                 
                 var node: AnimeNode
                 if animeType == .anime {
-                    node = try await self.fetchAnime(animeID: id)
+                    node = try await self.fetchAnime(animeID: animeID)
                 } else {
-                    node = try await self.fetchManga(mangaID: id)
+                    node = try await self.fetchManga(mangaID: animeID)
                 }
-                node.record = record
+                node.record = AnimeRecord(record: record)
                 animes.append(node)
             }
+            
+            animeData.append(contentsOf: animes)
         } catch {
             print("Error fetching animes using records: \(error)")
             return []
@@ -85,11 +87,8 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         
         let operation: CKQueryOperation
         if let cursor = cursor { // if cursor exist, means there is more data to be fetched
-            print("A")
             operation = CKQueryOperation(cursor: cursor)
         } else { // inital query
-            print("B")
-
             operation = CKQueryOperation(query: query)
         }
         
@@ -97,25 +96,25 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         operation.recordMatchedBlock = { (recordID, result) in
             switch result {
             case .success(let record):
-                print("Adding record")
+                //                print("Adding record")
                 records.append(record)
             case .failure(let error):
                 print("Error with recordMatchedBlock: \(error)")
             }
         }
-
+        
         operation.queryResultBlock = { result in
             switch result {
             case .success(let cursor):
                 if let cursor = cursor {
-                    print("Found cursor, fetching more records")
+                    //                    print("Found cursor, fetching more records")
                     self.fetchRecords(cursor: cursor) { fetchedRecords in
                         records.append(contentsOf: fetchedRecords)
-                        print("queryResultBlock handler: \(records.count)")
+                        //                        print("queryResultBlock handler: \(records.count)")
                         completion(records)
                     }
                 } else {
-                    print("no more cursor: \(records.count)")
+                    //                    print("no more cursor: \(records.count)")
                     completion(records)
                 }
             case .failure(let error):
@@ -128,7 +127,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     }
     
     public typealias YourFetchCompletionHandler = (_ records: [CKRecord]?, _ cursor: CKQueryOperation.Cursor?) -> (Void)
-
+    
     /// https://stackoverflow.com/questions/48965667/batch-fetching-with-cloudkit-ckqueryoperation
     /// Retrieves x amount of records and next cursor (that points to the next x records).
     /// - Parameters:
@@ -138,7 +137,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     /// - Returns: Returns the batch of records and a cursor pointing to the next batch.
     public func fetchRecordsInBatches(isFirstFetch: Bool, _ cursor: CKQueryOperation.Cursor? = nil, completionHandler handler: @escaping YourFetchCompletionHandler) -> Void {
         guard let userID = userID else { return }
-
+        
         let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
         // different name from cloudkit dashboard for some reason. Also need to add index to make it queryable
         let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
@@ -147,9 +146,9 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             // Schema -> Indexes -> Anime -> Add basic index -> modifiedTimestamp (different name) https://developer.apple.com/documentation/cloudkit/ckrecord/1462227-modificationdate
             NSSortDescriptor(key: "modificationDate", ascending: false)
         ]
-
+        
         var operation: CKQueryOperation
-
+        
         if isFirstFetch {
             print("first fetch")
             // Create the operation for the first time
@@ -163,13 +162,13 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             // If not first time and if cursor is nil (which means
             // there is no more data) then return empty array
             // or whatever you want
-
+            
             handler([], nil)
             return
         }
-
+        
         var records: [CKRecord] = [CKRecord]()
-
+        
         operation.recordMatchedBlock = { (recordID, result) in
             switch result {
             case .success(let record):
@@ -179,7 +178,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
                 print("Error with recordMatchedBlock: \(error)")
             }
         }
-
+        
         operation.queryResultBlock = { result in
             switch result {
             case .success(let cursor):
@@ -194,7 +193,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
                 print("Error with queryResultBlock: \(error)")
             }
         }
-
+        
         // Fetch only 3 records
         operation.resultsLimit = 3
         database.add(operation)
@@ -209,13 +208,21 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-
+        
         let (data, response) = try await URLSession.shared.data(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest } // 200 indicates successful request
         
         do {
             let anime = try JSONDecoder().decode(Anime.self, from: data)
-            return AnimeNode(node: anime)
+            var animeNode = AnimeNode(node: anime)
+//            // update record if it exist
+//            if let index = animeData.firstIndex(where: { $0.node.id == animeID }){
+//                print("update record")
+//                animeNode.record = animeData[index].record
+//            } else {
+//                print("no record")
+//            }
+            return animeNode
         } catch {
             print("\(TAG) Error calling fetchAnime(animeID: \(animeID)) \n \(error)")
         }
@@ -231,6 +238,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         guard !title.isEmpty else { return AnimeCollection() }
         
         let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
+        print(titleFormatted)
         guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { return AnimeCollection() }
         
         var request = URLRequest(url: url)
@@ -375,54 +383,73 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     /// - Parameters:
     ///     - animeNode: Anime that we using to extract relevant info
     /// - Returns: List of mangas from MyAnimeList using that id.
-    func saveAnime(animeNode: AnimeNode) async {
-        if let index = searchResults.firstIndex(where: { $0.node.id == animeNode.node.id }) {
-            searchResults[index] = animeNode
-        }
-        
-        // Update existing record
-        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
-            animeData[index] = animeNode
-            
-            do {
-                let record = animeData[index].record
-                try await database.save(record)
-                print("\(TAG) Added record successfully.")
-            } catch {
-                print("\(TAG) Error saving record: \(error)")
-            }
-        }
-        else {
-            // Create new record
-            animeData.append(animeNode)
-            let record = animeNode.record
-            record[.animeID] = animeNode.node.id
-            record[.seen] = animeNode.record[.seen] as? Int ?? 0
-            record[.animeType] = animeNode.node.animeType.rawValue
-            
-            do {
-                try await database.save(animeNode.record)
-                print("\(TAG) Added record successfully.")
-            } catch {
-                print("\(TAG) Error saving record: \(error)")
-            }
-        }
-    }
-    
-    /// Delete an Anime record.
-    /// - Parameters:
-    ///     - animeNode: Anime object containing record to delete from CloudKit.
-    func deleteAnime(animeNode: AnimeNode) async {
+    func addOrUpdate(animeNode: AnimeNode) async {
         do {
-            let recordToDelete = animeNode.record
-            animeData = animeData.filter { $0.record.recordID != recordToDelete.recordID }
-            try await database.deleteRecord(withID: recordToDelete.recordID)
-            print("\(TAG) Successfully removed \(String(describing: animeNode.node.title)).")
+            // Add record
+            if !animeData.contains(where: { $0.node.id == animeNode.node.id }) {
+                animeData.append(animeNode)
+                try await database.save(animeNode.record.record)
+            } else {
+                // Update record
+                let (saveResult, _) = try await database.modifyRecords(
+                    saving: [animeNode.record.record],
+                    deleting: [],
+                    savePolicy: .changedKeys
+                )
+                for (recordID, result) in saveResult {
+                    switch result {
+                    case .success(let record):
+                        // update changes locally
+                        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
+                            animeData[index] = animeNode
+                        }
+                    case .failure(let error):
+                        print(error)
+                    }
+                }
+            }
         } catch {
-            print("\(TAG) Failed to remove \(String(describing: animeNode.node.title)) \n \(error)")
+            print(error)
         }
     }
     
+    
+    //        // Update existing record
+    //        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
+    //            animeData[index] = animeNode
+    //            do {
+    //                let record = animeData[index].record.record
+    //                try await database.save(record)
+    //                print("\(TAG) Updated record successfully. \(record.recordID.recordName)")
+    //            } catch {
+    //                print("\(TAG) Error saving record: \(error)")
+    //            }
+    //        }
+    //        else {
+    //            // Create new record
+    //            animeData.append(animeNode)
+    //            do {
+    //                try await database.save(animeNode.record.record)
+    //                print("\(TAG) Added record successfully. \(animeNode.record.recordID.recordName)")
+    //            } catch {
+    //                print("\(TAG) Error saving record: \(error)")
+    //            }
+    //        }
+
+/// Delete an Anime record.
+/// - Parameters:
+///     - animeNode: Anime object containing record to delete from CloudKit.
+func deleteAnime(animeNode: AnimeNode) async {
+    do {
+        let recordToDelete = animeNode.record
+        animeData = animeData.filter { $0.record.recordID != recordToDelete.recordID }
+        try await database.deleteRecord(withID: recordToDelete.recordID)
+        print("\(TAG) Successfully removed \(String(describing: animeNode.node.title)).")
+    } catch {
+        print("\(TAG) Failed to remove \(String(describing: animeNode.node.title)) \n \(error)")
+    }
+}
+
 }
 
 enum FetchError: Error {

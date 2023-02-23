@@ -32,6 +32,8 @@ class DiscoverViewModel: ObservableObject {
     }
     
     func fetchAnimesByTitle(title: String) async throws -> AnimeCollection {
+        print(title)
+
         return try await animeRepository.fetchAnimes(title: title)
     }
     

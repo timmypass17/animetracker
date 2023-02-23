@@ -8,14 +8,14 @@
 import Foundation
 import CloudKit
 
+extension CKRecord.RecordType {
+    static let anime = "Anime"
+}
+
 extension CKRecord {
-    subscript(key: Anime.RecordKey) -> Any? {
-        get {
-            return self[key.rawValue]
-        }
-        set {
-            self[key.rawValue] = newValue as? CKRecordValue
-        }
+    subscript(key: AnimeRecord.RecordKey) -> Any? {
+        get { return self[key.rawValue] }
+        set { self[key.rawValue] = newValue as? CKRecordValue }
     }
 }
 

@@ -14,6 +14,8 @@ struct AnimeTrackerApp: App {
     @StateObject var appState: AppState
     @StateObject var animeViewModel: AnimeViewModel
     @StateObject var discoverViewModel: DiscoverViewModel
+    @StateObject var friendViewModel: FriendViewModel
+
     
     // inject repo into viewmodel to share repo with multible viewmodels
     init() {
@@ -22,6 +24,7 @@ struct AnimeTrackerApp: App {
         let animeRepository = AnimeRepository()
         _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository))
         _discoverViewModel = StateObject(wrappedValue: DiscoverViewModel(animeRepository: animeRepository))
+        _friendViewModel = StateObject(wrappedValue: FriendViewModel())
     }
     
     var body: some Scene {
@@ -41,15 +44,19 @@ struct AnimeTrackerApp: App {
                     Label("Discover", systemImage: "magnifyingglass")
                 }
                 
-                Text("Friend View")
-                    .tabItem {
-                        Label("Friends", systemImage: "person.2")
-                    }
+                NavigationStack {
+                    FriendView()
+                }
+                .tabItem {
+                    Label("Friends", systemImage: "person.2")
+                }
+                
             }
 //            .environmentObject(authViewModel)
             .environmentObject(appState)
             .environmentObject(animeViewModel)
             .environmentObject(discoverViewModel)
+            .environmentObject(friendViewModel)
         }
     }
 }

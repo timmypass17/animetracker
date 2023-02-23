@@ -42,7 +42,7 @@ class AnimeViewModel: ObservableObject {
     }
     
     func saveAnime(animeNode: AnimeNode) async {
-        await animeRepository.saveAnime(animeNode: animeNode)
+        await animeRepository.addOrUpdate(animeNode: animeNode)
     }
     
     func deleteAnime(animeNode: AnimeNode) async {
@@ -65,12 +65,12 @@ class AnimeViewModel: ObservableObject {
                 selectedAnimeData = animeData.filter {
                     var n = $0.node.getNumEpisodesOrChapters()
                     if n == 0 { n = Int.max } // 0 episodes means series is ongoing
-                    return 1..<n ~= $0.record[.seen] as? Int ?? 0
+                    return 1..<n ~= $0.record.seen
                 }
             case .finished:
-                selectedAnimeData = animeData.filter { ($0.record[.seen] as? Int) == $0.node.getNumEpisodesOrChapters() && ($0.record[.seen] as? Int) != 0 }
+                selectedAnimeData = animeData.filter { ($0.record.seen) == $0.node.getNumEpisodesOrChapters() && ($0.record.seen) != 0 }
             case .not_started:
-                selectedAnimeData = animeData.filter { $0.record[.seen] as? Int == 0 }
+                selectedAnimeData = animeData.filter { $0.record.seen == 0 }
             }
         }
         
@@ -81,9 +81,13 @@ class AnimeViewModel: ObservableObject {
             case .newest:
                 selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? Int.max > $1.node.start_season?.year ?? Int.max }
             case .date_created:
-                selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate! > $1.record.creationDate! }
+//                selectedAnimeData = selectedAnimeData.sorted { $0.record.record.creationDate! > $1.record.creationDate! }
+                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
+
             case .last_modified:
-                selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate! > $1.record.modificationDate! }
+//                selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate! > $1.record.modificationDate! }
+                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
+
             }
         }
     }
