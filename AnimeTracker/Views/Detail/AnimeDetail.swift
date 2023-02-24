@@ -101,7 +101,9 @@ struct AnimeDetail: View {
             .padding()
             .padding(.top, 115) // 45
             .background(alignment: .top) {
-                DetailBackground(poster: animeNode.node.main_picture)
+                if let url = animeNode.node.main_picture?.large {
+                    DetailBackground(url: url)
+                }
             }
             
             Spacer()
@@ -139,7 +141,6 @@ struct AnimeDetail: View {
         // Cached
         if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == id }) {
             animeNode = existingNode
-            print("Existing \(animeNode.record.recordID.recordName)")
         } else {
             // Send network request
             switch animeType {

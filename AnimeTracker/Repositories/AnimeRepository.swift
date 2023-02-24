@@ -384,32 +384,43 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     ///     - animeNode: Anime that we using to extract relevant info
     /// - Returns: List of mangas from MyAnimeList using that id.
     func addOrUpdate(animeNode: AnimeNode) async {
+        if animeData.contains(where: { $0.node.id == animeNode.node.id }) {
+            await updateAnime(animeNode: animeNode)
+        } else {
+            await addAnime(animeNode: animeNode)
+        }
+    }
+    
+    func updateAnime(animeNode: AnimeNode) async {
+        // update locally
+        guard let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) else { return }
+        animeData[index].record.seen = animeNode.record.seen
+        animeData[index].record.animeID = animeNode.record.animeID
+        animeData[index].record.animeType = animeNode.node.animeType
+        
         do {
-            // Add record
-            if !animeData.contains(where: { $0.node.id == animeNode.node.id }) {
-                animeData.append(animeNode)
-                try await database.save(animeNode.record.record)
-            } else {
-                // Update record
-                let (saveResult, _) = try await database.modifyRecords(
-                    saving: [animeNode.record.record],
-                    deleting: [],
-                    savePolicy: .changedKeys
-                )
-                for (recordID, result) in saveResult {
-                    switch result {
-                    case .success(let record):
-                        // update changes locally
-                        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
-                            animeData[index] = animeNode
-                        }
-                    case .failure(let error):
-                        print(error)
-                    }
+            let (saveResult, _) = try await database.modifyRecords(saving: [animeNode.record.record], deleting: [], savePolicy: .changedKeys)
+            
+            for (_, result) in saveResult {
+                switch result {
+                case .success(_):
+                    print("\(TAG) Updated record sucessfully")
+                case .failure(let error):
+                    print("\(TAG) Error updaing anime: \(error.localizedDescription)")
                 }
             }
         } catch {
-            print(error)
+            print("\(TAG) Error calling modifyRecords(): \(error.localizedDescription)")
+        }
+    }
+    
+    func addAnime(animeNode: AnimeNode) async {
+        do {
+            animeData.append(animeNode)
+            try await database.save(animeNode.record.record)
+            print("\(TAG) Added record successfully")
+        } catch {
+            print("\(TAG) Error adding anime: \(error)")
         }
     }
     

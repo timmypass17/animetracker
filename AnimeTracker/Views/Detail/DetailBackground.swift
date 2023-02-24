@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DetailBackground: View {
-    let poster: Poster?
+    let url: String
 
     let gradient = LinearGradient(
         gradient: Gradient(stops: [
@@ -20,21 +20,19 @@ struct DetailBackground: View {
     )
     
     var body: some View {
-        if let poster = poster {
-            AsyncImage(url: URL(string: poster.medium)) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 350)
-                    .clipShape(Rectangle())
-                    .overlay {
-                        gradient
-                    }
-                    .clipped()
-            } placeholder: {
-                ProgressView()
-                    .frame(height: 350)
-            }
+        AsyncImage(url: URL(string: url)) { image in
+            image
+                .resizable()
+                .scaledToFill()
+                .frame(height: 350)
+                .clipShape(Rectangle())
+                .overlay {
+                    gradient
+                }
+                .clipped()
+        } placeholder: {
+            ProgressView()
+                .frame(height: 350)
         }
     }
 }
