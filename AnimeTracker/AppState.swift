@@ -27,7 +27,12 @@ class AppState: ObservableObject {
             await getiCloudStatus() // Check if user is logged into iCloud
             await requestPermission() //
             await getiCloudUser()   // Get icloud user's info (name, email, phonenumber)
-            await getUserRecord()   // Get users record from cloudkit
+            // Get users record from cloudkit
+            
+            await getUserRecord { record in
+//                updateUserInfo(record: record)
+            }
+            
         }
     }
 
@@ -83,7 +88,7 @@ class AppState: ObservableObject {
         }
     }
     
-    func getUserRecord() async {
+    func getUserRecord(completion: @escaping ((CKRecord) -> Void)) async {
         do {
             // Get user recordID
             let userID = try await container.userRecordID()
@@ -94,45 +99,49 @@ class AppState: ObservableObject {
                 switch result {
                 case .success(let record):
                     print("\(TAG) Found user record")
-                    user = User(record: record)
-                    
-                    // Get user's name
-                    if let identity = identity {
-                        if let nameParts = identity.nameComponents, let name = nameParts.givenName {
-                            user?.name = name
-                            print(name)
-                        }
-                        // Can't access user's email unless we got identity using email (we used id)
-//                        if let lookupInfo = identity.lookupInfo, let email = lookupInfo.emailAddress {
-//                            user?.email = email
-//                            print(email)
-//                        }
-                        
-                    }
-                    
-//                    guard let friends = record[User.RecordKey.friends] as? [CKRecord.Reference]
-                    else {
-                        print("\(TAG) failed to get friends list")
-                        return
-                    }
-                    
+                    completion(record)
                 case .failure(let error):
                     print("\(TAG) Error fetching user record: \(error)")
-                }
-            }
-            
-            operation.fetchRecordsResultBlock = { [self] result in
-                switch result {
-                case .success(_):
-                    print("\(TAG) Successfully finished getting user record")
-                case.failure(let error):
-                    print("\(TAG) Failed to get user record: \(error)")
                 }
             }
             
             database.add(operation)
         } catch {
             print(error)
+        }
+    }
+    
+    func updateUserInfo(record: CKRecord, username: String?) async {
+        guard let identity = identity else { return }
+        
+        // Get user's name, last name
+        if let nameParts = identity.nameComponents {
+            if let firstName = nameParts.givenName {
+                user?.firstName = firstName
+                record[.firstName] = firstName
+            }
+            
+            if let lastname = nameParts.familyName {
+                user?.lastName = lastname
+                record[.lastName] = lastname
+            }
+        }
+        
+        record[.username] = username
+                
+        do {
+            let (saveResult, _) = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .changedKeys)
+            
+            for (_, result) in saveResult {
+                switch result {
+                case .success(_):
+                    print("\(TAG) Updated record sucessfully")
+                case .failure(let error):
+                    print("\(TAG) Error updaing anime: \(error.localizedDescription)")
+                }
+            }
+        } catch {
+            print("\(TAG) Error calling modifyRecords(): \(error.localizedDescription)")
         }
     }
 }

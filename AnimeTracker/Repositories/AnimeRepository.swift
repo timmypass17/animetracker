@@ -423,43 +423,20 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             print("\(TAG) Error adding anime: \(error)")
         }
     }
-    
-    
-    //        // Update existing record
-    //        if let index = animeData.firstIndex(where: { $0.node.id == animeNode.node.id }) {
-    //            animeData[index] = animeNode
-    //            do {
-    //                let record = animeData[index].record.record
-    //                try await database.save(record)
-    //                print("\(TAG) Updated record successfully. \(record.recordID.recordName)")
-    //            } catch {
-    //                print("\(TAG) Error saving record: \(error)")
-    //            }
-    //        }
-    //        else {
-    //            // Create new record
-    //            animeData.append(animeNode)
-    //            do {
-    //                try await database.save(animeNode.record.record)
-    //                print("\(TAG) Added record successfully. \(animeNode.record.recordID.recordName)")
-    //            } catch {
-    //                print("\(TAG) Error saving record: \(error)")
-    //            }
-    //        }
 
-/// Delete an Anime record.
-/// - Parameters:
-///     - animeNode: Anime object containing record to delete from CloudKit.
-func deleteAnime(animeNode: AnimeNode) async {
-    do {
-        let recordToDelete = animeNode.record
-        animeData = animeData.filter { $0.record.recordID != recordToDelete.recordID }
-        try await database.deleteRecord(withID: recordToDelete.recordID)
-        print("\(TAG) Successfully removed \(String(describing: animeNode.node.title)).")
-    } catch {
-        print("\(TAG) Failed to remove \(String(describing: animeNode.node.title)) \n \(error)")
+    /// Delete an Anime record.
+    /// - Parameters:
+    ///     - animeNode: Anime object containing record to delete from CloudKit.
+    func deleteAnime(animeNode: AnimeNode) async {
+        do {
+            let recordToDelete = animeNode.record
+            animeData = animeData.filter { $0.record.recordID != recordToDelete.recordID }
+            try await database.deleteRecord(withID: recordToDelete.recordID)
+            print("\(TAG) Successfully removed \(String(describing: animeNode.node.title)).")
+        } catch {
+            print("\(TAG) Failed to remove \(String(describing: animeNode.node.title)) \n \(error)")
+        }
     }
-}
 
 }
 

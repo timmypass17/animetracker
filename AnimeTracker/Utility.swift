@@ -10,10 +10,16 @@ import CloudKit
 
 extension CKRecord.RecordType {
     static let anime = "Anime"
+    static let user = "Users"
 }
 
 extension CKRecord {
     subscript(key: AnimeRecord.RecordKey) -> Any? {
+        get { return self[key.rawValue] }
+        set { self[key.rawValue] = newValue as? CKRecordValue }
+    }
+    
+    subscript(key: User.RecordKey) -> Any? {
         get { return self[key.rawValue] }
         set { self[key.rawValue] = newValue as? CKRecordValue }
     }

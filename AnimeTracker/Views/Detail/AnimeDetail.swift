@@ -30,9 +30,8 @@ struct AnimeDetail: View {
                     .padding(.top)
                 
                 DetailProgress(animeNode: $animeNode)
+                    .padding(.top)
                 
-//                DetailProgress(animeNode: $animeNode, current_episode: $currentEpisode)
-//                    .padding(.top)
                 
                 DetailTabView(selectedTab: $selectedTab)
                     .padding(.top)

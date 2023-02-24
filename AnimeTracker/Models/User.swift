@@ -9,20 +9,44 @@ import Foundation
 import CloudKit
 
 struct User {
-    var record: CKRecord = CKRecord(recordType: User.RecordKey.recordType.rawValue)
-    var name: String?
-    var email: String?
+//    var record: CKRecord = CKRecord(recordType: .user)
+    var id: String
+    // users can look up other users on firstName or userName
+    var firstName: String
+    var lastName: String
+    var username: String?
+    // cant get email
+    
+    init(firstName: String, lastName: String, username: String? = nil) {
+        self.id = UUID().uuidString
+        self.firstName = firstName
+        self.lastName = lastName
+    }
+    
+    var recordID: CKRecord.ID {
+        CKRecord.ID(recordName: id)
+    }
+    
+    func createUserRecord(firstName: String, lastName: String, userName: String?) -> CKRecord {
+        let record = CKRecord(recordType: .user, recordID: recordID)
+        record[.firstName] = firstName
+        record[.lastName] = lastName
+        record[.username] = username
+        
+        return record
+    }
 }
 
 extension User {
     enum RecordKey: String {
-        case recordType = "Users"
-        case friends
+        case firstName
+        case lastName
+        case username
     }
 }
 
 extension User {
     static let sampleUsers: [User] = [
-        User(name: "Timmy Nguyen", email: "email123@gmail.com")
+        User(firstName: "Timmy", lastName: "Nguyen", username: "timmypass21")
     ]
 }
