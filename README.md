@@ -1,4 +1,14 @@
 # Screenshot (In progress)
-note: Im planning to add app to app store when im done so I am focusing alot on ui
+Planning to add to app store
 
-<img src="https://github.com/timmypass17/animetracker/blob/main/AnimeTracker/Assets.xcassets/home.imageset/Screen%20Shot%202022-11-29%20at%2011.19.55%20PM.png" width="300">
+<p float="left">
+
+  <img src="https://github.com/timmypass17/animetracker/blob/main/AnimeTracker/Assets.xcassets/home.imageset/home.png" width="300">
+
+  <img src="https://github.com/timmypass17/animetracker/blob/main/AnimeTracker/Assets.xcassets/detail.imageset/detail.png" width="300">
+
+  <img src="https://github.com/timmypass17/animetracker/blob/main/AnimeTracker/Assets.xcassets/save.imageset/save.png" width="300">
+
+  <img src="https://github.com/timmypass17/animetracker/blob/main/AnimeTracker/Assets.xcassets/discover.imageset/discover.png" width="300">
+
+</p>
