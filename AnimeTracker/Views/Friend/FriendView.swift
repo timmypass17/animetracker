@@ -12,20 +12,46 @@ struct FriendView: View {
 
     var body: some View {
         ScrollView {
-            VStack {
-                Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+            VStack(spacing: 0) {
+                RequestList(users: $friendViewModel.pendingRequest)
+                FriendList(users: $friendViewModel.friends)
             }
         }
         .navigationTitle("Profile")
         .background(Color.ui.background)
+        .searchable(
+            text: $friendViewModel.searchText,
+            prompt: "Filter friend by name"
+        ) {
+            FriendList(users: $friendViewModel.userSearchResult)
+        }
+        .toolbar {
+            ToolbarItem {
+                Button(action: { friendViewModel.isShowingAddFriendSheet.toggle() }) {
+                    Image(systemName: "person.badge.plus") // plus.square
+                }
+            }
+        }
+        .sheet(isPresented: $friendViewModel.isShowingAddFriendSheet) {
+            NavigationStack {
+                AddFriendView()
+            }
+        }
+        .onAppear {
+            Task {
+                friendViewModel.pendingRequest = await friendViewModel.fetchPendingFriendshipRequests()
+                await friendViewModel.fetchFriends()
+            }
+        }
     }
+    
 }
 
 struct FriendView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             FriendView()
-                .environmentObject(FriendViewModel())
+                .environmentObject(FriendViewModel(animeRepository: AnimeRepository(), appState: AppState()))
         }
     }
 }

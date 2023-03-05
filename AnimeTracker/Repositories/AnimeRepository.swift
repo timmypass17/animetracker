@@ -23,16 +23,15 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     init() {
         Task {
             userID = try await container.userRecordID()
-            fetchAnimesFromCloudKit()
-            //            let user = getCurrentUser()
+            loadUserAnimeList()
         }
     }
     
     
-    func fetchAnimesFromCloudKit() {
+    private func loadUserAnimeList() {
         fetchRecords { [self] records in
             Task {
-                animeData = await fetchAnimeManga(records: records)
+                animeData = await fetchAnimeOrManga(records: records)
             }
         }
     }
@@ -41,7 +40,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     /// - Parameters:
     ///     - records: List of Anime records.
     /// - Returns: Animes from MyAnimeList.
-    func fetchAnimeManga(records: [CKRecord]) async -> [AnimeNode] {
+    func fetchAnimeOrManga(records: [CKRecord]) async -> [AnimeNode] {
         var animes: [AnimeNode] = []
         do {
             for record in records {
@@ -215,13 +214,6 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         do {
             let anime = try JSONDecoder().decode(Anime.self, from: data)
             var animeNode = AnimeNode(node: anime)
-//            // update record if it exist
-//            if let index = animeData.firstIndex(where: { $0.node.id == animeID }){
-//                print("update record")
-//                animeNode.record = animeData[index].record
-//            } else {
-//                print("no record")
-//            }
             return animeNode
         } catch {
             print("\(TAG) Error calling fetchAnime(animeID: \(animeID)) \n \(error)")

@@ -15,23 +15,26 @@ class AppState: ObservableObject {
     @Published var identity: CKUserIdentity?
     @Published var isDiscoverableByEmail: Bool = false
     var username: String { return identity?.nameComponents?.givenName ?? "No username." }
+    let defaults = UserDefaults.standard // used to store basic types, we use it to store user setting's preferences
+    var user: User?
+    
     private lazy var database: CKDatabase = container.publicCloudDatabase
     private lazy var container: CKContainer = CKContainer.default()
-    let defaults = UserDefaults.standard // used to store basic types, we use it to store user setting's preferences
     let TAG = "[AppState]"
-    
-    var user: User?
     
     init() {
         Task {
             await getiCloudStatus() // Check if user is logged into iCloud
-            await requestPermission() //
-            await getiCloudUser()   // Get icloud user's info (name, email, phonenumber)
+//            await requestPermission()
+            await getiCloudUserIdentity()   // Get icloud user's info (name, email, phonenumber)
+            await getUser()
             // Get users record from cloudkit
             
-            await getUserRecord { record in
-//                updateUserInfo(record: record)
-            }
+//            await getUserRecord { [self] record in
+//                Task {
+//                    await updateUserInfo(record: record)
+//                }
+//            }
             
         }
     }
@@ -70,7 +73,7 @@ class AppState: ObservableObject {
         }
     }
     
-    func getiCloudUser() async {
+    func getiCloudUserIdentity() async {
         do {
             let userID = try await container.userRecordID()
             isSignedInToiCloud = true
@@ -88,54 +91,86 @@ class AppState: ObservableObject {
         }
     }
     
-    func getUserRecord(completion: @escaping ((CKRecord) -> Void)) async {
+    func getUser() async {
         do {
-            // Get user recordID
+            // 1. Get current user's record id
             let userID = try await container.userRecordID()
             
-            // Get users record
-            let operation = CKFetchRecordsOperation(recordIDs: [userID])
-            operation.perRecordResultBlock = { [self] (recordID, result) in // self so we dont have to write self.user, self.TAG
-                switch result {
-                case .success(let record):
-                    print("\(TAG) Found user record")
-                    completion(record)
-                case .failure(let error):
-                    print("\(TAG) Error fetching user record: \(error)")
-                }
+            // 2. Look for record where userID (User) == user's recordID (Users)
+            let reference = CKRecord.Reference(recordID: userID, action: .none)
+            let predicate = NSPredicate(format: "creatorUserRecordID == %@", reference) // userID is a CKRecord.Reference
+            let query = CKQuery(recordType: .user, predicate: predicate)
+            let (matchingResults, _) = try await database.records(matching: query, resultsLimit: 1)
+            
+            // 2. If user record exists, store it. Should only have 1
+            if matchingResults.count > 0 {
+                print("user exists")
+                let record = try matchingResults[0].1.get()
+                let user = try User(record: record)
+                self.user = user
+            } else {
+                print("adding user")
+                // 3. else, user record doesn't exist, add it
+                let record = CKRecord(recordType: .user)
+                record[User.RecordKey.userID] = CKRecord.Reference(recordID: userID, action: .none)
+                record[.firstName] = identity?.nameComponents?.givenName
+                record[.lastName] = identity?.nameComponents?.familyName
+                
+                try await database.save(record)
             }
             
-            database.add(operation)
+            
         } catch {
-            print(error)
+            print("\(TAG) Error getting user record: \(error)")
         }
     }
     
-    func updateUserInfo(record: CKRecord, username: String?) async {
+//    func getUserRecord(completion: @escaping ((CKRecord) -> Void)) async {
+//        do {
+//            // Get user recordID
+//            let userID = try await container.userRecordID()
+//
+//            // Get users record
+//            let operation = CKFetchRecordsOperation(recordIDs: [userID])
+//            operation.perRecordResultBlock = { [self] (recordID, result) in // self so we dont have to write self.user, self.TAG
+//                switch result {
+//                case .success(let record):
+//                    print("\(TAG) Found user record")
+//                    completion(record)
+//                case .failure(let error):
+//                    print("\(TAG) Error fetching user record: \(error)")
+//                }
+//            }
+//
+//            database.add(operation)
+//        } catch {
+//            print(error)
+//        }
+//    }
+//
+    func updateUserInfo(record: CKRecord) async {
         guard let identity = identity else { return }
         
         // Get user's name, last name
         if let nameParts = identity.nameComponents {
             if let firstName = nameParts.givenName {
-                user?.firstName = firstName
                 record[.firstName] = firstName
+                print(firstName)
             }
             
             if let lastname = nameParts.familyName {
-                user?.lastName = lastname
                 record[.lastName] = lastname
+                print(lastname)
             }
         }
-        
-        record[.username] = username
-                
+                        
         do {
             let (saveResult, _) = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .changedKeys)
             
             for (_, result) in saveResult {
                 switch result {
                 case .success(_):
-                    print("\(TAG) Updated record sucessfully")
+                    print("\(TAG) Updated user record sucessfully")
                 case .failure(let error):
                     print("\(TAG) Error updaing anime: \(error.localizedDescription)")
                 }

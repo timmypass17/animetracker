@@ -99,7 +99,7 @@ struct EpisodeSheet: View {
     // capture user input 
     func handleSaveAction() {
         Task {
-            await appState.getiCloudUser()
+            await appState.getiCloudUserIdentity()
             if appState.isSignedInToiCloud {
                 isShowingSheet = false
                 animeNode.record.animeID = animeNode.node.id

@@ -10,7 +10,8 @@ import CloudKit
 
 extension CKRecord.RecordType {
     static let anime = "Anime"
-    static let user = "Users"
+    static let user = "User"
+    static let friendship = "Friendship"
 }
 
 extension CKRecord {
@@ -20,6 +21,11 @@ extension CKRecord {
     }
     
     subscript(key: User.RecordKey) -> Any? {
+        get { return self[key.rawValue] }
+        set { self[key.rawValue] = newValue as? CKRecordValue }
+    }
+    
+    subscript(key: Friendship.RecordKey) -> Any? {
         get { return self[key.rawValue] }
         set { self[key.rawValue] = newValue as? CKRecordValue }
     }

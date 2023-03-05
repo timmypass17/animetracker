@@ -56,7 +56,9 @@ struct AnimeRecord: Codable {
         animeID = record[.animeID] as? Int ?? 0
         animeType = AnimeType(rawValue: record[.animeType] as? String ?? "") ?? .anime
         seen = record[.seen] as? Int ?? 0
+
     }
+    
     
     var recordID: CKRecord.ID {
         CKRecord.ID(recordName: id)

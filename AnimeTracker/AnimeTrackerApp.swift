@@ -20,11 +20,12 @@ struct AnimeTrackerApp: App {
     // inject repo into viewmodel to share repo with multible viewmodels
     init() {
         // https://swiftui-lab.com/random-lessons/#data-10
-        _appState = StateObject(wrappedValue: AppState())
+        let appState = AppState()
         let animeRepository = AnimeRepository()
+        _appState = StateObject(wrappedValue: appState)
         _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository))
         _discoverViewModel = StateObject(wrappedValue: DiscoverViewModel(animeRepository: animeRepository))
-        _friendViewModel = StateObject(wrappedValue: FriendViewModel())
+        _friendViewModel = StateObject(wrappedValue: FriendViewModel(animeRepository: animeRepository, appState: appState))
     }
     
     var body: some Scene {
