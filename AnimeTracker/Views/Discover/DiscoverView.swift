@@ -28,14 +28,6 @@ struct DiscoverView: View {
                     }
                 }
             }
-            .toolbar {
-                ToolbarItem {
-                    Button(action: {}) {
-                        Image(systemName: "info.circle")
-                    }
-                }
-                
-            }
             .searchable(
                 text: $discoverViewModel.searchText,
                 prompt: discoverViewModel.selectedAnimeType == .anime ? "Search Anime" : "Search Mangas, Novels, etc"

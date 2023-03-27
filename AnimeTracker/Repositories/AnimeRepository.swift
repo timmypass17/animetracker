@@ -27,175 +27,13 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         }
     }
     
-    
-    private func loadUserAnimeList() {
+    func loadUserAnimeList() {
         fetchRecords { [self] records in
             Task {
                 animeData = await fetchAnimeOrManga(records: records)
+                print("Got animes")
             }
         }
-    }
-    
-    /// Retrieves animes and mangas using Anime records from Cloudkit.
-    /// - Parameters:
-    ///     - records: List of Anime records.
-    /// - Returns: Animes from MyAnimeList.
-    func fetchAnimeOrManga(records: [CKRecord]) async -> [AnimeNode] {
-        var animes: [AnimeNode] = []
-        do {
-            for record in records {
-                guard let type = record[.animeType] as? String else { continue }
-                guard let animeType = AnimeType(rawValue: type) else { continue }
-                guard let animeID = record[.animeID] as? Int else { continue }
-                
-                var node: AnimeNode
-                if animeType == .anime {
-                    node = try await self.fetchAnime(animeID: animeID)
-                } else {
-                    node = try await self.fetchManga(mangaID: animeID)
-                }
-                node.record = AnimeRecord(record: record)
-                animes.append(node)
-            }
-            
-            animeData.append(contentsOf: animes)
-        } catch {
-            print("Error fetching animes using records: \(error)")
-            return []
-        }
-        return animes
-    }
-    
-    /// https://medium.com/swift-blondie/cloudkit-helper-4643cd73b0be
-    /// Retrieves all records satifying the query.
-    /// Recursively calls itself, passing next cursor to get next batch until we get all the records.
-    /// - Parameters:
-    ///     - cursor:  An object that marks the stopping point for a query and the starting point for retreivign the remaining results
-    ///     - completionHandler: Returned result after function is done calling.
-    /// - Returns: Returns all records using the query.
-    func fetchRecords(cursor: CKQueryOperation.Cursor? = nil, completion: @escaping (([CKRecord]) -> Void)) {
-        guard let userID = userID else { return }
-        let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
-        // different name from cloudkit dashboard for some reason. Also need to add index to make it queryable
-        let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
-        let query = CKQuery(recordType: "Anime", predicate: predicate)
-        query.sortDescriptors = [
-            // Schema -> Indexes -> Anime -> Add basic index -> modifiedTimestamp (different name) https://developer.apple.com/documentation/cloudkit/ckrecord/1462227-modificationdate
-            NSSortDescriptor(key: "modificationDate", ascending: false)
-        ]
-        
-        let operation: CKQueryOperation
-        if let cursor = cursor { // if cursor exist, means there is more data to be fetched
-            operation = CKQueryOperation(cursor: cursor)
-        } else { // inital query
-            operation = CKQueryOperation(query: query)
-        }
-        
-        var records: [CKRecord] = []
-        operation.recordMatchedBlock = { (recordID, result) in
-            switch result {
-            case .success(let record):
-                //                print("Adding record")
-                records.append(record)
-            case .failure(let error):
-                print("Error with recordMatchedBlock: \(error)")
-            }
-        }
-        
-        operation.queryResultBlock = { result in
-            switch result {
-            case .success(let cursor):
-                if let cursor = cursor {
-                    //                    print("Found cursor, fetching more records")
-                    self.fetchRecords(cursor: cursor) { fetchedRecords in
-                        records.append(contentsOf: fetchedRecords)
-                        //                        print("queryResultBlock handler: \(records.count)")
-                        completion(records)
-                    }
-                } else {
-                    //                    print("no more cursor: \(records.count)")
-                    completion(records)
-                }
-            case .failure(let error):
-                print("Error with queryResultBlock: \(error)")
-            }
-        }
-        
-        operation.resultsLimit = 3
-        database.add(operation)
-    }
-    
-    public typealias YourFetchCompletionHandler = (_ records: [CKRecord]?, _ cursor: CKQueryOperation.Cursor?) -> (Void)
-    
-    /// https://stackoverflow.com/questions/48965667/batch-fetching-with-cloudkit-ckqueryoperation
-    /// Retrieves x amount of records and next cursor (that points to the next x records).
-    /// - Parameters:
-    ///     - isFirstFetch: To solve infinite loop
-    ///     - cursor:  An object that marks the stopping point for a query and the starting point for retreivign the remaining results
-    ///     - completionHandler: Returned result after function is done calling.
-    /// - Returns: Returns the batch of records and a cursor pointing to the next batch.
-    public func fetchRecordsInBatches(isFirstFetch: Bool, _ cursor: CKQueryOperation.Cursor? = nil, completionHandler handler: @escaping YourFetchCompletionHandler) -> Void {
-        guard let userID = userID else { return }
-        
-        let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
-        // different name from cloudkit dashboard for some reason. Also need to add index to make it queryable
-        let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
-        let query = CKQuery(recordType: "Anime", predicate: predicate)
-        query.sortDescriptors = [
-            // Schema -> Indexes -> Anime -> Add basic index -> modifiedTimestamp (different name) https://developer.apple.com/documentation/cloudkit/ckrecord/1462227-modificationdate
-            NSSortDescriptor(key: "modificationDate", ascending: false)
-        ]
-        
-        var operation: CKQueryOperation
-        
-        if isFirstFetch {
-            print("first fetch")
-            // Create the operation for the first time
-            operation = CKQueryOperation(query: query)
-        } else if let cursor = cursor {
-            print("got cursor")
-            // Operation to fetch another 10 records.
-            operation = CKQueryOperation(cursor: cursor)
-        } else {
-            print("end of fetching")
-            // If not first time and if cursor is nil (which means
-            // there is no more data) then return empty array
-            // or whatever you want
-            
-            handler([], nil)
-            return
-        }
-        
-        var records: [CKRecord] = [CKRecord]()
-        
-        operation.recordMatchedBlock = { (recordID, result) in
-            switch result {
-            case .success(let record):
-                print("Adding record")
-                records.append(record)
-            case .failure(let error):
-                print("Error with recordMatchedBlock: \(error)")
-            }
-        }
-        
-        operation.queryResultBlock = { result in
-            switch result {
-            case .success(let cursor):
-                if let cursor = cursor {
-                    print("Passing cursor")
-                    handler(records, cursor)
-                } else {
-                    print("no more cursor")
-                    handler(records, nil)
-                }
-            case .failure(let error):
-                print("Error with queryResultBlock: \(error)")
-            }
-        }
-        
-        // Fetch only 3 records
-        operation.resultsLimit = 3
-        database.add(operation)
     }
     
     /// Retrieves specific anime from MyAnimeList database using anime's id.
@@ -389,6 +227,7 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
         animeData[index].record.seen = animeNode.record.seen
         animeData[index].record.animeID = animeNode.record.animeID
         animeData[index].record.animeType = animeNode.node.animeType
+        animeData[index].record.modificationDate = Date()
         
         do {
             let (saveResult, _) = try await database.modifyRecords(saving: [animeNode.record.record], deleting: [], savePolicy: .changedKeys)
@@ -429,7 +268,169 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             print("\(TAG) Failed to remove \(String(describing: animeNode.node.title)) \n \(error)")
         }
     }
+    
+    /// Retrieves animes and mangas using Anime records from Cloudkit.
+    /// - Parameters:
+    ///     - records: List of Anime records.
+    /// - Returns: Animes from MyAnimeList.
+    func fetchAnimeOrManga(records: [CKRecord]) async -> [AnimeNode] {
+        var animes: [AnimeNode] = []
+        do {
+            for record in records {
+                guard let type = record[.animeType] as? String else { continue }
+                guard let animeType = AnimeType(rawValue: type) else { continue }
+                guard let animeID = record[.animeID] as? Int else { continue }
+                
+                var node: AnimeNode
+                if animeType == .anime {
+                    node = try await self.fetchAnime(animeID: animeID)
+                } else {
+                    node = try await self.fetchManga(mangaID: animeID)
+                }
+                node.record = AnimeRecord(record: record)
+                print(node.record.creationDate)
+                animes.append(node)
+            }
+            
+            animeData.append(contentsOf: animes)
+        } catch {
+            print("Error fetching animes using records: \(error)")
+            return []
+        }
+        return animes
+    }
 
+    /// https://medium.com/swift-blondie/cloudkit-helper-4643cd73b0be
+    /// Retrieves all records satifying the query.
+    /// Recursively calls itself, passing next cursor to get next batch until we get all the records.
+    /// - Parameters:
+    ///     - cursor:  An object that marks the stopping point for a query and the starting point for retreivign the remaining results
+    ///     - completionHandler: Returned result after function is done calling.
+    /// - Returns: Returns all records using the query.
+    func fetchRecords(cursor: CKQueryOperation.Cursor? = nil, completion: @escaping (([CKRecord]) -> Void)) {
+        guard let userID = userID else { return }
+        let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
+        // different name from cloudkit dashboard for some reason. Also need to add index to make it queryable
+        let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
+        let query = CKQuery(recordType: "Anime", predicate: predicate)
+        query.sortDescriptors = [
+            // Schema -> Indexes -> Anime -> Add basic index -> modifiedTimestamp (different name) https://developer.apple.com/documentation/cloudkit/ckrecord/1462227-modificationdate
+            NSSortDescriptor(key: "modificationDate", ascending: false)
+        ]
+        
+        let operation: CKQueryOperation
+        if let cursor = cursor { // if cursor exist, means there is more data to be fetched
+            operation = CKQueryOperation(cursor: cursor)
+        } else { // inital query
+            operation = CKQueryOperation(query: query)
+        }
+        
+        var records: [CKRecord] = []
+        operation.recordMatchedBlock = { (recordID, result) in
+            switch result {
+            case .success(let record):
+                //                print("Adding record")
+                records.append(record)
+            case .failure(let error):
+                print("Error with recordMatchedBlock: \(error)")
+            }
+        }
+        
+        operation.queryResultBlock = { result in
+            switch result {
+            case .success(let cursor):
+                if let cursor = cursor {
+                    //                    print("Found cursor, fetching more records")
+                    self.fetchRecords(cursor: cursor) { fetchedRecords in
+                        records.append(contentsOf: fetchedRecords)
+                        //                        print("queryResultBlock handler: \(records.count)")
+                        completion(records)
+                    }
+                } else {
+                    //                    print("no more cursor: \(records.count)")
+                    completion(records)
+                }
+            case .failure(let error):
+                print("Error with queryResultBlock: \(error)")
+            }
+        }
+        
+        operation.resultsLimit = 3
+        database.add(operation)
+    }
+    
+    public typealias YourFetchCompletionHandler = (_ records: [CKRecord]?, _ cursor: CKQueryOperation.Cursor?) -> (Void)
+    
+    /// https://stackoverflow.com/questions/48965667/batch-fetching-with-cloudkit-ckqueryoperation
+    /// Retrieves x amount of records and next cursor (that points to the next x records).
+    /// - Parameters:
+    ///     - isFirstFetch: To solve infinite loop
+    ///     - cursor:  An object that marks the stopping point for a query and the starting point for retreivign the remaining results
+    ///     - completionHandler: Returned result after function is done calling.
+    /// - Returns: Returns the batch of records and a cursor pointing to the next batch.
+    public func fetchRecordsInBatches(isFirstFetch: Bool, _ cursor: CKQueryOperation.Cursor? = nil, completionHandler handler: @escaping YourFetchCompletionHandler) -> Void {
+        guard let userID = userID else { return }
+        
+        let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
+        // different name from cloudkit dashboard for some reason. Also need to add index to make it queryable
+        let predicate = NSPredicate(format: "creatorUserRecordID == %@", recordToMatch)
+        let query = CKQuery(recordType: "Anime", predicate: predicate)
+        query.sortDescriptors = [
+            // Schema -> Indexes -> Anime -> Add basic index -> modifiedTimestamp (different name) https://developer.apple.com/documentation/cloudkit/ckrecord/1462227-modificationdate
+            NSSortDescriptor(key: "modificationDate", ascending: false)
+        ]
+        
+        var operation: CKQueryOperation
+        
+        if isFirstFetch {
+            print("first fetch")
+            // Create the operation for the first time
+            operation = CKQueryOperation(query: query)
+        } else if let cursor = cursor {
+            print("got cursor")
+            // Operation to fetch another 10 records.
+            operation = CKQueryOperation(cursor: cursor)
+        } else {
+            print("end of fetching")
+            // If not first time and if cursor is nil (which means
+            // there is no more data) then return empty array
+            // or whatever you want
+            
+            handler([], nil)
+            return
+        }
+        
+        var records: [CKRecord] = [CKRecord]()
+        
+        operation.recordMatchedBlock = { (recordID, result) in
+            switch result {
+            case .success(let record):
+                print("Adding record")
+                records.append(record)
+            case .failure(let error):
+                print("Error with recordMatchedBlock: \(error)")
+            }
+        }
+        
+        operation.queryResultBlock = { result in
+            switch result {
+            case .success(let cursor):
+                if let cursor = cursor {
+                    print("Passing cursor")
+                    handler(records, cursor)
+                } else {
+                    print("no more cursor")
+                    handler(records, nil)
+                }
+            case .failure(let error):
+                print("Error with queryResultBlock: \(error)")
+            }
+        }
+        
+        // Fetch only 3 records
+        operation.resultsLimit = 3
+        database.add(operation)
+    }
 }
 
 enum FetchError: Error {

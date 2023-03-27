@@ -13,28 +13,33 @@ struct FriendAnimeList: View {
     var user: User
     
     var body: some View {
-        VStack {
-            ForEach(animes, id: \.node.id) { anime in
-                HStack {
-                    Text(anime.node.getTitle())
-                    
+        ZStack {
+            Color.ui.background
+                .ignoresSafeArea()
+
+
+            ScrollView {
+                VStack {
+                    AnimeList(animeData: $animes)
                     Spacer()
-                    
-                    Text("\(anime.record.seen) / \(anime.node.getNumEpisodesOrChapters())")
+                }
+                .padding()
+            }
+            .navigationTitle(Text("\(user.firstName)'s Watch List"))
+            .onAppear {
+                Task {
+                    animes = await friendViewModel.getAnimeData(user: user)
+                    print(animes.map{ $0.node.title })
                 }
             }
         }
-        .onAppear {
-            Task {
-                animes = await friendViewModel.getAnimeData(user: user)
-                print(animes.map{ $0.node.title })
-            }
-        }
+//        .background(Color.ui.background)
     }
 }
 
 struct FriendAnimeList_Previews: PreviewProvider {
     static var previews: some View {
         FriendAnimeList(animes: AnimeCollection.sampleData, user: User.sampleUsers[0])
+            .environmentObject(FriendViewModel(animeRepository: AnimeRepository(), appState: AppState()))
     }
 }

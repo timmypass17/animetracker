@@ -13,41 +13,39 @@ struct FriendCell: View {
     
     var body: some View {
         HStack {
-            HStack(alignment: .top) {
-                Circle()
-                    .frame(width: 60)
+            NavigationLink(destination: FriendAnimeList(user: user)) {
                 
-                VStack(alignment: .leading) {
+                HStack(alignment: .center) {
+                    
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 20))
+                    
                     Text("\(user.firstName) \(user.lastName)")
                         .font(.headline)
+                        .lineLimit(1)
                     
-                    Text("Friends with")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Currently watching Blue Lock")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Spacer()
                 }
-                
-                Spacer()
             }
+            .padding()
+            .buttonStyle(.plain)
             
-            FriendButton(
-                friendStatus: .constant(.rejected),
-                user: user,
-                followButtonTapped: friendViewModel.followButtonTapped
-            )
+            Menu {
+                Button("Remove Friend", role: .destructive) {
+                    Task {
+                        await friendViewModel.removeFriend(user)
+                    }
+                }
+            } label: {
+                Button(action: {}) {
+                    Image(systemName: "ellipsis")
+                }
+                .foregroundColor(.white)
+            }
+            .padding()
             
         }
-        .padding()
         .background(Color.ui.background)
-        .onTapGesture {
-            friendViewModel.isShowingFriendProfile = true
-        }
-        .sheet(isPresented: $friendViewModel.isShowingFriendProfile) {
-            FriendAnimeList(user: user)
-        }
     }
 }
 

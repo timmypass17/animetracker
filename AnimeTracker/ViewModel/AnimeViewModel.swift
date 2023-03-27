@@ -37,6 +37,11 @@ class AnimeViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
+    func loadUserAnimeList() async {
+        await animeRepository.loadUserAnimeList()
+    }
+    
+    
     func fetchAnime(id: Int) async throws -> AnimeNode {
         try await animeRepository.fetchAnime(animeID: id)
     }
@@ -81,12 +86,12 @@ class AnimeViewModel: ObservableObject {
             case .newest:
                 selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? Int.max > $1.node.start_season?.year ?? Int.max }
             case .date_created:
-//                selectedAnimeData = selectedAnimeData.sorted { $0.record.record.creationDate! > $1.record.creationDate! }
-                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
+                selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate > $1.record.creationDate }
+//                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
 
             case .last_modified:
-//                selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate! > $1.record.modificationDate! }
-                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
+                selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate > $1.record.modificationDate }
+//                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
 
             }
         }

@@ -66,6 +66,11 @@ struct HomeView: View {
             // TODO: use user saved defaults
             animeViewModel.applySort()
         }
+        .refreshable {
+            Task{
+                await animeViewModel.loadUserAnimeList()
+            }
+        }
         
     }
 }

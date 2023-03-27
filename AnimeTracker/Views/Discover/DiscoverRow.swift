@@ -65,7 +65,7 @@ struct DiscoverRow: View {
             Task {
                 if animeCollection.data.isEmpty {
                     animeCollection = try await loadMore(season, year, animeType, 0)
-                    print("fetching \(season) \(year) \(animeType)")
+//                    print("fetching \(season) \(year) \(animeType)")
                 }
             }
         }

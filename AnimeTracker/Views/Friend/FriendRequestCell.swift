@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct RequestCell: View {
+struct FriendRequestCell: View {
     @EnvironmentObject var friendViewModel: FriendViewModel
     let user: User
     let status: Friendship
@@ -16,7 +16,7 @@ struct RequestCell: View {
         HStack {
             HStack {
                 Circle()
-                    .frame(width: 60)
+                    .frame(width: 40)
                 
                 VStack(alignment: .leading) {
                     Text("\(user.firstName) \(user.lastName)")
@@ -27,17 +27,14 @@ struct RequestCell: View {
             }
             
             AcceptButton(friend: user, status: status, acceptButtonTapped: friendViewModel.acceptButtonTapped)
+                .padding(.trailing)
             
-            Button("Decline") {
+            Button {
+                // Handle decline
+            } label: {
+                Image(systemName: "xmark")
             }
-            .font(.subheadline)
-            .foregroundColor(.white)
-            .padding(.vertical, 4)
-            .frame(width: 80)
-            .background {
-                RoundedRectangle(cornerRadius: 4)
-                    .foregroundColor(Color.ui.tag)
-            }
+            .foregroundColor(.secondary)
             
             
         }
@@ -46,9 +43,9 @@ struct RequestCell: View {
     }
 }
 
-struct RequestCell_Previews: PreviewProvider {
+struct AcceptCell_Previews: PreviewProvider {
     static var previews: some View {
-        RequestCell(
+        FriendRequestCell(
             user: User.sampleUsers[1],
             status: Friendship.sampleFriendShipRequest
         )
@@ -63,19 +60,16 @@ struct AcceptButton: View {
     var acceptButtonTapped: (User, Friendship) async -> Void
 
     var body: some View {
-        Button("Accept") {
+        Button {
             Task {
                 await acceptButtonTapped(friend, status)
             }
+        } label: {
+            Image(systemName: "checkmark")
+                .foregroundColor(.secondary)
         }
-        .font(.subheadline)
-        .foregroundColor(.white)
-        .padding(.vertical, 4)
-        .frame(width: 80)
-        .background {
-            RoundedRectangle(cornerRadius: 4)
-                .foregroundColor(.accentColor)
-        }
+        .foregroundColor(.secondary)
+
     }
     
 }

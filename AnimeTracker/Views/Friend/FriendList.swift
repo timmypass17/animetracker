@@ -9,10 +9,9 @@ import SwiftUI
 
 struct FriendList: View {
     @EnvironmentObject var friendViewModel: FriendViewModel
-    @Binding var users: [User]
 
     var body: some View {
-        ForEach(users) { friend in
+        ForEach(friendViewModel.friends) { friend in
             FriendCell(user: friend)
         }
     }
@@ -20,6 +19,7 @@ struct FriendList: View {
 
 struct FriendList_Previews: PreviewProvider {
     static var previews: some View {
-        FriendList(users: .constant(User.sampleUsers))
+        FriendList()
+            .environmentObject(FriendViewModel(animeRepository: AnimeRepository(), appState: AppState()))
     }
 }

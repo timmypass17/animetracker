@@ -9,20 +9,29 @@ import SwiftUI
 
 struct AddFriendView: View {
     @EnvironmentObject var friendViewModel: FriendViewModel
-
+    @EnvironmentObject var appState: AppState
+    @State var searchText: String = ""
+    
+    var name: String {
+        let firstName = appState.user?.firstName ?? ""
+        let lastName = appState.user?.lastName ?? ""
+        return "\(firstName) \(lastName)"
+    }
+    
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                FriendList(users: $friendViewModel.userSearchResult)
+            VStack(alignment: .center, spacing: 0) {
+                Text("Your name is: \(name)")
+                    .foregroundColor(.secondary)
+
+                FriendList()
             }
         }
         .navigationTitle("Add Friend")
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.ui.background)
-        .searchable(
-            text: $friendViewModel.searchText,
-            prompt: "Search for other users by name"
-        ) {
-            FriendList(users: $friendViewModel.userSearchResult)
+        .searchable(text: $friendViewModel.searchText) {
+            Text("\(friendViewModel.searchText)")
         }
         .onSubmit(of: .search) {
             Task {
@@ -38,6 +47,7 @@ struct AddFriendView_Previews: PreviewProvider {
         NavigationStack {
             AddFriendView()
                 .environmentObject(FriendViewModel(animeRepository: AnimeRepository(), appState: AppState()))
+                .environmentObject(AppState())
         }
     }
 }

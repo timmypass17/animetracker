@@ -16,24 +16,11 @@ struct AnimeCollection: Codable {
 struct AnimeNode: Codable {
     var node: Anime
     var record: AnimeRecord = AnimeRecord()
-
-//    var record: CKRecord = CKRecord(recordType: Anime.RecordKey.recordType.rawValue)
     
     // put stuff in json tree here.
     private enum CodingKeys: CodingKey {
         case node
     }
-    
-    // note: explicity create variables for each record field. Updating record's field doesnt trigger ui.
-    // If value doesn't get modified ever, we can just create a computed value
-    // Better to store the data from the CKRecord in your model as individual fields or properties  instead of entire CKRecord
-    
-
-    // doesnt update ui if modified
-//    var seen: Int {
-//        get { record[Anime.RecordKey.seen] as? Int ?? 0 }
-//        set { record[Anime.RecordKey.seen] = newValue }
-//    }
 }
 
 // Same name as api so its confusing but this is the record model we use to store onto cloudkit
@@ -42,21 +29,25 @@ struct AnimeRecord: Codable {
     var animeID: Int
     var animeType: AnimeType
     var seen: Int
+    var creationDate: Date
+    var modificationDate: Date
     
-    init(id: String = UUID().uuidString, animeID: Int = 0, animeType: AnimeType = .anime, seen: Int = 0) {
+    init(id: String = UUID().uuidString, animeID: Int = 0, animeType: AnimeType = .anime, seen: Int = 0, creationDate: Date = Date(), modificationDate: Date = Date()) {
         self.id = id
         self.animeID = animeID
         self.animeType = animeType
         self.seen = seen
+        self.creationDate = creationDate
+        self.modificationDate = modificationDate
     }
     
     init(record: CKRecord) {
-        id = record.recordID.recordName
-//        self.createdAt = record.creationDate
-        animeID = record[.animeID] as? Int ?? 0
-        animeType = AnimeType(rawValue: record[.animeType] as? String ?? "") ?? .anime
-        seen = record[.seen] as? Int ?? 0
-
+        self.id = record.recordID.recordName
+        self.animeID = record[.animeID] as? Int ?? 0
+        self.animeType = AnimeType(rawValue: record[.animeType] as? String ?? "") ?? .anime
+        self.seen = record[.seen] as? Int ?? 0
+        self.creationDate = record.creationDate!
+        self.modificationDate = record.modificationDate!
     }
     
     
@@ -69,7 +60,6 @@ struct AnimeRecord: Codable {
         record[.animeID] = animeID
         record[.animeType] = animeType.rawValue // can't store enum directly, unwrap it
         record[.seen] = seen
-        
         return record
     }
     
@@ -81,6 +71,15 @@ extension AnimeRecord {
         case animeID
         case animeType
     }
+    
+    struct RecordError: LocalizedError {
+        var localizedDescription: String
+        
+        static func missingKey(_ key: RecordKey) -> RecordError {
+            RecordError(localizedDescription: "Missing required key \(key.rawValue)")
+        }
+    }
+
 }
 
 struct Anime: Codable {

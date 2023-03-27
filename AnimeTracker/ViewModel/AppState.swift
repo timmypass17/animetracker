@@ -25,9 +25,10 @@ class AppState: ObservableObject {
     init() {
         Task {
             await getiCloudStatus() // Check if user is logged into iCloud
-//            await requestPermission()
+            await requestPermission() // need this to be able to get icloud identity
             await getiCloudUserIdentity()   // Get icloud user's info (name, email, phonenumber)
             await getUser()
+
             // Get users record from cloudkit
             
 //            await getUserRecord { [self] record in
@@ -82,6 +83,8 @@ class AppState: ObservableObject {
             if let identity = try await container.userIdentity(forUserRecordID: userID) {
                 // can look up user's name, can't look up email unless we used email
                 self.identity = identity
+                print(identity.nameComponents?.givenName)
+                print(identity.nameComponents?.familyName)
             } else {
                 print("\(TAG) failed to get icloud identity")
             }

@@ -20,6 +20,17 @@ extension CKRecord {
         set { self[key.rawValue] = newValue as? CKRecordValue }
     }
     
+//    subscript<T>(field: User.RecordKey) -> T? {
+//        get {
+//            return self[field.rawValue] as? T
+//        }
+//        set {
+//            if let value = newValue as? CKRecordValue {
+//                self[field.rawValue] = value
+//            }
+//        }
+//    }
+    
     subscript(key: User.RecordKey) -> Any? {
         get { return self[key.rawValue] }
         set { self[key.rawValue] = newValue as? CKRecordValue }
