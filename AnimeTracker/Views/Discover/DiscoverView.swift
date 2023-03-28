@@ -28,6 +28,17 @@ struct DiscoverView: View {
                     }
                 }
             }
+            .toolbar {
+                ToolbarItem {
+                    Button(action: { discoverViewModel.isShowingSheet.toggle() }) {
+                        Image(systemName: "info.circle")
+                    }
+                }
+                
+            }
+            .sheet(isPresented: $discoverViewModel.isShowingSheet) {
+                InfoView()
+            }
             .searchable(
                 text: $discoverViewModel.searchText,
                 prompt: discoverViewModel.selectedAnimeType == .anime ? "Search Anime" : "Search Mangas, Novels, etc"

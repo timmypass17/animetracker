@@ -14,6 +14,7 @@ class DiscoverViewModel: ObservableObject {
     @Published var searchResults: [AnimeNode] = []
     @Published var searchText = ""
     @Published var selectedAnimeType: AnimeType = .anime
+    @Published var isShowingSheet = false
     
     private var cancellables = Set<AnyCancellable>()
     var recentSeasons: [(Season, Int)] = []
