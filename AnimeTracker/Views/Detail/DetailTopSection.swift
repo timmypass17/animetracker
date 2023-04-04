@@ -9,34 +9,67 @@ import SwiftUI
 
 struct DetailTopSection: View {
     let animeNode: AnimeNode
+    @State var isTitleExpanded = false
+    @State var isJapaneseTitleExpanded = false
     
     var body: some View {
         HStack(alignment: .top) {
             DetailPoster(poster: animeNode.node.main_picture, height: 200)
-
             
             VStack(alignment: .leading, spacing: 0) {
                 Text(animeNode.node.animeCellHeader())
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(Color.ui.textColor.opacity(0.6))
                 
                 Text(animeNode.node.getTitle())
                     .font(.system(size: 24))
-                
+                    .foregroundColor(Color.ui.textColor)
+                    .lineLimit(isTitleExpanded ? nil : 2)
+//                    .onTapGesture {
+//                        isTitleExpanded.toggle()
+//                    }
+//
                 Text(animeNode.node.getJapaneseTitle())
-                    .foregroundColor(.white.opacity(0.6))
-                
-                HStack {
-                    Label("\(animeNode.node.getNumEpisodesOrChapters()) Episodes", systemImage: "tv")
+                    .foregroundColor(Color.ui.textColor.opacity(0.6))
+                    .lineLimit(isJapaneseTitleExpanded ? nil : 2)
+//                    .onTapGesture {
+//                        isJapaneseTitleExpanded.toggle()
+//                    }
+
+                if animeNode.node.animeType == .anime {
+                    HStack {
+                        Label("\(animeNode.node.getNumEpisodesOrChapters()) \(animeNode.node.getEpisodeOrChapter())",
+                              systemImage: "tv"
+                        )
                         .font(.system(size: 12))
-                    
-                    
-                    Circle()
-                        .frame(width: 3 )
-                    
-                    Label("\(animeNode.node.getEpisodeMinutes())", systemImage: "clock")
+                        .foregroundColor(Color.ui.textColor)
+                        
+                        
+                        Circle()
+                            .frame(width: 3)
+                        
+                        Label("\(animeNode.node.getEpisodeMinutes())", systemImage: "clock")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.ui.textColor)
+                    }
+                    .padding(.top, 8)
+                } else {
+                    HStack {
+                        Label("\(animeNode.node.getNumChapters()) Chapters", systemImage: "book")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.ui.textColor)
+                        
+                        Circle()
+                            .frame(width: 3)
+                        
+                        Label("\(animeNode.node.getNumVolume()) Volumes",
+                              systemImage: "books.vertical"
+                        )
                         .font(.system(size: 12))
+                        .foregroundColor(Color.ui.textColor)
+                        
+                    }
+                    .padding(.top, 8)
                 }
-                .padding(.top, 8)
                                 
                 HStack {
                     VStack(spacing: 2) {
@@ -47,12 +80,9 @@ struct DetailTopSection: View {
                             .background(RoundedRectangle(cornerRadius: 2).fill(.blue))
                         
                         HStack(spacing: 4) {
-//                            if animeNode.node.mean != nil {
-//                                Image(systemName: "star")
-//                            }
-                            
                             Text(animeNode.node.getMean())
                                 .font(.system(size: 16))
+                                .foregroundColor(Color.ui.textColor)
                         }
                     }
                     
@@ -66,10 +96,12 @@ struct DetailTopSection: View {
                         HStack(spacing: 0) {
                             if animeNode.node.rank != nil {
                                 Image(systemName: "number")
+                                    .foregroundColor(Color.ui.textColor)
                             }
                             
                             Text(animeNode.node.getRank())
                                 .font(.system(size: 16))
+                                .foregroundColor(Color.ui.textColor)
                         }
                     }
                     VStack(spacing: 2) {
@@ -81,8 +113,11 @@ struct DetailTopSection: View {
                         
                         HStack(spacing: 4) {
                             Image(systemName: "person.2")
+                                .foregroundColor(Color.ui.textColor)
+
                             Text("\(animeNode.node.getNumListUser())")
                                 .font(.system(size: 16))
+                                .foregroundColor(Color.ui.textColor)
                         }
                     }
                     
@@ -102,6 +137,5 @@ struct DetailTopSection: View {
 struct DetailTopSection_Previews: PreviewProvider {
     static var previews: some View {
         DetailTopSection(animeNode: AnimeCollection.sampleData[0])
-            .background(.black)
     }
 }

@@ -29,8 +29,9 @@ struct DiscoverAnimeList: View {
     
     var body: some View {
         LazyVStack {
+             TopAiringAnimeView()
+            
             ForEach(years.reversed(), id: \.self) { year in
-                
                 if isRelevant(season: .fall, year: year) {
                     DiscoverRow(
                         title: "Fall \(year)",
@@ -39,7 +40,7 @@ struct DiscoverAnimeList: View {
                         animeType: .anime,
                         geometry: geometry,
                         loadMore: discoverViewModel.loadMoreAnimes)
-                    .padding(.top)
+                    .padding(.top, 6)
                 }
                 
                 if isRelevant(season: .summer, year: year) {
@@ -51,7 +52,7 @@ struct DiscoverAnimeList: View {
                         animeType: .anime,
                         geometry: geometry,
                         loadMore: discoverViewModel.loadMoreAnimes)
-                    .padding(.top)
+                    .padding(.top, 6)
                 }
                 
                 if isRelevant(season: .spring, year: year) {
@@ -63,7 +64,7 @@ struct DiscoverAnimeList: View {
                         animeType: .anime,
                         geometry: geometry,
                         loadMore: discoverViewModel.loadMoreAnimes)
-                    .padding(.top)
+                    .padding(.top, 6)
                 }
                 
                 if isRelevant(season: .winter, year: year) {
@@ -75,7 +76,7 @@ struct DiscoverAnimeList: View {
                         animeType: .anime,
                         geometry: geometry,
                         loadMore: discoverViewModel.loadMoreAnimes)
-                    .padding(.top)
+                    .padding(.top, 6)
                 }
             }
         }
@@ -92,7 +93,7 @@ struct DiscoverAnimeList: View {
             .fall: 3
         ]
         
-        return prio[season]! <= prio[currentSeason]!
+        return prio[season]! <= (prio[currentSeason]! + 1) % 4
     }
     
     func getCurrentSeason() -> Season {

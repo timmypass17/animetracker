@@ -9,7 +9,6 @@ import SwiftUI
 
 struct DetailProgress: View {
     @Binding var animeNode: AnimeNode
-//    @Binding var current_episode: Float
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -26,12 +25,15 @@ struct DetailProgress: View {
                     
                     Text("Episodes:")
                         .font(.caption)
+                        .foregroundColor(Color.ui.textColor)
                     
                     Text("\(animeNode.record.seen) /")
                         .font(.caption)
+                        .foregroundColor(Color.ui.textColor)
                     
                     Text("\(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?" : String(animeNode.node.getNumEpisodesOrChapters()))")
                         .font(.caption)
+                        .foregroundColor(Color.ui.textColor)
                 }
             }
             .progressViewStyle(.linear)

@@ -12,7 +12,7 @@ import Combine
 
 @MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
 class AnimeViewModel: ObservableObject {
-    @Published var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
+    var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
     @Published var animeData: [AnimeNode] = []  // original anime data
     @Published var selectedAnimeData: [AnimeNode] = []  // filtered version of anime data
     @Published var filterResults: [AnimeNode] = []
@@ -40,7 +40,6 @@ class AnimeViewModel: ObservableObject {
     func loadUserAnimeList() async {
         await animeRepository.loadUserAnimeList()
     }
-    
     
     func fetchAnime(id: Int) async throws -> AnimeNode {
         try await animeRepository.fetchAnime(animeID: id)
@@ -87,12 +86,8 @@ class AnimeViewModel: ObservableObject {
                 selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? Int.max > $1.node.start_season?.year ?? Int.max }
             case .date_created:
                 selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate > $1.record.creationDate }
-//                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
-
             case .last_modified:
                 selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate > $1.record.modificationDate }
-//                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
-
             }
         }
     }

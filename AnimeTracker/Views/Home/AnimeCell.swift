@@ -24,11 +24,11 @@ struct AnimeCell: View {
                 VStack(alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack {
-//                            Text(animeNode.node.media_type)
                             Text(animeNode.node.animeCellHeader())
                             
                             Spacer()
-
+                            
+//                            Image(systemName: "ellipsis")
                         }
                         .foregroundColor(.secondary)
                         .font(.caption)
@@ -42,9 +42,10 @@ struct AnimeCell: View {
                         
                         GenreRow(animeNode: animeNode, maxTags: 2)
                             .font(.caption)
+                            .scrollDisabled(true)
+                        
                     }
                     
-                    // progressiveView likes float
                     ProgressView(
                         value: Float(animeNode.record.seen),
                         total: Float(animeNode.node.getNumEpisodesOrChapters())
@@ -90,6 +91,7 @@ struct AnimeCell: View {
 struct AnimeCell_Previews: PreviewProvider {
     static var previews: some View {
         AnimeCell(animeNode: .constant(AnimeCollection.sampleData[0]))
+            .previewLayout(.sizeThatFits)
     }
 }
 

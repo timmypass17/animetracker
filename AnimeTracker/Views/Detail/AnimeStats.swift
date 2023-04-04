@@ -9,28 +9,45 @@ import SwiftUI
 
 struct AnimeStats: View {
     let animeNode: AnimeNode
-        
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text("Information".uppercased())
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Color.ui.textColor.opacity(0.6))
+            
+            StatsCell(title: "Alternate Title", image: "t.square.fill", value: animeNode.node.getTitle())
+            
+            StatsCell(title: "Type", image: "magnifyingglass", value: animeNode.node.getMediaType().uppercased())
             
             Group {
-                StatsCell(title: "Alternate Title", image: "clock", value: animeNode.node.getTitle())
-                StatsCell(title: "Type", image: "clock", value: animeNode.node.getMediaType())
-                StatsCell(title: "Episodes", image: "clock", value: String(animeNode.node.getNumEpisodesOrChapters()))
-                StatsCell(title: "Status", image: "clock", value: animeNode.node.getStatus())
-                StatsCell(title: "Aired", image: "clock", value: animeNode.node.getAiringTime())
-                StatsCell(title: "Premiered", image: "clock", value: animeNode.node.getSeasonYear())
-                StatsCell(title: "Broadcast", image: "clock", value: animeNode.node.getBroadcast())
+                StatsCell(
+                    title: animeNode.node.getEpisodesOrChapters(),
+                    image: animeNode.node.animeType == .anime ? "tv" : "book",
+                    value: String(animeNode.node.getNumEpisodesOrChapters())
+                )
+                
+                if animeNode.node.num_volumes != nil {
+                    StatsCell(title: "Volumes", image: "books.vertical", value: animeNode.node.getNumVolume())
+                }
+                
+                StatsCell(title: "Status", image: "leaf", value: animeNode.node.getStatus())
+                
+                StatsCell(title: "Aired", image: "calendar", value: animeNode.node.getAiringTime())
+                
+                if animeNode.node.start_season != nil {
+                    StatsCell(title: "Premiered", image: "calendar", value: animeNode.node.getSeasonYear())
+                }
+                
+                StatsCell(title: "Broadcast", image: "calendar", value: animeNode.node.getBroadcast())
+                
+                StatsCell(title: "Studio", image: "building", value: animeNode.node.getStudios())
             }
-
-            StatsCell(title: "Studio", image: "clock", value: animeNode.node.getStudios())
-            if animeNode.node.source != nil {
-                StatsCell(title: "Source", image: "clock", value: animeNode.node.source?.capitalized ?? "?")
-            }
+            
+            StatsCell(title: "Source", image: "book.closed", value: animeNode.node.source?.capitalized ?? "?")
+            
             StatsCell(title: "Duration", image: "clock", value: animeNode.node.getEpisodeMinutes())
-            StatsCell(title: "Rating", image: "clock", value: animeNode.node.getRatingFormatted())
+            
+            StatsCell(title: "Rating", image: "r.square.fill", value: animeNode.node.getRatingFormatted().uppercased())
         }
         .padding()
         .background {
@@ -52,11 +69,12 @@ struct StatsCell: View {
             
             HStack(alignment: .top) {
                 Label(title, systemImage: image)
+                    .foregroundColor(Color.ui.textColor)
                     .padding(.trailing)
                 
                 Spacer()
                 Text(value)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(Color.ui.textColor.opacity(0.6))
                     .lineLimit(isExpanded ? nil : 1)
             }
             .onTapGesture {

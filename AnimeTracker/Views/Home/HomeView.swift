@@ -22,30 +22,30 @@ struct HomeView: View {
                 AnimeList(animeData: $animeViewModel.selectedAnimeData)
                     .padding([.horizontal])
             }
-            .toolbar {
-                ToolbarItem {
-                    Menu {
-                        Picker("Sort By", selection: $animeViewModel.selectedSort) {
-                            Label("Newest", systemImage: "leaf")
-                                .tag(SortBy.newest)
-                            
-                            Label("Alphabetical", systemImage: "textformat.abc")
-                                .tag(SortBy.alphabetical)
-                            
-                            Label("Date Added", systemImage: "calendar")
-                                .tag(SortBy.date_created)
-                            
+        }
+        .navigationTitle("My Anime List")
+        .toolbar {
+            ToolbarItem {
+                Menu {
+                    Picker("Sort By", selection: $animeViewModel.selectedSort) {
+                        Label("Newest", systemImage: "leaf")
+                            .tag(SortBy.newest)
+                        
+                        Label("Alphabetical", systemImage: "textformat.abc")
+                            .tag(SortBy.alphabetical)
+                        
+                        Label("Date Added", systemImage: "calendar")
+                            .tag(SortBy.date_created)
+                        
 
-                            Label("Last Modified", systemImage: "clock")
-                                .tag(SortBy.last_modified)
-                        }
-                    } label: {
-                        Label("Add Bookmark", systemImage: "line.3.horizontal.decrease")
+                        Label("Last Modified", systemImage: "clock")
+                            .tag(SortBy.last_modified)
                     }
+                } label: {
+                    Label("Add Bookmark", systemImage: "line.3.horizontal.decrease")
                 }
             }
         }
-        .navigationTitle("Anime Tracker")
         .background(Color.ui.background)
         .searchable(
             text: $animeViewModel.filterText,
@@ -63,7 +63,6 @@ struct HomeView: View {
             animeViewModel.applySort()
         }
         .onAppear {
-            // TODO: use user saved defaults
             animeViewModel.applySort()
         }
         .refreshable {
@@ -84,10 +83,3 @@ struct HomeView_Previews: PreviewProvider {
         }
     }
 }
-
-// Note:
-// ForEach automatically assigns a tag to the selection views using each option’s id. This is possible because ViewMode conforms to the Identifiable protocol.
-
-// 1. Search can be used for filtering and searching data
-// 2. Filter is when we HAVE data, we narrow our data
-// 3. Search is when we have NO data, we call api to search for more results

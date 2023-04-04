@@ -15,7 +15,7 @@ struct RelatedRow: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text(title.uppercased())
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Color.ui.textColor.opacity(0.6))
             
             if relatedAnimes.count == 0 {
                 Text("Not found.")
@@ -61,13 +61,13 @@ struct RelatedRowCell: View {
             
             if let relation = relatedAnimeNode.relation_type_formatted {
                 Text(relation.uppercased())
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(Color.ui.textColor.opacity(0.6))
                     .font(.system(size: 12))
             }
 
             Text(relatedAnimeNode.node.title)
                 .lineLimit(2)
-                
+                .foregroundColor(Color.ui.textColor)
         }
         .frame(width: 100)
         .contentShape(RoundedRectangle(cornerRadius: 5)) // fixes overlap click area

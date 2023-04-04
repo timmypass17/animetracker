@@ -30,12 +30,15 @@ struct DiscoverRow: View {
                     .navigationTitle(title)
             } label: {
                 HStack {
-                    Text(title)
+                    Text(title.uppercased())
+                        .foregroundColor(Color.ui.textColor.opacity(0.6))
+
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12))
+                        .foregroundColor(Color.ui.textColor.opacity(0.6))
                 }
                 .contentShape(Rectangle())
                 .padding(.horizontal)
@@ -60,12 +63,10 @@ struct DiscoverRow: View {
             Divider()
                 .padding(.top)
         }
-//        .background(.blue)
         .onAppear {
             Task {
                 if animeCollection.data.isEmpty {
                     animeCollection = try await loadMore(season, year, animeType, 0)
-//                    print("fetching \(season) \(year) \(animeType)")
                 }
             }
         }

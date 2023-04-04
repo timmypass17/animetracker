@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-// Note: Could have multible anime detail screens so we store state seperately
 struct AnimeDetail: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var animeViewModel: AnimeViewModel
@@ -17,6 +16,9 @@ struct AnimeDetail: View {
     @State var isShowingSheet = false
     @State var currentEpisode: Float = 0.0
     @State var selectedTab: DetailTab = .background
+    @State var isLoading = false
+    @State var showDeleteAlert = false
+    
     let id: Int
     let animeType: AnimeType
     
@@ -62,21 +64,6 @@ struct AnimeDetail: View {
                             .padding(.top)
                         }
                     }
-                    
-                    if animeViewModel.animeData.contains(where: { $0.node.id == id }) {
-                        Button(action: {
-                            Task {
-                                dismiss()
-                                await animeViewModel.deleteAnime(animeNode: animeNode)
-                                animeViewModel.applySort()
-                            }
-                        }) {
-                            Text("Delete Anime")
-                                .foregroundColor(.red)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top)
-                    }
                 case .statistic:
                     AnimeStats(animeNode: animeNode)
                         .padding(.top)
@@ -107,20 +94,28 @@ struct AnimeDetail: View {
             
             Spacer()
         }
-        
+        .redacted(when: isLoading, redactionType: .customPlaceholder)
         .foregroundColor(.white)
         .edgesIgnoringSafeArea(.top)
         .navigationTitle(animeNode.node.getTitle())
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isShowingSheet, onDismiss: { /** Save data **/ }, content: {
             NavigationView {
-//                EpisodeSheet(isShowingSheet: $isShowingSheet, animeNode: $animeNode, current_episode: $currentEpisode)
                 EpisodeSheet(isShowingSheet: $isShowingSheet, animeNode: $animeNode)
             }
             .presentationDetents([.medium])
         })
         .toolbar {
             ToolbarItemGroup {
+                if animeViewModel.animeData.contains(where: { $0.node.id == id }) {
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
+                    } label: {
+                        Image(systemName: "trash")
+
+                    }
+                }
+                
                 Button(action: { isShowingSheet.toggle() }) {
                     Image(systemName: "plus") // plus.square
                         .imageScale(.large)
@@ -130,14 +125,39 @@ struct AnimeDetail: View {
         .background(Color.ui.background)
         .onAppear {
             Task {
+                isLoading = true
                 try await loadAnimeData()
-                
+                isLoading = false
             }
         }
+        .alert(
+            "Delete Progress",
+            isPresented: $showDeleteAlert,
+            presenting: animeNode
+        ) { animeNode in
+            Button(role: .destructive) {
+                Task {
+                    await animeViewModel.deleteAnime(animeNode: animeNode)
+                }
+            } label: {
+                Text("Delete")
+            }
+            
+            Button(role: .cancel) {
+                
+            } label: {
+                Text("Cancel")
+            }
+            
+        } message: { anime in
+            Text("Are you sure you want to delete your progress for \"\(anime.node.getTitle())\"?")
+        }
+//        .animation(.easeInOut, value: 1.0)
     }
     
     func loadAnimeData() async throws {
         // Cached
+        print("loading")
         if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == id }) {
             animeNode = existingNode
         } else {
@@ -164,5 +184,92 @@ struct AnimeDetail_Previews: PreviewProvider {
                 .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
+    }
+}
+
+public enum RedactionType {
+    case customPlaceholder
+    case scaled
+    case blurred
+}
+
+struct Redactable: ViewModifier {
+    let type: RedactionType?
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        switch type {
+        case .customPlaceholder:
+            content
+                .modifier(Placeholder())
+        case .scaled:
+            content
+                .modifier(Scaled())
+        case .blurred:
+            content
+                .modifier(Blurred())
+        case nil:
+            content
+        }
+    }
+}
+
+struct Placeholder: ViewModifier {
+
+    @State private var condition: Bool = false
+    func body(content: Content) -> some View {
+        content
+            .accessibility(label: Text("Placeholder"))
+            .redacted(reason: .placeholder)
+//            .opacity(condition ? 0.0 : 1.0)
+//            .animation(Animation
+//                        .easeInOut(duration: 1)
+//                        .repeatForever(autoreverses: true))
+            .onAppear { condition = true }
+    }
+}
+
+struct Scaled: ViewModifier {
+
+    @State private var condition: Bool = false
+    func body(content: Content) -> some View {
+        content
+            .accessibility(label: Text("Scaled"))
+            .redacted(reason: .placeholder)
+            .scaleEffect(condition ? 0.9 : 1.0)
+            .animation(Animation
+                        .easeInOut(duration: 1)
+                        .repeatForever(autoreverses: true))
+            .onAppear { condition = true }
+    }
+}
+
+struct Blurred: ViewModifier {
+
+    @State private var condition: Bool = false
+    func body(content: Content) -> some View {
+        content
+            .accessibility(label: Text("Blurred"))
+            .redacted(reason: .placeholder)
+            .blur(radius: condition ? 0.0 : 4.0)
+            .animation(Animation
+                        .easeInOut(duration: 1)
+                        .repeatForever(autoreverses: true))
+            .onAppear { condition = true }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func redacted(when condition: Bool, redactionType: RedactionType) -> some View {
+        if !condition {
+            unredacted()
+        } else {
+            redacted(reason: redactionType)
+        }
+    }
+
+    func redacted(reason: RedactionType?) -> some View {
+        self.modifier(Redactable(type: reason))
     }
 }

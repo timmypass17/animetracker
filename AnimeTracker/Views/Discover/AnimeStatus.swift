@@ -20,8 +20,8 @@ struct AnimeStatus: View {
             Text(animeNode.node.getStatus())
                 .font(.system(size: 10))
                 .lineLimit(1)
+                .foregroundColor(Color.ui.textColor)
         }
-        .foregroundColor(Color.ui.tag_text)
         .padding(.vertical, 2)
         .padding(.horizontal, 4)
         .background{

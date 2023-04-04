@@ -10,7 +10,7 @@ import SwiftUI
 struct InfoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Anime Info 🧐")
+            Text("General Information 🥸")
                 .font(.title)
                 .bold()
                 .padding(.vertical)

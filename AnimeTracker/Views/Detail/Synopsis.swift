@@ -14,16 +14,16 @@ struct Synopsis: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Synopsis".uppercased())
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Color.ui.textColor.opacity(0.6))
             
             Text(animeNode.node.getSynopsis())
                 .fixedSize(horizontal: false, vertical: true) // fixes text from being truncated "..." somehow
                 .lineLimit(showMore ? nil : 4)
+                .foregroundColor(Color.ui.textColor)
             
             Button(action: {
                 withAnimation {
                     showMore.toggle()
-                    print(animeNode.node.synopsis)
                 }
             }) {
                 HStack(alignment: .firstTextBaseline, spacing:  4) {
@@ -35,6 +35,7 @@ struct Synopsis: View {
             }
             .buttonStyle(.plain)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background {
             RoundedRectangle(cornerRadius: 4)

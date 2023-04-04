@@ -8,7 +8,7 @@
 import Foundation
 
 protocol MyAnimeListApiService {
-
+    
     func fetchAnime(animeID: Int) async throws -> AnimeNode
 
     func fetchAnimes(title: String) async throws -> AnimeCollection

@@ -15,71 +15,12 @@ struct AnimeCollection: Codable {
 
 struct AnimeNode: Codable {
     var node: Anime
-    var record: AnimeRecord = AnimeRecord()
+    var record: AnimeProgress = AnimeProgress()
     
     // put stuff in json tree here.
     private enum CodingKeys: CodingKey {
         case node
     }
-}
-
-// Same name as api so its confusing but this is the record model we use to store onto cloudkit
-struct AnimeRecord: Codable {
-    var id: String
-    var animeID: Int
-    var animeType: AnimeType
-    var seen: Int
-    var creationDate: Date
-    var modificationDate: Date
-    
-    init(id: String = UUID().uuidString, animeID: Int = 0, animeType: AnimeType = .anime, seen: Int = 0, creationDate: Date = Date(), modificationDate: Date = Date()) {
-        self.id = id
-        self.animeID = animeID
-        self.animeType = animeType
-        self.seen = seen
-        self.creationDate = creationDate
-        self.modificationDate = modificationDate
-    }
-    
-    init(record: CKRecord) {
-        self.id = record.recordID.recordName
-        self.animeID = record[.animeID] as? Int ?? 0
-        self.animeType = AnimeType(rawValue: record[.animeType] as? String ?? "") ?? .anime
-        self.seen = record[.seen] as? Int ?? 0
-        self.creationDate = record.creationDate!
-        self.modificationDate = record.modificationDate!
-    }
-    
-    
-    var recordID: CKRecord.ID {
-        CKRecord.ID(recordName: id)
-    }
-    
-    var record: CKRecord {
-        let record = CKRecord(recordType: .anime, recordID: recordID)
-        record[.animeID] = animeID
-        record[.animeType] = animeType.rawValue // can't store enum directly, unwrap it
-        record[.seen] = seen
-        return record
-    }
-    
-}
-
-extension AnimeRecord {
-    enum RecordKey: String {
-        case seen
-        case animeID
-        case animeType
-    }
-    
-    struct RecordError: LocalizedError {
-        var localizedDescription: String
-        
-        static func missingKey(_ key: RecordKey) -> RecordError {
-            RecordError(localizedDescription: "Missing required key \(key.rawValue)")
-        }
-    }
-
 }
 
 struct Anime: Codable {
@@ -248,12 +189,12 @@ extension Anime {
                 if let other = otherTitles.first { return other }
             }
         }
-        return "?"
+        return ""
     }
     
     func getJapaneseTitle() -> String {
         if let japaneseTitle = alternative_titles?.ja { return japaneseTitle }
-        return "?"
+        return ""
     }
     
     func animeCellHeader() -> String {
@@ -283,6 +224,16 @@ extension Anime {
     func getNumListUser() -> String {
         guard let num_list_users = num_list_users else { return "?" }
         return formatNumber(num_list_users)
+    }
+    
+    func getNumChapters() -> String {
+        guard let num_chapters = num_chapters else { return "?" }
+        return String(num_chapters)
+    }
+    
+    func getNumVolume() -> String {
+        guard let num_volumes = num_volumes else { return "?" }
+        return String(num_volumes)
     }
 }
 
@@ -436,4 +387,42 @@ extension AnimeCollection {
             )
         )
     ]
+}
+
+extension Double {
+    func reduceScale(to places: Int) -> Double {
+        let multiplier = pow(10, Double(places))
+        let newDecimal = multiplier * self // move the decimal right
+        let truncated = Double(Int(newDecimal)) // drop the fraction
+        let originalDecimal = truncated / multiplier // move the decimal back
+        return originalDecimal
+    }
+}
+
+func formatNumber(_ n: Int) -> String {
+    let num = abs(Double(n))
+    let sign = (n < 0) ? "-" : ""
+    
+    switch num {
+    case 1_000_000_000...:
+        var formatted = num / 1_000_000_000
+        formatted = formatted.reduceScale(to: 1)
+        return "\(sign)\(formatted)B"
+        
+    case 1_000_000...:
+        var formatted = num / 1_000_000
+        formatted = formatted.reduceScale(to: 1)
+        return "\(sign)\(formatted)M"
+        
+    case 1_000...:
+        var formatted = num / 1_000
+        formatted = formatted.reduceScale(to: 1)
+        return "\(sign)\(formatted)K"
+        
+    case 0...:
+        return "\(n)"
+        
+    default:
+        return "\(sign)\(n)"
+    }
 }

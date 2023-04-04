@@ -12,7 +12,7 @@ struct GenreRow: View {
     var maxTags = Int.max
     
     var body: some View {
-        ScrollView(.horizontal) {
+        ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 4) {
                 ForEach(animeNode.node.genres?.prefix(maxTags) ?? [], id: \.name) { tag in
                     TagView(text: tag.name)

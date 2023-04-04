@@ -28,14 +28,13 @@ struct DiscoverView: View {
                     }
                 }
             }
-            .toolbar {
-                ToolbarItem {
-                    Button(action: { discoverViewModel.isShowingSheet.toggle() }) {
-                        Image(systemName: "info.circle")
-                    }
-                }
-                
-            }
+//            .toolbar {
+//                ToolbarItem {
+//                    Button(action: { discoverViewModel.isShowingSheet.toggle() }) {
+//                        Image(systemName: "info.circle")
+//                    }
+//                }
+//            }
             .sheet(isPresented: $discoverViewModel.isShowingSheet) {
                 InfoView()
             }
@@ -66,7 +65,7 @@ struct DiscoverView: View {
                     }
                 }
             }
-            .navigationTitle("Discover Animes")
+            .navigationTitle("Discover Anime")
         }
         .background(Color.ui.background)
     }

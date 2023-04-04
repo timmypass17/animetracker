@@ -14,14 +14,18 @@ struct MangaList: View {
     
     var body: some View {
         LazyVStack {
+            PopularMangas()
+
             ForEach(mangaTypes) { mangaType in
-                DiscoverRow(
-                    title: mangaType.rawValue.capitalized,
-                    animeType: mangaType,
-                    geometry: geometry,
-                    loadMore: discoverViewModel.loadMoreMangas
-                )
-                .padding(.top)
+                if mangaType != .doujin && mangaType != .oneshots {
+                    DiscoverRow(
+                        title: mangaType.rawValue.capitalized,
+                        animeType: mangaType,
+                        geometry: geometry,
+                        loadMore: discoverViewModel.loadMoreMangas
+                    )
+                    .padding(.top, 6)
+                }
             }
         }
         

@@ -23,7 +23,6 @@ struct DiscoverCell: View {
     }
     
     var description: String {
-//        guard let animeType = animeNode.node.animeType else { return "?" }
         if animeNode.node.animeType == .anime {
             return "\(animeNode.node.getMediaType().uppercased()) - \(animeNode.node.getNumEpisodesOrChapters()) Episodes"
         } else {
@@ -55,7 +54,7 @@ struct DiscoverCell: View {
                 .padding(.top, 4)
 
             Text(description)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Color.ui.textColor.opacity(0.6))
                 .font(.system(size: 10))
             
             AnimeStatus(animeNode: animeNode)
@@ -76,8 +75,8 @@ struct TagView: View {
             image
             
             Text(text)
+                .foregroundColor(Color.ui.textColor)
         }
-        .foregroundColor(Color.ui.tag_text)
         .padding(.vertical, 2)
         .padding(.horizontal, 4)
         .background{

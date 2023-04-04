@@ -29,6 +29,7 @@ struct DetailPoster: View {
                 ProgressView()
                     .frame(width: width, height: height)
             }
+            
         }
     }
 }

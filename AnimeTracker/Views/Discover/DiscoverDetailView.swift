@@ -30,17 +30,15 @@ struct DiscoverDetailView: View {
                     .buttonStyle(.plain)
                 }
                 
-//                if animeCollection.paging.next != nil {
-                    ProgressView()
-                        .onAppear {
-                            Task {
-                                print("OnAppear() \(page) \(season) \(year) \(animeType)")
-                                let temp = try await loadMore(season, year, animeType, page)
-                                animeCollection.data.append(contentsOf: temp.data)
-                                page += 1
-                            }
+                ProgressView()
+                    .onAppear {
+                        Task {
+                            print("OnAppear() \(page) \(season) \(year) \(animeType)")
+                            let temp = try await loadMore(season, year, animeType, page)
+                            animeCollection.data.append(contentsOf: temp.data)
+                            page += 1
                         }
-//                }
+                    }
             }
         }
         .padding()

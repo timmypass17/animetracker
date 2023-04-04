@@ -12,6 +12,8 @@ import Combine
 class DiscoverViewModel: ObservableObject {
     @Published var animeRepository: AnimeRepository
     @Published var searchResults: [AnimeNode] = []
+    @Published var topAiringAnimes = AnimeCollection()
+    @Published var popularMangas = AnimeCollection()
     @Published var searchText = ""
     @Published var selectedAnimeType: AnimeType = .anime
     @Published var isShowingSheet = false
@@ -26,6 +28,19 @@ class DiscoverViewModel: ObservableObject {
         self.animeRepository.$searchResults
             .assign(to: \.searchResults, on: self)
             .store(in: &cancellables)
+        
+        Task {
+            await fetchTopAiringAnimes()
+            await fetchPopularMangas()
+        }
+    }
+    
+    func fetchTopAiringAnimes() async {
+        self.topAiringAnimes = await animeRepository.fetchTopAiringAnimes()
+    }
+    
+    func fetchPopularMangas() async {
+        self.popularMangas = await animeRepository.fetchPopularMangas()
     }
     
     func fetchMangaByID(id: Int, animeType: AnimeType) async throws -> AnimeNode {
@@ -33,8 +48,6 @@ class DiscoverViewModel: ObservableObject {
     }
     
     func fetchAnimesByTitle(title: String) async throws -> AnimeCollection {
-        print(title)
-
         return try await animeRepository.fetchAnimes(title: title)
     }
     

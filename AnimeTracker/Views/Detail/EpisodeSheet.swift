@@ -8,12 +8,19 @@
 import SwiftUI
 import CloudKit
 
+enum ActiveAlert {
+    case failure
+}
+
 struct EpisodeSheet: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var animeViewModel: AnimeViewModel
+    @State var progress: Float = 0.0
     @Binding var isShowingSheet: Bool
     @Binding var animeNode: AnimeNode
-    @State var progress: Float = 0.0
+    
+    @State var activeAlert: ActiveAlert = .failure
+    @State var showAlert = false
     
     var maxSlider: Float {
         return animeNode.node.getNumEpisodesOrChapters() == 0 ? 2000.0 : Float(animeNode.node.getNumEpisodesOrChapters())
@@ -38,10 +45,6 @@ struct EpisodeSheet: View {
                 // TODO: Some animes don't have num count (ex. One Piece)
                 Slider(
                     value: $progress,
-//                    value: Binding<Float>(
-//                        get: { Float(animeNode.seen) },
-//                        set: { animeNode.seen = Int($0) }
-//                    ),
                     in: 0.0...maxSlider,
                     step: 1.0
                 ) {
@@ -56,11 +59,13 @@ struct EpisodeSheet: View {
                 }
             }
             .padding(.top, 10)
+            .opacity(animeNode.node.status == "not_yet_aired" ? 0 : 1)
             
             Text("Currently on episode: \(Int(progress)) / \(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?": String(animeNode.node.getNumEpisodesOrChapters())) ")
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .font(.caption)
+                .opacity(animeNode.node.status == "not_yet_aired" ? 0 : 1)
             
             
             Spacer()
@@ -74,22 +79,29 @@ struct EpisodeSheet: View {
                     .cornerRadius(10)
             }
             .buttonStyle(.plain)
-            .alert(isPresented: $animeViewModel.showErrorAlert) {
-                Alert(title: Text("Unable to save record!"),
-                      message: Text("Please login to an iCloud account."),
-                      dismissButton: .default(Text("Got it!"))
-                )
+            .alert(isPresented: $showAlert) {
+                switch activeAlert {
+                case .failure:
+                    return Alert(title: Text("Unable to save record!"),
+                          message: Text("Please login to an iCloud account."),
+                          dismissButton: .default(Text("Got it!"))
+                    )
+                }
             }
         }
         .padding()
-        .padding(.top) // sheet needs extra top padding
+        .padding(.top)
         .onAppear {
             progress = Float(animeNode.record.seen)
         }
     }
     
     func handlePlus() {
-        progress = min((progress) + 1, Float(animeNode.node.num_episodes ?? Int.max))
+        if animeNode.node.getNumEpisodesOrChapters() == 0 {
+            progress += 1
+        } else {
+            progress = min((progress) + 1, Float(animeNode.node.getNumEpisodesOrChapters() ?? Int.max))
+        }
     }
     
     func handleMinus() {
@@ -99,35 +111,28 @@ struct EpisodeSheet: View {
     // capture user input 
     func handleSaveAction() {
         Task {
-            await appState.getiCloudUserIdentity()
             if appState.isSignedInToiCloud {
-                isShowingSheet = false
                 animeNode.record.animeID = animeNode.node.id
                 animeNode.record.seen = Int(progress)
                 animeNode.record.animeType = animeNode.node.animeType
                 await animeViewModel.saveAnime(animeNode: animeNode)
             } else {
-                animeViewModel.showErrorAlert = true
+                activeAlert = .failure
+                showAlert = true
             }
         }
     }
 }
 
-//struct EpisodeSheet_Previews: PreviewProvider {
-//    static var previews: some View {
-//        NavigationView {
-//            EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(100.0))
-//                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
-//        }
-//    }
-//}
-
-//extension Binding where Value == Int {
-//    public func float() -> Binding<Float> {
-//        return Binding<Float>(get:{ Float(self.wrappedValue) },
-//            set: { self.wrappedValue = Int($0)})
-//    }
-//}
+struct EpisodeSheet_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]))
+                .environmentObject(AppState())
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+        }
+    }
+}
 
 struct IntFromDoubleBinding {
     var intValue: Binding<Int>

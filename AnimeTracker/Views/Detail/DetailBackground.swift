@@ -31,8 +31,8 @@ struct DetailBackground: View {
                 }
                 .clipped()
         } placeholder: {
-            ProgressView()
-                .frame(height: 350)
+//            ProgressView()
+//                .frame(height: 350)
         }
     }
 }
