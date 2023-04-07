@@ -9,15 +9,17 @@ import SwiftUI
 
 struct TopAiringAnimeView: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    
+    var geometry: GeometryProxy
+
     var body: some View {
-        TopAiringAnimeRow()
+        TopAiringAnimeRow(geometry: geometry)
     }
 }
 
 struct TopAiringAnimeRow: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    
+    var geometry: GeometryProxy
+
     let leftGradient = LinearGradient(
         gradient: Gradient(stops: [
             .init(color: Color.ui.background, location: 0),
@@ -36,20 +38,35 @@ struct TopAiringAnimeRow: View {
         endPoint: .leading
     )
     
-    
     var body: some View {
         if discoverViewModel.topAiringAnimes.data.count > 0 {
             VStack(alignment: .leading) {
-                HStack {
-                    Text("Top Airing Animes")
-                        .font(.title3)
-                    
-                    Spacer()
-                    
-                    
+                NavigationLink {
+                    DiscoverDetailView(
+                        year: 0,
+                        season: .fall,
+                        animeType: .anime,
+                        geometry: geometry,
+                        loadMore: discoverViewModel.fetchTopAiringAnimes
+                    )
+                    .navigationTitle("Top Airing Animes")
+                    .navigationBarTitleDisplayMode(.inline)
+                } label: {
+                    HStack {
+                        Text("Top Airing Animes".uppercased())
+                            .foregroundColor(Color.ui.textColor.opacity(0.6))
+
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.ui.textColor.opacity(0.6))
+                    }
+                    .contentShape(Rectangle())
+                    .padding(.horizontal)
                 }
-                .contentShape(Rectangle())
-                .padding(.horizontal)
+                .buttonStyle(.plain)
                 
                 TabView {
                     ForEach(discoverViewModel.topAiringAnimes.data, id: \.node.id) { animeNode in
@@ -84,8 +101,11 @@ struct TopAiringAnimeRow: View {
 struct TopAiringAnimeView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            TopAiringAnimeView()
-            TopAiringAnimeRow()
+            GeometryReader { geometry in
+                TopAiringAnimeView(geometry: geometry)
+                TopAiringAnimeRow(geometry: geometry)
+                
+            }
         }
         .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
     }

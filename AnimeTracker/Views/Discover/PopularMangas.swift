@@ -9,15 +9,17 @@ import SwiftUI
 
 struct PopularMangas: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    
+    var geometry: GeometryProxy
+
     var body: some View {
-        PopularMangasRow()
+        PopularMangasRow(geometry: geometry)
     }
 }
 
 struct PopularMangasRow: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    
+    var geometry: GeometryProxy
+
     let leftGradient = LinearGradient(
         gradient: Gradient(stops: [
             .init(color: Color.ui.background, location: 0),
@@ -40,16 +42,31 @@ struct PopularMangasRow: View {
     var body: some View {
         if discoverViewModel.popularMangas.data.count > 0 {
             VStack(alignment: .leading) {
-                HStack {
-                    Text("Popular Mangas")
-                        .font(.title3)
-                    
-                    Spacer()
-                    
-                    
+                NavigationLink {
+                    DiscoverDetailView(
+                        year: 0,
+                        season: .fall,
+                        animeType: .anime,
+                        geometry: geometry,
+                        loadMore: discoverViewModel.fetchPopularMangas
+                    )
+                    .navigationTitle("Popular Mangas")
+                } label: {
+                    HStack {
+                        Text("Popular Mangas".uppercased())
+                            .foregroundColor(Color.ui.textColor.opacity(0.6))
+
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.ui.textColor.opacity(0.6))
+                    }
+                    .contentShape(Rectangle())
+                    .padding(.horizontal)
                 }
-                .contentShape(Rectangle())
-                .padding(.horizontal)
+                .buttonStyle(.plain)
                 
                 TabView {
                     ForEach(discoverViewModel.popularMangas.data, id: \.node.id) { animeNode in
@@ -84,8 +101,10 @@ struct PopularMangasRow: View {
 struct PopularMangas_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            PopularMangas()
-            PopularMangasRow()
+            GeometryReader { geometry in
+                PopularMangas(geometry: geometry)
+                PopularMangasRow(geometry: geometry)
+            }
         }
         .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
     }

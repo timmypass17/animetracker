@@ -53,6 +53,7 @@ struct Anime: Codable {
     var num_chapters: Int?
     var authors: [Author]?
     var serialization: [Publisher]?
+//    var statistics: Statistics?
         
     // infer either anime, manga, novel, etc.. from media type (ex. 'tv' is an anime)
     var animeType: AnimeType {
@@ -235,6 +236,26 @@ extension Anime {
         guard let num_volumes = num_volumes else { return "?" }
         return String(num_volumes)
     }
+    
+//    func getWatching() -> String {
+//        return formatNumber(Int(statistics?.status?.watching ?? "0") ?? 0)
+//    }
+//
+//    func getCompleted() -> String {
+//        return formatNumber(Int(statistics?.status?.completed ?? "0") ?? 0)
+//    }
+//
+//    func getOnHold() -> String {
+//        return formatNumber(Int(statistics?.status?.on_hold ?? "0") ?? 0)
+//    }
+//
+//    func getDropped() -> String {
+//        return formatNumber(Int(statistics?.status?.dropped ?? "0") ?? 0)
+//    }
+//
+//    func getPlanToWatch() -> String {
+//        return formatNumber(Int(statistics?.status?.plan_to_watch ?? "0") ?? 0)
+//    }
 }
 
 struct Poster: Codable {
@@ -295,6 +316,19 @@ struct PublisherDetail: Codable {
     var name: String
 }
 
+struct Statistics: Codable {
+    var status: Status?
+    var num_list_users: Int
+}
+
+struct Status: Codable {
+    var watching: String
+    var completed: String
+    var on_hold: String
+    var dropped: String?
+    var plan_to_watch: String
+}
+
 enum Ranking: String {
     case manga, novels, manhwa, manhua
 }
@@ -351,6 +385,7 @@ extension AnimeCollection {
                 num_chapters: nil,
                 authors: nil,
                 serialization: nil
+//                statistics: Statistics(status: Status(watching: "7799", completed: "35492", on_hold: "2802", dropped: "1242", plan_to_watch: "9859"), num_list_users: 57194)
             )
         ),
         AnimeNode(
@@ -384,6 +419,7 @@ extension AnimeCollection {
                 num_chapters: 0,
                 authors: [Author(node: AuthorDetail(first_name: "Kentarou", last_name: "Miura"), role: "Story & Art")],
                 serialization: [Publisher(node: PublisherDetail(name: "Young Animal"))]
+//                statistics: Statistics(status: Status(watching: "7799", completed: "35492", on_hold: "2802", dropped: "1242", plan_to_watch: "9859"), num_list_users: 57194)
             )
         )
     ]

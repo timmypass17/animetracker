@@ -14,7 +14,7 @@ struct MangaList: View {
     
     var body: some View {
         LazyVStack {
-            PopularMangas()
+            PopularMangas(geometry: geometry)
 
             ForEach(mangaTypes) { mangaType in
                 if mangaType != .doujin && mangaType != .oneshots {

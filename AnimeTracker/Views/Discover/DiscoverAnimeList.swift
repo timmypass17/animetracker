@@ -29,7 +29,7 @@ struct DiscoverAnimeList: View {
     
     var body: some View {
         LazyVStack {
-             TopAiringAnimeView()
+             TopAiringAnimeView(geometry: geometry)
             
             ForEach(years.reversed(), id: \.self) { year in
                 if isRelevant(season: .fall, year: year) {

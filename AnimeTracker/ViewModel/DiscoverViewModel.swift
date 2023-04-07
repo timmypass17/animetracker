@@ -30,17 +30,18 @@ class DiscoverViewModel: ObservableObject {
             .store(in: &cancellables)
         
         Task {
-            await fetchTopAiringAnimes()
-            await fetchPopularMangas()
+            var airingAnimes = try await fetchTopAiringAnimes()
+            while airingAnimes.data.count > 5 {
+                airingAnimes.data.removeLast()
+            }
+            self.topAiringAnimes = airingAnimes
+            
+            var mangas = try await fetchPopularMangas()
+            while mangas.data.count > 5 {
+                mangas.data.removeLast()
+            }
+            self.popularMangas = mangas
         }
-    }
-    
-    func fetchTopAiringAnimes() async {
-        self.topAiringAnimes = await animeRepository.fetchTopAiringAnimes()
-    }
-    
-    func fetchPopularMangas() async {
-        self.popularMangas = await animeRepository.fetchPopularMangas()
     }
     
     func fetchMangaByID(id: Int, animeType: AnimeType) async throws -> AnimeNode {
@@ -53,6 +54,14 @@ class DiscoverViewModel: ObservableObject {
     
     func fetchMangasByTitle(title: String, limit: Int = 15) async throws -> AnimeCollection {
         return try await animeRepository.fetchMangas(title: title)
+    }
+    
+    func fetchTopAiringAnimes(season: Season = .fall, year: Int = 0, animeType: AnimeType = .anime, page: Int = 0) async throws -> AnimeCollection {
+        return await animeRepository.fetchTopAiringAnimes(page: page)
+    }
+    
+    func fetchPopularMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType = .anime, page: Int = 0) async throws -> AnimeCollection {
+        return await animeRepository.fetchPopularMangas(page: page)
     }
     
     func loadMoreAnimes(season: Season, year: Int, animeType: AnimeType = .anime, page: Int) async throws -> AnimeCollection {

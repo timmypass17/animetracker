@@ -81,10 +81,22 @@ struct AnimeCell: View {
                 Spacer()
             }
             .padding(.vertical)
-            
             Divider()
         }
         .contentShape(Rectangle()) // makes whole view clickable
+    }
+    var selectColor: Color {
+        switch animeNode.node.status {
+            
+        case "currently_airing", "on_hiatus", "currently_publishing":
+            return .yellow
+            
+        case "finished_airing", "finished":
+            return .green
+        default:
+            return .red
+            
+        }
     }
 }
 

@@ -28,12 +28,12 @@ struct DiscoverRow: View {
                     loadMore: loadMore
                 )
                     .navigationTitle(title)
+                    .navigationBarTitleDisplayMode(.inline)
             } label: {
                 HStack {
                     Text(title.uppercased())
                         .foregroundColor(Color.ui.textColor.opacity(0.6))
 
-                    
                     Spacer()
                     
                     Image(systemName: "chevron.right")

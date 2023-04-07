@@ -119,13 +119,14 @@ struct AnimeDetail: View {
                 Button(action: { isShowingSheet.toggle() }) {
                     Image(systemName: "plus") // plus.square
                         .imageScale(.large)
+                    
                 }
             }
         }
         .background(Color.ui.background)
         .onAppear {
             Task {
-                isLoading = true
+//                isLoading = true
                 try await loadAnimeData()
                 isLoading = false
             }

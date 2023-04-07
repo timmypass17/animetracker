@@ -15,7 +15,7 @@ struct AnimeStats: View {
             Text("Information".uppercased())
                 .foregroundColor(Color.ui.textColor.opacity(0.6))
             
-            StatsCell(title: "Alternate Title", image: "t.square.fill", value: animeNode.node.getTitle())
+            StatsCell(title: "Alternate Title", image: "t.square", value: animeNode.node.getTitle())
             
             StatsCell(title: "Type", image: "magnifyingglass", value: animeNode.node.getMediaType().uppercased())
             
@@ -48,6 +48,32 @@ struct AnimeStats: View {
             StatsCell(title: "Duration", image: "clock", value: animeNode.node.getEpisodeMinutes())
             
             StatsCell(title: "Rating", image: "r.square.fill", value: animeNode.node.getRatingFormatted().uppercased())
+        }
+        .padding()
+        .background {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(.regularMaterial)
+        }
+        
+//        if animeNode.node.animeType == .anime {
+//            statistics
+//        }
+    }
+    
+    var statistics: some View {
+        VStack(alignment: .leading) {
+            Text("Statistics".uppercased())
+                .foregroundColor(Color.ui.textColor.opacity(0.6))
+            
+//            StatsCell(title: "Watching", image: "play", value: animeNode.node.getWatching())
+//            
+//            StatsCell(title: "Completed", image: "checkmark", value: animeNode.node.getCompleted())
+//            
+//            StatsCell(title: "On Hold", image: "pause.circle", value: animeNode.node.getOnHold())
+//            
+//            StatsCell(title: "Dropped", image: "xmark", value: animeNode.node.getDropped())
+//            
+//            StatsCell(title: "Plan To Watch", image: "calendar", value: animeNode.node.getPlanToWatch())
         }
         .padding()
         .background {
