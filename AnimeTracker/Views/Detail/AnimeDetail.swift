@@ -127,7 +127,7 @@ struct AnimeDetail: View {
         .onAppear {
             Task {
 //                isLoading = true
-                try await loadAnimeData()
+                await loadAnimeData()
                 isLoading = false
             }
         }
@@ -156,7 +156,7 @@ struct AnimeDetail: View {
 //        .animation(.easeInOut, value: 1.0)
     }
     
-    func loadAnimeData() async throws {
+    func loadAnimeData() async {
         // Cached
         print("loading")
         if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == id }) {

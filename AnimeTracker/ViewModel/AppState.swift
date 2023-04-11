@@ -22,7 +22,6 @@ class AppState: ObservableObject {
     init() {
         Task {
             await getiCloudStatus() // Check if user is logged into iCloud
-            await requestPermission() // need this to be able to get icloud identity
             await getUser()
         }
     }
@@ -42,20 +41,6 @@ class AppState: ObservableObject {
         } catch {
             print(error)
             isSignedInToiCloud = false
-        }
-    }
-    
-    func requestPermission() async {
-        do {
-            let status = try await container.requestApplicationPermission([.userDiscoverability])
-            switch status {
-            case .granted:
-                print("\(TAG) User allows to be looked up by email")
-            default:
-                print("\(TAG) User does not allow to be looked up by email")
-            }
-        } catch {
-            print("\(TAG) Error getting user's permisison \(error)")
         }
     }
 

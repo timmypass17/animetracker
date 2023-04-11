@@ -10,7 +10,7 @@ import CloudKit
 
 
 @MainActor
-class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService {
+class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitService **/ {
     @Published var animeData: [AnimeNode] = []
     @Published var searchResults: [AnimeNode] = []
     private lazy var container: CKContainer = CKContainer.default()
@@ -30,44 +30,44 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     /// - Parameters:
     ///     - animeID: Anime's unique identifier.
     /// - Returns: Anime from MyAnimeList with that id.
-    func fetchAnime(animeID: Int) async throws -> AnimeNode {
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(animeID)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badURL }
+    func fetchAnime(animeID: Int) async -> Result<AnimeNode, Error> {
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(animeID)?fields=\(MyAnimeListApi.fieldValues)")
+        else { return .failure(FetchError.badURL) }
         
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
         
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest } // 200 indicates successful request
-        
         do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { return .failure(FetchError.badRequest) }
+            
             let anime = try JSONDecoder().decode(Anime.self, from: data)
             var animeNode = AnimeNode(node: anime)
-            return animeNode
+            return .success(animeNode)
         } catch {
             print("\(TAG) Error calling fetchAnime(animeID: \(animeID)) \n \(error)")
+            return .failure(error)
         }
-        
-        return AnimeNode(node: Anime(id: 0))
     }
     
     /// Retrieves animes from MyAnimeList matchinig title query.
     /// - Parameters:
     ///     - title: Name of anime.
     /// - Returns: List of animes from MyAnimeList relating to title query.
-    func fetchAnimes(title: String) async throws -> AnimeCollection {
-        guard !title.isEmpty else { return AnimeCollection() }
+    func fetchAnimes(title: String) async -> Result<AnimeCollection, Error> {
+        guard !title.isEmpty else { return .failure(FetchError.badURL) }
         
         let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
-        print(titleFormatted)
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { return AnimeCollection() }
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)")
+        else { return .failure(FetchError.badURL) }
         
         var request = URLRequest(url: url)
         request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
         
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
-        
         do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { return .failure(FetchError.badRequest) }
+            
             var animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
             
             // Update record for each search item using user's list.
@@ -76,17 +76,16 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
                     animeCollection.data[index].record = existingAnime.record
                 }
             }
+            return .success(animeCollection)
             
-            return animeCollection
         } catch {
             print("\(TAG) Error calling fetchAnimes(title: \(title)) \n \(error)")
+            return .failure(error)
         }
-        
-        return AnimeCollection()
     }
     
     
-    func fetchTopAiringAnimes(page: Int = 0) async -> AnimeCollection {
+    func fetchTopAiringAnimes(page: Int = 0) async -> Result<AnimeCollection, Error> {
         do {
             let offset = page * limit
             guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/ranking?ranking_type=airing&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badURL }
@@ -98,14 +97,14 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest } // 200 indicates successful request
             
             let animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
-            return animeCollection
+            return .success(animeCollection)
         } catch {
             print("\(TAG) Error fetching top airing animes: \(error)")
-            return AnimeCollection()
+            return .failure(error)
         }
     }
     
-    func fetchPopularMangas(page: Int = 0) async -> AnimeCollection {
+    func fetchPopularMangas(page: Int = 0) async -> Result<AnimeCollection, Error> {
         do {
             let offset = page * limit
             guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=bypopularity&fields=\(MyAnimeListApi.fieldValues)&limit=10&offset=\(offset)") else { throw FetchError.badURL }
@@ -117,10 +116,10 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest } // 200 indicates successful request
             
             let animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
-            return animeCollection
+            return .success(animeCollection)
         } catch {
             print("\(TAG) Error fetching popular mangas: \(error)")
-            return AnimeCollection()
+            return .failure(error)
         }
     }
     
@@ -130,69 +129,63 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     ///     - year: Starting year of anime.
     ///     - page: For paging
     /// - Returns: List of animes from MyAnimeList from that season and year.
-    func fetchAnimes(season: Season, year: Int, page: Int) async throws -> AnimeCollection {
-        let offset = page * limit
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/season/\(year)/\(season.rawValue)?&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)&sort=anime_num_list_users") else { throw FetchError.badRequest }
-        
-        var request = URLRequest(url: url)
-        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
-        
+    func fetchAnimes(season: Season, year: Int, page: Int) async -> Result<AnimeCollection, Error> {
         do {
+            let offset = page * limit
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/season/\(year)/\(season.rawValue)?&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)&sort=anime_num_list_users") else { throw FetchError.badRequest }
+            
+            var request = URLRequest(url: url)
+            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
+        
             let animeCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
-            return animeCollection
+            return .success(animeCollection)
         } catch {
             print("\(TAG) Error calling fetchAnimes(season: \(season), year: \(year), page: \(page)) \n \(error)")
+            return .failure(error)
         }
-        
-        return AnimeCollection()
     }
     
     /// Retrieves mangas from MyAnimeList using manga's id.
     /// - Parameters:
     ///     - mangaID: Manga's unique identifier
     /// - Returns: List of mangas from MyAnimeList using that id.
-    func fetchManga(mangaID: Int) async throws -> AnimeNode {
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/\(mangaID)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badRequest }
-        
-        var request = URLRequest(url: url)
-        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw FetchError.badRequest
-        }
-        
+    func fetchManga(mangaID: Int) async -> Result<AnimeNode, Error> {
         do {
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/\(mangaID)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badRequest }
+            
+            var request = URLRequest(url: url)
+            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                throw FetchError.badRequest
+            }
             let manga = try JSONDecoder().decode(Anime.self, from: data)
-            return AnimeNode(node: manga)
+            return .success(AnimeNode(node: manga))
         } catch {
             print("\(TAG) Error calling fetchManga(mangaID: \(mangaID)) \n \(error)")
+            return .failure(error)
         }
-        
-        return AnimeNode(node: Anime(id: 0))
     }
     
     /// Retrieves mangas from MyAnimeList matching title query.
     /// - Parameters:
     ///     - title: Name of manga
     /// - Returns: List of mangas from MyAnimeList relating to title query.
-    func fetchMangas(title: String) async throws -> AnimeCollection {
-        guard !title.isEmpty else {
-            return AnimeCollection()
-        }
-        
-        let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { return AnimeCollection() }
-        var request = URLRequest(url: url)
-        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
-        
+    func fetchMangas(title: String) async -> Result<AnimeCollection, Error> {
         do {
+            guard !title.isEmpty else { throw FetchError.badRequest }
+            
+            let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { throw FetchError.badURL }
+            var request = URLRequest(url: url)
+            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw FetchError.badRequest }
             var mangaCollection = try JSONDecoder().decode(AnimeCollection.self, from: data)
             
             // Update record for each search item using user's list.
@@ -202,13 +195,12 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
                 }
             }
             
-            return mangaCollection
+            return .success(mangaCollection)
             
         } catch {
             print("\(TAG) Error calling fetchMangas(title: \(title)) \n \(error)")
+            return .failure(error)
         }
-        
-        return AnimeCollection()
     }
     
     /// Retrieves mangas from MyAnimeList using anime's type.
@@ -216,26 +208,25 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
     ///     - animeType: Type of media. (ex. anime, manga, novels)
     ///     - page: For paging
     /// - Returns: List of mangas from MyAnimeList using that id.
-    func fetchMangas(animeType: AnimeType, page: Int) async throws -> AnimeCollection {
-        let offset = page * limit
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=\(animeType.rawValue)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
-        
-        var request = URLRequest(url: url)
-        request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw FetchError.badRequest
-        }
-        
+    func fetchMangas(animeType: AnimeType, page: Int) async -> Result<AnimeCollection, Error> {
         do {
+            let offset = page * limit
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=\(animeType.rawValue)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
+            
+            var request = URLRequest(url: url)
+            request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                throw FetchError.badRequest
+            }
+            
             let mangaData = try JSONDecoder().decode(AnimeCollection.self, from: data)
-            return mangaData
+            return .success(mangaData)
         } catch {
             print("\(TAG) Error calling fetchMangas(animeType: \(animeType), page: \(page)) \n \(error)")
+            return .failure(error)
         }
-        
-        return AnimeCollection()
     }
     
     /// Saves anime to public database as Anime records.
@@ -313,9 +304,9 @@ class AnimeRepository: ObservableObject, MyAnimeListApiService, CloudKitService 
                 
                 var node: AnimeNode
                 if animeType == .anime {
-                    node = try await self.fetchAnime(animeID: animeID)
+                    node = try await self.fetchAnime(animeID: animeID).get()
                 } else {
-                    node = try await self.fetchManga(mangaID: animeID)
+                    node = try await self.fetchManga(mangaID: animeID).get()
                 }
                 node.record = AnimeProgress(record: record)
                 animes.append(node)

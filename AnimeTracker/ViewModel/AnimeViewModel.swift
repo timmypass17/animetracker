@@ -12,7 +12,6 @@ import Combine
 
 @MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
 class AnimeViewModel: ObservableObject {
-    var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
     @Published var animeData: [AnimeNode] = []  // original anime data
     @Published var selectedAnimeData: [AnimeNode] = []  // filtered version of anime data
     @Published var filterResults: [AnimeNode] = []
@@ -20,6 +19,8 @@ class AnimeViewModel: ObservableObject {
     @Published var selectedSort: SortBy = .last_modified
     @Published var filterText = ""
     @Published var showErrorAlert = false
+    
+    var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
     private var cancellables = Set<AnyCancellable>()
     let TAG = "[AnimeViewModel]"
     
@@ -41,8 +42,17 @@ class AnimeViewModel: ObservableObject {
         await animeRepository.loadUserAnimeList()
     }
     
-    func fetchAnime(id: Int) async throws -> AnimeNode {
-        try await animeRepository.fetchAnime(animeID: id)
+    // TODO: Maybe make this return Result or optional, instead of default object.
+    func fetchAnime(id: Int) async -> AnimeNode {
+        let result = await animeRepository.fetchAnime(animeID: id)
+        switch result {
+        case .success(let animeNode):
+            print("Successfully got anime")
+            return animeNode
+        case .failure(_):
+            print("Failed to get anime")
+            return AnimeNode(node: Anime(id: 0))
+        }
     }
     
     func saveAnime(animeNode: AnimeNode) async {
@@ -57,6 +67,9 @@ class AnimeViewModel: ObservableObject {
         filterResults = animeRepository.animeData.filter { $0.node.getTitle().lowercased().contains(query.lowercased()) }
     }
     
+}
+
+extension AnimeViewModel {
     func applySort() {
         sortByMode()
         sortBySorting()
@@ -91,7 +104,6 @@ class AnimeViewModel: ObservableObject {
             }
         }
     }
-    
 }
 
 enum ViewMode: String, CaseIterable, Identifiable {
