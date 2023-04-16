@@ -8,45 +8,50 @@
 import SwiftUI
 
 struct DetailProgress: View {
-    @Binding var animeNode: AnimeNode
+    @Binding var item: WeebItem?
     
     var body: some View {
-        VStack(alignment: .leading) {
+        if let anime = item as? Anime {
             
-            ProgressView(
-                value: Float(animeNode.record.seen),
-                total: Float(animeNode.node.getNumEpisodesOrChapters())
-            ) {
-                HStack(spacing: 4) {
-                    AnimeStatus(animeNode: animeNode)
-                        .font(.caption)
-                    
-                    Spacer()
-                    
-                    Text("Episodes:")
-                        .font(.caption)
-                        .foregroundColor(Color.ui.textColor)
-                    
-                    Text("\(animeNode.record.seen) /")
-                        .font(.caption)
-                        .foregroundColor(Color.ui.textColor)
-                    
-                    Text("\(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?" : String(animeNode.node.getNumEpisodesOrChapters()))")
-                        .font(.caption)
-                        .foregroundColor(Color.ui.textColor)
+            VStack(alignment: .leading) {
+                
+                ProgressView(
+                    value: Float(anime.progress?.seen ?? 0),
+                    total: Float(anime.getNumEpisodes())
+                ) {
+                    HStack(spacing: 4) {
+                        AnimeStatus(animeNode: anime)
+                            .font(.caption)
+                        
+                        Spacer()
+                        
+                        Text("Episodes:")
+                            .font(.caption)
+                            .foregroundColor(Color.ui.textColor)
+                        
+                        Text("\(anime.progress?.seen ?? 0) /")
+                            .font(.caption)
+                            .foregroundColor(Color.ui.textColor)
+                        
+                        Text("\(anime.getNumEpisodes())")
+                            .font(.caption)
+                            .foregroundColor(Color.ui.textColor)
+                    }
                 }
+                .progressViewStyle(.linear)
+                
+                Label("Next episode: \(anime.getBroadcast())", systemImage: "clock")
+                    .foregroundColor(.secondary)
+                    .font(.caption)
             }
-            .progressViewStyle(.linear)
-            
-            Label("Next episode: \(animeNode.node.getBroadcast())", systemImage: "clock")
-                .foregroundColor(.secondary)
-                .font(.caption)
+        } else if let manga = item as? Manga {
+            Text("manga")
         }
     }
 }
 
-//struct DetailProgress_Previews: PreviewProvider {
-//    static var previews: some View {
-//        DetailProgress(animeNode: .constant(AnimeCollection.sampleData[0]), current_episode: .constant(5.0))
-//    }
-//}
+struct DetailProgress_Previews: PreviewProvider {
+    static var previews: some View {
+        DetailProgress(item: .constant(SampleData.sampleData[0]))
+    }
+}

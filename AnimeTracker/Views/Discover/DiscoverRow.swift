@@ -9,13 +9,13 @@ import SwiftUI
 
 struct DiscoverRow: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    @State var animeCollection = AnimeCollection()
+    @State var animeCollection = [WeebItem]()
     var title: String = ""
     var year: Int = 0
     var season: Season = .fall
     var animeType: AnimeType
     var geometry: GeometryProxy
-    var loadMore: (Season, Int, AnimeType, Int) async throws -> AnimeCollection
+    var loadMore: (Season, Int, AnimeType, Int) async throws -> [WeebItem]
     
     var body: some View {
         LazyVStack {
@@ -47,11 +47,11 @@ struct DiscoverRow: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top) {
-                    ForEach(animeCollection.data, id: \.node.id) { animeNode in
+                    ForEach(animeCollection, id: \.id) { item in
                         NavigationLink {
-                            AnimeDetail(id: animeNode.node.id, animeType: animeType)
+                            AnimeDetail(id: item.id, type: .anime)
                         } label: {
-                            DiscoverCell(animeNode: animeNode, geometry: geometry, width: 0.25)
+                            DiscoverCell(animeNode: item, geometry: geometry, width: 0.25)
                         }
                         .buttonStyle(.plain)
                     }
@@ -65,7 +65,7 @@ struct DiscoverRow: View {
         }
         .onAppear {
             Task {
-                if animeCollection.data.isEmpty {
+                if animeCollection.isEmpty {
                     animeCollection = try await loadMore(season, year, animeType, 0)
                 }
             }
@@ -73,10 +73,10 @@ struct DiscoverRow: View {
     }
 }
 
-struct DiscoverRow_Previews: PreviewProvider {
-    static var previews: some View {
-        GeometryReader { geometry in
-            DiscoverRow(title: "Spring 2023", year: 2022, animeType: .anime, geometry: geometry, loadMore: { _, _,_,_ in return AnimeCollection() })
-        }
-    }
-}
+//struct DiscoverRow_Previews: PreviewProvider {
+//    static var previews: some View {
+//        GeometryReader { geometry in
+//            DiscoverRow(title: "Spring 2023", year: 2022, animeType: .anime, geometry: geometry, loadMore: { _, _,_,_ in return AnimeCollection() })
+//        }
+//    }
+//}

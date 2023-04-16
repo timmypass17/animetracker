@@ -8,16 +8,33 @@
 import Foundation
 import CloudKit
 
-struct AnimeProgress: Codable {
+struct Progress: Codable {
     var id: String
     var animeID: Int
-    var animeType: AnimeType
+    var animeType: WeebItemType
     var seen: Int
     var creationDate: Date
     var modificationDate: Date
     
-    init(id: String = UUID().uuidString, animeID: Int = 0, animeType: AnimeType = .anime, seen: Int = 0, creationDate: Date = Date(), modificationDate: Date = Date()) {
-        self.id = id
+    init(animeID: Int = 0, animeType: WeebItemType = .anime, seen: Int = 0) {
+        self.id = UUID().uuidString
+        self.animeID = animeID
+        self.animeType = animeType
+        self.seen = seen
+        self.creationDate = Date()
+        self.modificationDate = Date()
+    }
+    
+    init?(record: CKRecord) {
+        guard let animeID = record[.animeID] as? Int,
+              let animeTypeString = record[.animeType] as? String,
+              let animeType = WeebItemType(rawValue: animeTypeString),
+              let seen = record[.seen] as? Int,
+              let creationDate = record.creationDate,
+              let modificationDate = record.modificationDate
+        else { return nil }
+        
+        self.id = record.recordID.recordName
         self.animeID = animeID
         self.animeType = animeType
         self.seen = seen
@@ -25,22 +42,12 @@ struct AnimeProgress: Codable {
         self.modificationDate = modificationDate
     }
     
-    init(record: CKRecord) {
-        self.id = record.recordID.recordName
-        self.animeID = record[.animeID] as? Int ?? 0
-        self.animeType = AnimeType(rawValue: record[.animeType] as? String ?? "") ?? .anime
-        self.seen = record[.seen] as? Int ?? 0
-        self.creationDate = record.creationDate!
-        self.modificationDate = record.modificationDate!
-    }
-    
-    
     var recordID: CKRecord.ID {
         CKRecord.ID(recordName: id)
     }
     
     var record: CKRecord {
-        let record = CKRecord(recordType: .animeProgress, recordID: recordID)
+        let record = CKRecord(recordType: .progress, recordID: recordID)
         record[.animeID] = animeID
         record[.animeType] = animeType.rawValue // can't store enum directly, unwrap it
         record[.seen] = seen
@@ -49,7 +56,7 @@ struct AnimeProgress: Codable {
     
 }
 
-extension AnimeProgress {
+extension Progress {
     enum RecordKey: String {
         case seen
         case animeID
@@ -66,12 +73,12 @@ extension AnimeProgress {
 }
 
 extension CKRecord {
-    subscript(key: AnimeProgress.RecordKey) -> Any? {
+    subscript(key: Progress.RecordKey) -> Any? {
         get { return self[key.rawValue] }
         set { self[key.rawValue] = newValue as? CKRecordValue }
     }
 }
 
 extension CKRecord.RecordType {
-    static let animeProgress = "AnimeProgress"
+    static let progress = "Progress"
 }

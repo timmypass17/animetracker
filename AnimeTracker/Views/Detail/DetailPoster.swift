@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct DetailPoster: View {
-    let poster: Poster?
-    var width: CGFloat = 120
-    var height: CGFloat = 120
+    let poster: MainPicture?
+    var width: CGFloat
+    var height: CGFloat
+    
     
     var body: some View {
         if let poster = poster {
@@ -29,13 +30,16 @@ struct DetailPoster: View {
                 ProgressView()
                     .frame(width: width, height: height)
             }
-            
+        } else {
+            RoundedRectangle(cornerRadius: 5)
+                .fill(Color(.placeholderText))
+                .frame(width: width, height: height)
         }
     }
 }
 
-//struct DetailPoster_Previews: PreviewProvider {
-//    static var previews: some View {
-//        DetailPoster(animeNode: AnimeCollection.sampleData[0])
-//    }
-//}
+struct DetailPoster_Previews: PreviewProvider {
+    static var previews: some View {
+        DetailPoster(poster: SampleData.sampleData[0].main_picture, width: 85, height: 135)
+    }
+}

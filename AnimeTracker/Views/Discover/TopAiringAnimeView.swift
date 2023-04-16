@@ -39,7 +39,7 @@ struct TopAiringAnimeRow: View {
     )
     
     var body: some View {
-        if discoverViewModel.topAiringAnimes.data.count > 0 {
+        if discoverViewModel.topAiringAnimes.count > 0 {
             VStack(alignment: .leading) {
                 NavigationLink {
                     DiscoverDetailView(
@@ -69,24 +69,24 @@ struct TopAiringAnimeRow: View {
                 .buttonStyle(.plain)
                 
                 TabView {
-                    ForEach(discoverViewModel.topAiringAnimes.data, id: \.node.id) { animeNode in
-                        NavigationLink {
-                            AnimeDetail(id: animeNode.node.id, animeType: .anime)
-                        } label: {
-                            DetailTopSection(animeNode: animeNode)
-                                .padding()
-                                .background(alignment: .top) {
-                                    if let url = animeNode.node.main_picture?.large {
-                                        DetailBackground(url: url)
-                                            .opacity(0.5)
-                                            .overlay(leftGradient)
-                                            .overlay(rightGradient)
-                                    }
-                                }
-                                .padding(.vertical)
-                        }
-                        .buttonStyle(.plain)
-                    }
+//                    ForEach(discoverViewModel.topAiringAnimes, id: \.node.id) { animeNode in
+//                        NavigationLink {
+//                            AnimeDetail(id: animeNode.node.id, animeType: .anime)
+//                        } label: {
+//                            DetailTopSection(animeNode: animeNode)
+//                                .padding()
+//                                .background(alignment: .top) {
+//                                    if let url = animeNode.node.main_picture?.large {
+//                                        DetailBackground(url: url)
+//                                            .opacity(0.5)
+//                                            .overlay(leftGradient)
+//                                            .overlay(rightGradient)
+//                                    }
+//                                }
+//                                .padding(.vertical)
+//                        }
+//                        .buttonStyle(.plain)
+//                    }
                 }
                 .tabViewStyle(.page)
                 .indexViewStyle(.page(backgroundDisplayMode: .never))

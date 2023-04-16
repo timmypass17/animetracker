@@ -1,29 +1,29 @@
 //
-//  RelatedRow.swift
+//  RecommendationRow.swift
 //  AnimeTracker
 //
-//  Created by Timmy Nguyen on 12/18/22.
+//  Created by Timmy Nguyen on 4/14/23.
 //
 
 import SwiftUI
 
-struct RelatedRow: View {
-    let relatedItems: [RelatedItem]
+struct RecommendationRow: View {
+    let recommendedItems: [Recommendation]
     let type: WeebItemType
     
     var body: some View {
-        if relatedItems.count > 0 {
+        if recommendedItems.count > 0 {
             VStack(alignment: .leading) {
-                Text("Related \(type.rawValue)".uppercased())
+                Text("Recommended".uppercased())
                     .foregroundColor(Color.ui.textColor.opacity(0.6))
 
                 ScrollView(.horizontal) {
                     HStack(alignment: .top) {
-                        ForEach(relatedItems, id: \.node.id) { item in
+                        ForEach(recommendedItems, id: \.node.id) { item in
                             NavigationLink {
                                 AnimeDetail(id: item.node.id, type: type)
                             } label: {
-                                RelatedRowCell(relatedItem: item)
+                                RecommendationCell(recommendedItem: item)
                             }
                             .buttonStyle(.plain)
                             //                            RelatedRowCell(relatedAnimeNode: animeNode)
@@ -35,12 +35,12 @@ struct RelatedRow: View {
     }
 }
 
-struct RelatedRowCell: View {
-    let relatedItem: RelatedItem
+struct RecommendationCell: View {
+    let recommendedItem: Recommendation
     
     var body: some View {
         VStack(alignment: .leading) {
-            AsyncImage(url: URL(string: relatedItem.node.mainPicture.medium)) { image in
+            AsyncImage(url: URL(string: recommendedItem.node.mainPicture.medium)) { image in
                 image
                     .resizable()
                     .scaledToFill()
@@ -56,13 +56,7 @@ struct RelatedRowCell: View {
                     .frame(width: 100, height: 150)
             }
 
-            if let relation = relatedItem.relation_type_formatted {
-                Text(relation.uppercased())
-                    .foregroundColor(Color.ui.textColor.opacity(0.6))
-                    .font(.system(size: 12))
-            }
-
-            Text(relatedItem.node.title)
+            Text(recommendedItem.node.title)
                 .lineLimit(2)
                 .foregroundColor(Color.ui.textColor)
         }
@@ -72,11 +66,8 @@ struct RelatedRowCell: View {
 }
 
 
-struct RelatedRow_Previews: PreviewProvider {
-    static var previews: some View {
-        RelatedRow(
-            relatedItems: [],
-            type: .anime
-        )
-    }
-}
+//struct RecommendationRow_Previews: PreviewProvider {
+//    static var previews: some View {
+//        RecommendationRow()
+//    }
+//}

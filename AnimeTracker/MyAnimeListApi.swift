@@ -9,17 +9,17 @@ import Foundation
 
 protocol MyAnimeListApiService {
     
-    func fetchAnime(animeID: Int) async -> Result<AnimeNode, Error>
-
-    func fetchAnimes(title: String) async -> Result<AnimeCollection, Error>
-
-    func fetchAnimes(season: Season, year: Int, page: Int) async throws -> AnimeCollection
-
-    func fetchManga(mangaID: Int) async throws -> AnimeNode
-    
-    func fetchMangas(title: String) async throws -> AnimeCollection
-
-    func fetchMangas(animeType: AnimeType, page: Int) async throws -> AnimeCollection
+//    func fetchAnime(animeID: Int) async -> Result<AnimeNode, Error>
+//
+//    func fetchAnimes(title: String) async -> Result<AnimeCollection, Error>
+//
+//    func fetchAnimes(season: Season, year: Int, page: Int) async throws -> AnimeCollection
+//
+//    func fetchManga(mangaID: Int) async throws -> AnimeNode
+//    
+//    func fetchMangas(title: String) async throws -> AnimeCollection
+//
+//    func fetchMangas(animeType: AnimeType, page: Int) async throws -> AnimeCollection
 }
 
 struct MyAnimeListApi {

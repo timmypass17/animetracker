@@ -1,45 +1,45 @@
 //
-//  AnimeCell.swift
+//  MangaCell.swift
 //  AnimeTracker
 //
-//  Created by Timmy Nguyen on 10/24/22.
+//  Created by Timmy Nguyen on 4/14/23.
 //
 
 import SwiftUI
 
-struct AnimeCell: View {
+struct MangaCell: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
-    var anime: Anime
+    var manga: Manga
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             
-            DetailPoster(poster: anime.main_picture, width: 85.0, height: 135.0)
+            DetailPoster(poster: manga.main_picture, width: 85.0, height: 135.0)
             
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("\(anime.getStartSeasonAndYear())")
+                    Text("\(manga.getStartSeasonAndYear())")
                         .foregroundColor(.secondary)
                         .font(.caption)
                     
                     HStack(spacing: 4){
-                        Text(anime.getTitle())
+                        Text(manga.getTitle())
                     }
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .padding(.bottom, 5)
                     
-                    GenreRow(animeNode: anime, maxTags: 2)
+                    GenreRow(animeNode: manga, maxTags: 2)
                         .font(.caption)
                         .scrollDisabled(true)
                 }
                 
                 ProgressView(
-                    value: Float(anime.progress?.seen ?? 0),
-                    total: Float(anime.getNumEpisodes())
+                    value: Float(manga.progress?.seen ?? 0),
+                    total: Float(manga.getNumChapters())
                 ) {
                     HStack(spacing: 4) {
-                        AnimeStatus(animeNode: anime)
+                        AnimeStatus(animeNode: manga)
                             .font(.caption)
                         
                         Spacer()
@@ -47,11 +47,11 @@ struct AnimeCell: View {
                             .foregroundColor(.secondary)
                             .font(.caption)
                         
-                        Text("\(anime.progress?.seen ?? 0) /")
+                        Text("\(manga.progress?.seen ?? 0) /")
                             .foregroundColor(.secondary)
                             .font(.caption)
                         
-                        Text("\(anime.getNumEpisodes())")
+                        Text("\(manga.getNumChapters())")
                             .foregroundColor(.secondary)
                             .font(.caption)
                         
@@ -60,7 +60,7 @@ struct AnimeCell: View {
                 }
                 .progressViewStyle(.linear)
                 
-                Label("Next Episode: \(anime.getBroadcast())", systemImage: "clock")
+                Label("Next Chapter: Unknown", systemImage: "clock")
                     .foregroundColor(.secondary)
                     .font(.caption)
                 
@@ -72,12 +72,8 @@ struct AnimeCell: View {
     }
 }
 
-struct AnimeCell_Previews: PreviewProvider {
+struct MangaCell_Previews: PreviewProvider {
     static var previews: some View {
-        AnimeCell(anime: SampleData.sampleData[0] as! Anime)
-            .previewLayout(.sizeThatFits)
-            .background(Color.ui.background)
+        MangaCell(manga: SampleData.sampleData[1] as! Manga)
     }
 }
-
-

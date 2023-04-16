@@ -42,28 +42,28 @@ struct DiscoverView: View {
                 text: $discoverViewModel.searchText,
                 prompt: discoverViewModel.selectedAnimeType == .anime ? "Search Anime" : "Search Mangas, Novels, etc"
             ) {
-                AnimeList(animeData: $discoverViewModel.searchResults)
+                WatchList()
             }
             .autocorrectionDisabled(true)
             .onSubmit(of: .search) {
-                Task {
-                    if discoverViewModel.selectedAnimeType == .anime {
-                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
-                    } else {
-                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
-                    }
-                }
+//                Task {
+//                    if discoverViewModel.selectedAnimeType == .anime {
+//                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
+//                    } else {
+//                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
+//                    }
+//                }
             }
             .onReceive(discoverViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
             ) { _ in
                 // Debounce. Fetch api calls after 0.5 seconds of not typing.
-                Task {
-                    if discoverViewModel.selectedAnimeType == .anime {
-                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
-                    } else {
-                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
-                    }
-                }
+//                Task {
+//                    if discoverViewModel.selectedAnimeType == .anime {
+//                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
+//                    } else {
+//                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
+//                    }
+//                }
             }
             .navigationTitle("Discover Anime")
         }

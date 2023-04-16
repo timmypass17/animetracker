@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct Synopsis: View {
-    let animeNode: AnimeNode
     @State var showMore = false
+    let animeNode: WeebItem?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Synopsis".uppercased())
                 .foregroundColor(Color.ui.textColor.opacity(0.6))
             
-            Text(animeNode.node.getSynopsis())
+            Text(animeNode?.getSynopsis() ?? "placeholder-copy-synopsis")
                 .fixedSize(horizontal: false, vertical: true) // fixes text from being truncated "..." somehow
                 .lineLimit(showMore ? nil : 4)
                 .foregroundColor(Color.ui.textColor)
@@ -46,6 +46,6 @@ struct Synopsis: View {
 
 struct Synopsis_Previews: PreviewProvider {
     static var previews: some View {
-        Synopsis(animeNode: AnimeCollection.sampleData[0])
+        Synopsis(animeNode: SampleData.sampleData[0])
     }
 }

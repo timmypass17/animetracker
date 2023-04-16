@@ -7,168 +7,162 @@
 
 import SwiftUI
 
+// TODO: Refrator code to have optional animeNode
 struct AnimeDetail: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var animeViewModel: AnimeViewModel
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    @State var animationAmount = 1.0
-    @State var animeNode: AnimeNode = AnimeNode(node: Anime(id: 0))
-    @State var isShowingSheet = false
+    @State var item: WeebItem?
     @State var currentEpisode: Float = 0.0
+    @State var isShowingSheet = false
     @State var selectedTab: DetailTab = .background
+    @State var animationAmount = 1.0
     @State var isLoading = false
     @State var showDeleteAlert = false
     
     let id: Int
-    let animeType: AnimeType
+    let type: WeebItemType?
     
     var body: some View {
-        ScrollView(.vertical) {
-            VStack(alignment: .leading, spacing: 0) {
-                DetailTopSection(animeNode: animeNode)
-                
-                GenreRow(animeNode: animeNode)
-                    .font(.caption)
-                    .padding(.top)
-                
-                DetailProgress(animeNode: $animeNode)
-                    .padding(.top)
-                
-                
-                DetailTabView(selectedTab: $selectedTab)
-                    .padding(.top)
-                
-                switch selectedTab {
-                case .background:
-                    Synopsis(animeNode: animeNode)
+//        if let item = item {
+            ScrollView(.vertical) {
+                VStack(alignment: .leading, spacing: 0) {
+                    DetailTopSection(item: item)
+    
+                    GenreRow(animeNode: item)
+                        .font(.caption)
                         .padding(.top)
-
-                    if let related_animes = animeNode.node.related_anime {
-                        if related_animes.count > 0 {
+    
+                    DetailProgress(item: $item)
+                        .padding(.top)
+                    
+                    DetailTabView(selectedTab: $selectedTab)
+                        .padding(.top)
+                        .unredacted()
+                    
+                    switch selectedTab {
+                    case .background:
+                        Synopsis(animeNode: item)
+                            .padding(.top)
+                        
+                        if let relatedAnimes = (item as? Anime)?.related_anime {
                             RelatedRow(
-                                title: "Related Anime",
-                                relatedAnimes: related_animes,
-                                animeType: .anime
+                                relatedItems: relatedAnimes,
+                                type: .anime
                             )
                             .padding(.top)
                         }
+
+                        if let relatedMangas = (item as? Manga)?.related_manga {
+                            RelatedRow(
+                                relatedItems: relatedMangas,
+                                type: .manga
+                            )
+                            .padding(.top)
+                        }
+                    case .statistic:
+                        AnimeStats(item: item)
+                            .padding(.top)
+                    case .recommendation:
+                        RecommendationRow(
+                            recommendedItems: item?.recommendations ?? [],
+                            type: type ?? .anime
+                        )
+                        .padding(.top)
                     }
                     
-                    if let related_mangas = animeNode.node.related_manga {
-                        if related_mangas.count > 0 {
-                            RelatedRow(
-                                title: "Related Mangas",
-                                relatedAnimes: related_mangas,
-                                animeType: .manga
-                            )
-                            .padding(.top)
-                        }
-                    }
-                case .statistic:
-                    AnimeStats(animeNode: animeNode)
-                        .padding(.top)
-                case .recommendation:
-                    if let recommended_animes = animeNode.node.recommendations {
-                        if recommended_animes.count > 0 {
-                            RelatedRow(
-                                title: "Recommendations",
-                                relatedAnimes: animeNode.node.recommendations ?? [],
-                                animeType: animeType
-                            )
-                            .padding(.top)
-                        }
-                    } else {
-                        Text("No recommended anime.")
-                    }
-                }
-                
-
-            }
-            .padding()
-            .padding(.top, 115) // 45
-            .background(alignment: .top) {
-                if let url = animeNode.node.main_picture?.large {
-                    DetailBackground(url: url)
-                }
-            }
-            
-            Spacer()
-        }
-        .redacted(when: isLoading, redactionType: .customPlaceholder)
-        .foregroundColor(.white)
-        .edgesIgnoringSafeArea(.top)
-        .navigationTitle(animeNode.node.getTitle())
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $isShowingSheet, onDismiss: { /** Save data **/ }, content: {
-            NavigationView {
-                EpisodeSheet(isShowingSheet: $isShowingSheet, animeNode: $animeNode)
-            }
-            .presentationDetents([.medium])
-        })
-        .toolbar {
-            ToolbarItemGroup {
-                if animeViewModel.animeData.contains(where: { $0.node.id == id }) {
-                    Button(role: .destructive) {
-                        showDeleteAlert = true
-                    } label: {
-                        Image(systemName: "trash")
-
-                    }
-                }
-                
-                Button(action: { isShowingSheet.toggle() }) {
-                    Image(systemName: "plus") // plus.square
-                        .imageScale(.large)
                     
                 }
+                .padding()
+                .padding(.top, 115) // 45
+                .background(alignment: .top) {
+                    if let url = item?.main_picture?.large {
+                        DetailBackground(url: url)
+                    }
+                }
+                
+                Spacer()
             }
-        }
-        .background(Color.ui.background)
-        .onAppear {
-            Task {
-//                isLoading = true
-                await loadAnimeData()
-                isLoading = false
+            .redacted(reason: item == nil ? .placeholder : [])
+            .foregroundColor(.white)
+            .edgesIgnoringSafeArea(.top)
+            .navigationTitle(item?.getTitle() ?? "")
+            .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $isShowingSheet, onDismiss: { /** Save data **/ }, content: {
+                NavigationView {
+                    EpisodeSheet(isShowingSheet: $isShowingSheet, item: $item, type: type)
+                }
+                .presentationDetents([.medium])
+            })
+            .toolbar {
+                ToolbarItemGroup {
+    //                if animeViewModel.animeData.contains(where: { $0.node.id == id }) {
+    //                    Button(role: .destructive) {
+    //                        showDeleteAlert = true
+    //                    } label: {
+    //                        Image(systemName: "trash")
+    //
+    //                    }
+    //                }
+                    
+                    Button(action: { isShowingSheet.toggle() }) {
+                        Image(systemName: "plus") // plus.square
+                            .imageScale(.large)
+                        
+                    }
+                }
             }
-        }
-        .alert(
-            "Delete Progress",
-            isPresented: $showDeleteAlert,
-            presenting: animeNode
-        ) { animeNode in
-            Button(role: .destructive) {
+            .background(Color.ui.background)
+            .onAppear {
                 Task {
-                    await animeViewModel.deleteAnime(animeNode: animeNode)
+                    //                isLoading = true
+                    await fetchItem()
+                    isLoading = false
                 }
-            } label: {
-                Text("Delete")
             }
-            
-            Button(role: .cancel) {
+            .alert(
+                "Delete Progress",
+                isPresented: $showDeleteAlert,
+                presenting: item
+            ) { animeNode in
+                Button(role: .destructive) {
+                    Task {
+    //                    await animeViewModel.deleteAnime(animeNode: item)
+                    }
+                } label: {
+                    Text("Delete")
+                }
                 
-            } label: {
-                Text("Cancel")
+                Button(role: .cancel) {
+                    
+                } label: {
+                    Text("Cancel")
+                }
+            } message: { anime in
+                Text("Are you sure you want to delete your progress for \"\(item?.getTitle() ?? "Title not found")\"?")
             }
-            
-        } message: { anime in
-            Text("Are you sure you want to delete your progress for \"\(anime.node.getTitle())\"?")
-        }
-//        .animation(.easeInOut, value: 1.0)
+        .animation(.easeInOut, value: 1.0)
+//        } else {
+//            ProgressView()
+//                .redacted(reason: item == nil ? .placeholder : [])
+//        }
+        
     }
     
-    func loadAnimeData() async {
+    func fetchItem() async {
         // Cached
-        print("loading")
-        if let existingNode = animeViewModel.animeData.first(where: { $0.node.id == id }) {
-            animeNode = existingNode
-        } else {
-            // Send network request
-            switch animeType {
-            case .anime:
-                animeNode = try await animeViewModel.fetchAnime(id: id)
-            default:
-                animeNode = try await discoverViewModel.fetchMangaByID(id: id, animeType: animeType)
-            }
+        if let existingItem = animeViewModel.userAnimeMangaList.first(where: { $0.id == id }) {
+            print("Hit cached item")
+            item = existingItem
+            return
+        }
+        
+        // Send network request
+        switch type {
+        case .anime:
+            item = await animeViewModel.fetchAnime(id: id)
+        default:
+            item = await animeViewModel.fetchMangaByID(id: id)
         }
     }
 }
@@ -181,7 +175,14 @@ enum DetailOption: String, CaseIterable, Identifiable {
 struct AnimeDetail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            AnimeDetail(animeNode: AnimeCollection.sampleData[1], id: 0, animeType: .anime)
+            AnimeDetail(item: SampleData.sampleData[0], id: 0, type: .anime)
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+                .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
+            
+        }
+        
+        NavigationView {
+            AnimeDetail(item: nil, id: 0, type: .manga)
                 .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
@@ -196,7 +197,7 @@ public enum RedactionType {
 
 struct Redactable: ViewModifier {
     let type: RedactionType?
-
+    
     @ViewBuilder
     func body(content: Content) -> some View {
         switch type {
@@ -216,22 +217,22 @@ struct Redactable: ViewModifier {
 }
 
 struct Placeholder: ViewModifier {
-
+    
     @State private var condition: Bool = false
     func body(content: Content) -> some View {
         content
             .accessibility(label: Text("Placeholder"))
             .redacted(reason: .placeholder)
-//            .opacity(condition ? 0.0 : 1.0)
-//            .animation(Animation
-//                        .easeInOut(duration: 1)
-//                        .repeatForever(autoreverses: true))
+        //            .opacity(condition ? 0.0 : 1.0)
+        //            .animation(Animation
+        //                        .easeInOut(duration: 1)
+        //                        .repeatForever(autoreverses: true))
             .onAppear { condition = true }
     }
 }
 
 struct Scaled: ViewModifier {
-
+    
     @State private var condition: Bool = false
     func body(content: Content) -> some View {
         content
@@ -239,14 +240,14 @@ struct Scaled: ViewModifier {
             .redacted(reason: .placeholder)
             .scaleEffect(condition ? 0.9 : 1.0)
             .animation(Animation
-                        .easeInOut(duration: 1)
-                        .repeatForever(autoreverses: true))
+                .easeInOut(duration: 1)
+                .repeatForever(autoreverses: true))
             .onAppear { condition = true }
     }
 }
 
 struct Blurred: ViewModifier {
-
+    
     @State private var condition: Bool = false
     func body(content: Content) -> some View {
         content
@@ -254,8 +255,8 @@ struct Blurred: ViewModifier {
             .redacted(reason: .placeholder)
             .blur(radius: condition ? 0.0 : 4.0)
             .animation(Animation
-                        .easeInOut(duration: 1)
-                        .repeatForever(autoreverses: true))
+                .easeInOut(duration: 1)
+                .repeatForever(autoreverses: true))
             .onAppear { condition = true }
     }
 }
@@ -269,7 +270,7 @@ extension View {
             redacted(reason: redactionType)
         }
     }
-
+    
     func redacted(reason: RedactionType?) -> some View {
         self.modifier(Redactable(type: reason))
     }

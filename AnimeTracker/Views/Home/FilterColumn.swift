@@ -11,10 +11,11 @@ struct FilterColumn: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
     
     var body: some View {
-        ForEach($animeViewModel.filterResults, id: \.node.id) { $animeNode in
-            AnimeCell(animeNode: $animeNode)
-                .listRowSeparator(.hidden) // remove default separator
-        }
+        Text("Filter column")
+//        ForEach(animeViewModel.filterResults, id: \.id) { animeNode in
+//            AnimeCell(animeNode: animeNode)
+//                .listRowSeparator(.hidden) // remove default separator
+//        }
     }
 }
 

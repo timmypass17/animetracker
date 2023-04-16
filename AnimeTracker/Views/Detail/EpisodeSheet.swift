@@ -15,119 +15,110 @@ enum ActiveAlert {
 struct EpisodeSheet: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var animeViewModel: AnimeViewModel
+    @Binding var item: WeebItem?
     @State var progress: Float = 0.0
-    @Binding var isShowingSheet: Bool
-    @Binding var animeNode: AnimeNode
     
+    @Binding var isShowingSheet: Bool
     @State var activeAlert: ActiveAlert = .failure
     @State var showAlert = false
-    
-    var maxSlider: Float {
-        return animeNode.node.getNumEpisodesOrChapters() == 0 ? 2000.0 : Float(animeNode.node.getNumEpisodesOrChapters())
-    }
+    let type: WeebItemType?
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Episode Progression")
-                .font(.title)
-                .bold()
-            
-            Text("Keep track of episodes watched!")
-                .foregroundColor(.secondary)
-            
-            AnimeCell(animeNode: $animeNode)
-            
-            HStack {
-                Button(action: { handleMinus() }) {
-                    Image(systemName: "minus")
-                }
+            VStack(alignment: .leading) {
+                Text("Episode Progression")
+                    .font(.title)
+                    .bold()
+
+                Text("Keep track of episodes watched!")
+                    .foregroundColor(.secondary)
                 
-                // TODO: Some animes don't have num count (ex. One Piece)
-                Slider(
-                    value: $progress,
-                    in: 0.0...maxSlider,
-                    step: 1.0
-                ) {
-                    Text("Episode")
-                } minimumValueLabel: {
-                    Text("0")
-                } maximumValueLabel: {
-                    Text("\(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?" : String(animeNode.node.getNumEpisodesOrChapters()))")
+                if let anime = item as? Anime {
+                    AnimeCell(anime: anime)
+
+                    HStack {
+                        Button(action: { handleMinus() }) {
+                            Image(systemName: "minus")
+                        }
+                        
+                        // TODO: Some animes don't have num count (ex. One Piece)
+                        Slider(
+                            value: $progress,
+                            in: 0.0...Float(anime.getNumEpisodes()),
+                            step: 1.0
+                        ) {
+                            Text("Episode")
+                        } minimumValueLabel: {
+                            Text("0")
+                        } maximumValueLabel: {
+                            Text("")
+                        }
+                        Button(action: { handlePlus() }) {
+                            Image(systemName: "plus")
+                        }
+                    }
+                    .padding(.top, 10)
+                    
+                    Text("Currently on episode: \(Int(progress)) / \(anime.getNumEpisodes())")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .font(.caption)
                 }
-                Button(action: { handlePlus() }) {
-                    Image(systemName: "plus")
+
+                Spacer()
+
+                Button(action: {
+                    Task {
+                        if let item = item {
+                            await animeViewModel.saveProgress(item: item, seen: Int(progress))
+                        }
+                    }
+                }) {
+                    // save to icloud
+                    Text("Save")
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background(Color.accentColor)
+                        .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+                .alert(isPresented: $showAlert) {
+                    switch activeAlert {
+                    case .failure:
+                        return Alert(title: Text("Unable to save record!"),
+                              message: Text("Please login to an iCloud account."),
+                              dismissButton: .default(Text("Got it!"))
+                        )
+                    }
                 }
             }
-            .padding(.top, 10)
-            .opacity(animeNode.node.status == "not_yet_aired" ? 0 : 1)
-            
-            Text("Currently on episode: \(Int(progress)) / \(animeNode.node.getNumEpisodesOrChapters() == 0 ? "?": String(animeNode.node.getNumEpisodesOrChapters())) ")
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .font(.caption)
-                .opacity(animeNode.node.status == "not_yet_aired" ? 0 : 1)
-            
-            
-            Spacer()
-            
-            Button(action : { handleSaveAction() }) {
-                // save to icloud
-                Text("Save")
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.accentColor)
-                    .cornerRadius(10)
-            }
-            .buttonStyle(.plain)
-            .alert(isPresented: $showAlert) {
-                switch activeAlert {
-                case .failure:
-                    return Alert(title: Text("Unable to save record!"),
-                          message: Text("Please login to an iCloud account."),
-                          dismissButton: .default(Text("Got it!"))
-                    )
-                }
-            }
-        }
-        .padding()
-        .padding(.top)
-        .onAppear {
-            progress = Float(animeNode.record.seen)
+            .padding()
+            .padding(.top)
+            .onAppear {
+                progress = Float(item?.progress?.seen ?? 0)
         }
     }
     
     func handlePlus() {
-        if animeNode.node.getNumEpisodesOrChapters() == 0 {
-            progress += 1
-        } else {
-            progress = min((progress) + 1, Float(animeNode.node.getNumEpisodesOrChapters() ?? Int.max))
+        if let anime = item as? Anime {
+            progress = min((progress) + 1, Float(anime.getNumEpisodes()))
+        } else if let manga = item as? Manga {
+            progress = min((progress) + 1, Float(manga.getNumChapters()))
         }
     }
     
     func handleMinus() {
         progress = max((progress) - 1, 0)
     }
-    
-    // capture user input 
-    func handleSaveAction() {
-        Task {
-            if appState.isSignedInToiCloud {
-                animeNode.record.animeID = animeNode.node.id
-                animeNode.record.seen = Int(progress)
-                animeNode.record.animeType = animeNode.node.animeType
-                await animeViewModel.saveAnime(animeNode: animeNode)
-            } else {
-                activeAlert = .failure
-                showAlert = true
-            }
-        }
-    }
 }
 
 struct EpisodeSheet_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            EpisodeSheet(isShowingSheet: .constant(true), animeNode: .constant(AnimeCollection.sampleData[0]))
+            EpisodeSheet(
+                isShowingSheet: .constant(true),
+                item: .constant(SampleData.sampleData[0]),
+                type: .anime
+            )
                 .environmentObject(AppState())
                 .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
         }

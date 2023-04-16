@@ -8,16 +8,16 @@
 import SwiftUI
 
 struct AnimeStatus: View {
-    let animeNode: AnimeNode
+    let animeNode: WeebItem
     
     var body: some View {
         HStack(alignment: .center, spacing: 4) {
             Circle()
-                .fill(selectColor)
+                .fill(animeNode.getAiringStatusColor())
                 .frame(width: 5)
                 .padding(.top, 2)
             
-            Text(animeNode.node.getStatus())
+            Text(animeNode.getStatus())
                 .font(.system(size: 10))
                 .lineLimit(1)
                 .foregroundColor(Color.ui.textColor)
@@ -29,24 +29,10 @@ struct AnimeStatus: View {
                 .fill(.regularMaterial)
         }
     }
-    
-    var selectColor: Color {
-        switch animeNode.node.status {
-            
-        case "currently_airing", "on_hiatus", "currently_publishing":
-            return .yellow
-            
-        case "finished_airing", "finished":
-            return .green
-        default:
-            return .red
-            
-        }
-    }
 }
 
 struct AnimeStatus_Previews: PreviewProvider {
     static var previews: some View {
-        AnimeStatus(animeNode: AnimeCollection.sampleData[0])
+        AnimeStatus(animeNode: SampleData.sampleData[0])
     }
 }

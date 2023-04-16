@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CloudKit
 
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
@@ -19,7 +20,7 @@ struct HomeView: View {
 
                 Divider()
                 
-                AnimeList(animeData: $animeViewModel.selectedAnimeData)
+                WatchList()
                     .padding([.horizontal])
             }
         }
@@ -51,26 +52,25 @@ struct HomeView: View {
             text: $animeViewModel.filterText,
             prompt: "Filter by name"
         ) {
-            AnimeList(animeData: $animeViewModel.filterResults)
+//            WatchList()
         }
         .onChange(of: animeViewModel.filterText) { newValue in
-            animeViewModel.filterDataByTitle(query: newValue)
+//            animeViewModel.filterDataByTitle(query: newValue)
         }
         .onChange(of: animeViewModel.selectedViewMode) { newValue in
-            animeViewModel.applySort()
+//            animeViewModel.applySort()
         }
         .onChange(of: animeViewModel.selectedSort) { newValue in
-            animeViewModel.applySort()
+//            animeViewModel.applySort()
         }
         .onAppear {
-            animeViewModel.applySort()
+//            animeViewModel.applySort()
         }
         .refreshable {
             Task{
                 await animeViewModel.loadUserAnimeList()
             }
         }
-        
     }
 }
 

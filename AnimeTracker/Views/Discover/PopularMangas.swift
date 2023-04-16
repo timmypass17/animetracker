@@ -40,7 +40,7 @@ struct PopularMangasRow: View {
     
     
     var body: some View {
-        if discoverViewModel.popularMangas.data.count > 0 {
+        if discoverViewModel.popularMangas.count > 0 {
             VStack(alignment: .leading) {
                 NavigationLink {
                     DiscoverDetailView(
@@ -69,14 +69,14 @@ struct PopularMangasRow: View {
                 .buttonStyle(.plain)
                 
                 TabView {
-                    ForEach(discoverViewModel.popularMangas.data, id: \.node.id) { animeNode in
+                    ForEach(discoverViewModel.popularMangas, id: \.id) { item in
                         NavigationLink {
-                            AnimeDetail(id: animeNode.node.id, animeType: .manga)
+                            AnimeDetail(id: item.id, type: .manga)
                         } label: {
-                            DetailTopSection(animeNode: animeNode)
+                            DetailTopSection(item: item)
                                 .padding()
                                 .background(alignment: .top) {
-                                    if let url = animeNode.node.main_picture?.large {
+                                    if let url = item.main_picture?.large {
                                         DetailBackground(url: url)
                                             .opacity(0.5)
                                             .overlay(leftGradient)

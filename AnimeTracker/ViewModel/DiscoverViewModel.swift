@@ -11,9 +11,9 @@ import Combine
 @MainActor
 class DiscoverViewModel: ObservableObject {
     @Published var animeRepository: AnimeRepository
-    @Published var searchResults: [AnimeNode] = []
-    @Published var topAiringAnimes = AnimeCollection()
-    @Published var popularMangas = AnimeCollection()
+    @Published var searchResults: [WeebItem] = []
+    @Published var topAiringAnimes = [Anime]()
+    @Published var popularMangas = [Manga]()
     @Published var searchText = ""
     @Published var selectedAnimeType: AnimeType = .anime
     @Published var isShowingSheet = false
@@ -30,89 +30,92 @@ class DiscoverViewModel: ObservableObject {
             .store(in: &cancellables)
         
         Task {
-            var airingAnimes = try await fetchTopAiringAnimes()
-            while airingAnimes.data.count > 5 {
-                airingAnimes.data.removeLast()
-            }
-            self.topAiringAnimes = airingAnimes
-            
+//            var airingAnimes = try await fetchTopAiringAnimes()
+//            while airingAnimes.data.count > 5 {
+//                airingAnimes.data.removeLast()
+//            }
+//            self.topAiringAnimes = airingAnimes
+//            
             var mangas = try await fetchPopularMangas()
-            while mangas.data.count > 5 {
-                mangas.data.removeLast()
+            while mangas.count > 5 {
+                mangas.removeLast()
             }
             self.popularMangas = mangas
         }
     }
     
-    func fetchMangaByID(id: Int, animeType: AnimeType) async -> AnimeNode {
-        let result = await animeRepository.fetchManga(mangaID: id)
-        switch result {
-        case .success(let animeNode):
-            return animeNode
-        case .failure(_):
-            return AnimeNode(node: Anime(id: 0))
-        }
-    }
+//    // TODO: Should return optional. Is misleading to return default object
+//    func fetchMangaByID(id: Int) async -> Manga? {
+//        let result = await animeRepository.fetchManga(mangaID: id)
+//        switch result {
+//        case .success(let animeNode):
+//            print("Successfully got manga")
+//            return animeNode
+//        case .failure(_):
+//            print("Failed to get manga")
+//            return nil
+//        }
+//    }
     
     
-    func fetchAnimesByTitle(title: String) async -> AnimeCollection {
+    func fetchAnimesByTitle(title: String) async -> [Anime] {
         let result = await animeRepository.fetchAnimes(title: title)
         switch result {
         case .success(let animeCollection):
-            return animeCollection
+            return animeCollection.data
         case .failure(_):
-            return AnimeCollection()
+            return []
         }
     }
     
-    func fetchMangasByTitle(title: String, limit: Int = 15) async -> AnimeCollection {
+    func fetchMangasByTitle(title: String, limit: Int = 15) async -> [Manga] {
         let result = await animeRepository.fetchMangas(title: title)
         switch result {
         case .success(let animeCollection):
-            return animeCollection
+            return animeCollection.data
         case .failure(_):
-            return AnimeCollection()
+            return []
         }
     }
     
-    func fetchTopAiringAnimes(season: Season = .fall, year: Int = 0, animeType: AnimeType = .anime, page: Int = 0) async -> AnimeCollection {
+    func fetchTopAiringAnimes(season: Season = .fall, year: Int = 0, animeType: AnimeType = .anime, page: Int = 0) async -> [Anime] {
         let result = await animeRepository.fetchTopAiringAnimes(page: page)
         switch result {
         case .success(let animeCollection):
-            return animeCollection
+            return animeCollection.data
         case .failure(_):
-            return AnimeCollection()
+            return []
         }
     }
     
-    func fetchPopularMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType = .anime, page: Int = 0) async throws -> AnimeCollection {
+    func fetchPopularMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType = .anime, page: Int = 0) async throws -> [Manga] {
         let result = await animeRepository.fetchPopularMangas(page: page)
         switch result {
         case .success(let animeCollection):
-            return animeCollection
+            return animeCollection.data
         case .failure(_):
-            return AnimeCollection()
+            return []
         }
     }
     
-    func loadMoreAnimes(season: Season, year: Int, animeType: AnimeType = .anime, page: Int) async -> AnimeCollection {
+    func loadMoreAnimes(season: Season, year: Int, animeType: AnimeType = .anime, page: Int) async -> [Anime] {
         let result = await animeRepository.fetchAnimes(season: season, year: year, page: page)
         switch result {
         case .success(let animeCollection):
-            return animeCollection
+            return animeCollection.data
         case .failure(_):
-            return AnimeCollection()
+            return []
         }
     }
     
-    func loadMoreMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType, page: Int) async -> AnimeCollection {
+    func loadMoreMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType, page: Int) async -> [Manga] {
         let result = await animeRepository.fetchMangas(animeType: animeType, page: page)
         switch result {
         case .success(let animeCollection):
-            return animeCollection
+            return animeCollection.data
         case .failure(_):
             // TODO: change func to return either optional or Result. Returning default object hides underlying issue.
-            return AnimeCollection()
+            return []
         }
     }
 

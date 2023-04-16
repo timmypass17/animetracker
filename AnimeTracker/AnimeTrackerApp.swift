@@ -39,6 +39,14 @@ struct AnimeTrackerApp: App {
                 .tabItem {
                     Label("Discover", systemImage: "magnifyingglass")
                 }
+                
+                // TODO: Add settings, user defaults, remove all, import animes, display different list styles
+                NavigationStack {
+                    Text("Settings View")
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
             }
             .environmentObject(appState)
             .environmentObject(animeViewModel)

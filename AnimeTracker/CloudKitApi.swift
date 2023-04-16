@@ -10,10 +10,10 @@ import CloudKit
 
 protocol CloudKitService {
     
-    func addOrUpdate(animeNode: AnimeNode) async
-    
-    func deleteAnime(animeNode: AnimeNode) async
-    
-    func fetchRecords(cursor: CKQueryOperation.Cursor?, completion: @escaping (([CKRecord]) -> Void))
+//    func addOrUpdate(animeNode: AnimeNode) async
+//    
+//    func deleteAnime(animeNode: AnimeNode) async
+//    
+//    func fetchRecords(cursor: CKQueryOperation.Cursor?, completion: @escaping (([CKRecord]) -> Void))
 
 }

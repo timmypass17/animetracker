@@ -12,9 +12,9 @@ import Combine
 
 @MainActor // to automatically dispatch UI updates on the main queue. Same as doing DispatchQueue.main.async{}
 class AnimeViewModel: ObservableObject {
-    @Published var animeData: [AnimeNode] = []  // original anime data
-    @Published var selectedAnimeData: [AnimeNode] = []  // filtered version of anime data
-    @Published var filterResults: [AnimeNode] = []
+    @Published var userAnimeMangaList: [WeebItem] = []
+    @Published var selectedAnimeData: [WeebItem] = []  // filtered version of anime data
+    @Published var filterResults: [WeebItem] = []
     @Published var selectedViewMode: ViewMode = .all
     @Published var selectedSort: SortBy = .last_modified
     @Published var filterText = ""
@@ -27,13 +27,13 @@ class AnimeViewModel: ObservableObject {
     init(animeRepository: AnimeRepository) {
         self.animeRepository = animeRepository
         
-        // subscribe to changes in repository. Connects publisher to another publisher
+        // subscribe to changes in repository. Connects publisher to another publisher. modifying userAnimeList updates animeData
         self.animeRepository.$animeData
-            .assign(to: \.animeData, on: self)
+            .assign(to: \.userAnimeMangaList, on: self)
             .store(in: &cancellables)
         
         // selectedAnimeData subscribe to changes in animeData?
-        $animeData
+        $userAnimeMangaList
             .assign(to: \.selectedAnimeData, on: self)
             .store(in: &cancellables)
     }
@@ -43,7 +43,7 @@ class AnimeViewModel: ObservableObject {
     }
     
     // TODO: Maybe make this return Result or optional, instead of default object.
-    func fetchAnime(id: Int) async -> AnimeNode {
+    func fetchAnime(id: Int) async -> Anime {
         let result = await animeRepository.fetchAnime(animeID: id)
         switch result {
         case .success(let animeNode):
@@ -51,59 +51,95 @@ class AnimeViewModel: ObservableObject {
             return animeNode
         case .failure(_):
             print("Failed to get anime")
-            return AnimeNode(node: Anime(id: 0))
+            return Anime(id: 0)
         }
     }
     
-    func saveAnime(animeNode: AnimeNode) async {
-        await animeRepository.addOrUpdate(animeNode: animeNode)
+    // TODO: Should return optional. Is misleading to return default object
+    func fetchMangaByID(id: Int) async -> Manga? {
+        let result = await animeRepository.fetchManga(mangaID: id)
+        switch result {
+        case .success(let animeNode):
+            print("Successfully got manga")
+            return animeNode
+        case .failure(_):
+            print("Failed to get manga")
+            return nil
+        }
     }
-    
-    func deleteAnime(animeNode: AnimeNode) async {
-        await animeRepository.deleteAnime(animeNode: animeNode)
+
+    func saveProgress(item: WeebItem, seen: Int) async {
+        let result = await animeRepository.save(item: item, seen: seen)
+        switch result {
+        case .success(let record):
+            // Update existing item
+            if let index = userAnimeMangaList.firstIndex(where: { $0.id == item .id }) {
+                userAnimeMangaList[index].progress = Progress(record: record)
+                return
+            }
+            
+            // Add item locally
+            if var anime = item as? Anime {
+                anime.progress = Progress(record: record)
+                userAnimeMangaList.append(anime)
+            }
+            else if var manga = item as? Manga {
+                manga.progress = Progress(record: record)
+                userAnimeMangaList.append(manga)
+            }
+            
+            return
+        case .failure(let failure):
+            // Show iCloud error alert (e.g. User needs to relog iCloud password, should be rare)
+            return
+        }
     }
-    
-    func filterDataByTitle(query: String) {
-        filterResults = animeRepository.animeData.filter { $0.node.getTitle().lowercased().contains(query.lowercased()) }
-    }
+
+//    func deleteAnime(animeNode: AnimeNode) async {
+//        await animeRepository.deleteAnime(animeNode: animeNode)
+//    }
+//
+//    func filterDataByTitle(query: String) {
+//        filterResults = animeRepository.animeData.filter { $0.node.getTitle().lowercased().contains(query.lowercased()) }
+//    }
     
 }
 
 extension AnimeViewModel {
-    func applySort() {
-        sortByMode()
-        sortBySorting()
-        
-        func sortByMode() {
-            switch selectedViewMode {
-            case .all:
-                selectedAnimeData = animeData
-            case .in_progress:
-                selectedAnimeData = animeData.filter {
-                    var n = $0.node.getNumEpisodesOrChapters()
-                    if n == 0 { n = Int.max } // 0 episodes means series is ongoing
-                    return 1..<n ~= $0.record.seen
-                }
-            case .finished:
-                selectedAnimeData = animeData.filter { ($0.record.seen) == $0.node.getNumEpisodesOrChapters() && ($0.record.seen) != 0 }
-            case .not_started:
-                selectedAnimeData = animeData.filter { $0.record.seen == 0 }
-            }
-        }
-        
-        func sortBySorting() {
-            switch selectedSort {
-            case .alphabetical:
-                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
-            case .newest:
-                selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? Int.max > $1.node.start_season?.year ?? Int.max }
-            case .date_created:
-                selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate > $1.record.creationDate }
-            case .last_modified:
-                selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate > $1.record.modificationDate }
-            }
-        }
-    }
+//    func applySort() {
+//        sortByMode()
+//        sortBySorting()
+//        
+//        func sortByMode() {
+//            switch selectedViewMode {
+//            case .all:
+//                selectedAnimeData = userAnimeList
+//            case .in_progress:
+//                selectedAnimeData = animeData.filter {
+//                    var n = $0.node.getNumEpisodesOrChapters()
+//                    if n == 0 { n = Int.max } // 0 episodes means series is ongoing
+//                    return 1..<n ~= $0.record.seen
+//                }
+//            case .finished:
+//                selectedAnimeData = animeData.filter { ($0.record.seen) == $0.node.getNumEpisodesOrChapters() && ($0.record.seen) != 0 }
+//            case .not_started:
+//                selectedAnimeData = animeData.filter { $0.record.seen == 0 }
+//            }
+//        }
+//        
+//        func sortBySorting() {
+//            switch selectedSort {
+//            case .alphabetical:
+//                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
+//            case .newest:
+//                selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? Int.max > $1.node.start_season?.year ?? Int.max }
+//            case .date_created:
+//                selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate > $1.record.creationDate }
+//            case .last_modified:
+//                selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate > $1.record.modificationDate }
+//            }
+//        }
+//    }
 }
 
 enum ViewMode: String, CaseIterable, Identifiable {

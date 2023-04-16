@@ -8,72 +8,33 @@
 import SwiftUI
 
 struct AnimeStats: View {
-    let animeNode: AnimeNode
+    let item: WeebItem?
     
     var body: some View {
         VStack(alignment: .leading) {
             Text("Information".uppercased())
                 .foregroundColor(Color.ui.textColor.opacity(0.6))
             
-            StatsCell(title: "Alternate Title", image: "t.square", value: animeNode.node.getTitle())
+            StatsCell(title: "Alternate Title", image: "t.square", value: item?.getTitle() ?? "Unknown")
             
-            StatsCell(title: "Type", image: "magnifyingglass", value: animeNode.node.getMediaType().uppercased())
+            StatsCell(title: "Type", image: "magnifyingglass", value: item?.getMediaType().uppercased() ?? "Unknown")
             
-            Group {
-                StatsCell(
-                    title: animeNode.node.getEpisodesOrChapters(),
-                    image: animeNode.node.animeType == .anime ? "tv" : "book",
-                    value: String(animeNode.node.getNumEpisodesOrChapters())
-                )
-                
-                if animeNode.node.num_volumes != nil {
-                    StatsCell(title: "Volumes", image: "books.vertical", value: animeNode.node.getNumVolume())
-                }
-                
-                StatsCell(title: "Status", image: "leaf", value: animeNode.node.getStatus())
-                
-                StatsCell(title: "Aired", image: "calendar", value: animeNode.node.getAiringTime())
-                
-                if animeNode.node.start_season != nil {
-                    StatsCell(title: "Premiered", image: "calendar", value: animeNode.node.getSeasonYear())
-                }
-                
-                StatsCell(title: "Broadcast", image: "calendar", value: animeNode.node.getBroadcast())
-                
-                StatsCell(title: "Studio", image: "building", value: animeNode.node.getStudios())
+            if let anime = item as? Anime {
+                StatsCell(title: "Episodes",image: "tv",value: anime.getNumEpisodes())
+                StatsCell(title: "Minutes",image: "clock",value: anime.getAverageEpisodeDuration())
+                StatsCell(title: "Broadcast", image: "calendar", value: anime.getBroadcast())
+                StatsCell(title: "Studio", image: "building", value: anime.getStudios())
+                StatsCell(title: "Source", image: "book.closed", value: anime.getSource())
+                StatsCell(title: "Rating", image: "r.square.fill", value: anime.getRating())
+            }
+            else if let manga = item as? Manga {
+                StatsCell(title: "Chapter",image: "book",value: manga.getNumChapters())
+                StatsCell(title: "Volumes",image: "book",value: manga.getNumVolumes())
             }
             
-            StatsCell(title: "Source", image: "book.closed", value: animeNode.node.source?.capitalized ?? "?")
+            StatsCell(title: "Status", image: "leaf", value: item?.getStatus() ?? "Unknown")
+            StatsCell(title: "Aired", image: "calendar", value: item?.getStartSeasonAndYear() ?? "Unknown")
             
-            StatsCell(title: "Duration", image: "clock", value: animeNode.node.getEpisodeMinutes())
-            
-            StatsCell(title: "Rating", image: "r.square.fill", value: animeNode.node.getRatingFormatted().uppercased())
-        }
-        .padding()
-        .background {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(.regularMaterial)
-        }
-        
-//        if animeNode.node.animeType == .anime {
-//            statistics
-//        }
-    }
-    
-    var statistics: some View {
-        VStack(alignment: .leading) {
-            Text("Statistics".uppercased())
-                .foregroundColor(Color.ui.textColor.opacity(0.6))
-            
-//            StatsCell(title: "Watching", image: "play", value: animeNode.node.getWatching())
-//            
-//            StatsCell(title: "Completed", image: "checkmark", value: animeNode.node.getCompleted())
-//            
-//            StatsCell(title: "On Hold", image: "pause.circle", value: animeNode.node.getOnHold())
-//            
-//            StatsCell(title: "Dropped", image: "xmark", value: animeNode.node.getDropped())
-//            
-//            StatsCell(title: "Plan To Watch", image: "calendar", value: animeNode.node.getPlanToWatch())
         }
         .padding()
         .background {
@@ -83,10 +44,10 @@ struct AnimeStats: View {
     }
 }
 
-struct StatsCell: View {
+struct StatsCell<T: CustomStringConvertible>: View {
     let title: String
     let image: String
-    let value: String
+    let value: T
     
     @State var isExpanded = false
     var body: some View {
@@ -99,7 +60,7 @@ struct StatsCell: View {
                     .padding(.trailing)
                 
                 Spacer()
-                Text(value)
+                Text("\(value.description)")
                     .foregroundColor(Color.ui.textColor.opacity(0.6))
                     .lineLimit(isExpanded ? nil : 1)
             }
@@ -112,6 +73,6 @@ struct StatsCell: View {
 
 struct AnimeStats_Previews: PreviewProvider {
     static var previews: some View {
-        AnimeStats(animeNode: AnimeCollection.sampleData[0])
+        AnimeStats(item: SampleData.sampleData[0])
     }
 }
