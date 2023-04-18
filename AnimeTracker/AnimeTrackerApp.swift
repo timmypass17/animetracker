@@ -19,21 +19,24 @@ struct AnimeTrackerApp: App {
         let appState = AppState()
         let animeRepository = AnimeRepository()
         _appState = StateObject(wrappedValue: appState)
-        _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository))
+        _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository, appState: appState))
         _discoverViewModel = StateObject(wrappedValue: DiscoverViewModel(animeRepository: animeRepository))
     }
     
     var body: some Scene {
         WindowGroup {
             TabView {
-                NavigationStack {
+                NavigationStack(path: $appState.path) {
                     HomeView()
+                        .navigationDestination(for: Int.self) { id in
+                            AnimeDetail(id: id, type: .anime)
+                        }
                 }
                 .tabItem {
                     Label("List", systemImage: "list.bullet")
                 }
                 
-                NavigationStack {
+                NavigationStack(path: $appState.path) {
                     DiscoverView()
                 }
                 .tabItem {
@@ -41,7 +44,7 @@ struct AnimeTrackerApp: App {
                 }
                 
                 // TODO: Add settings, user defaults, remove all, import animes, display different list styles
-                NavigationStack {
+                NavigationStack(path: $appState.path) {
                     Text("Settings View")
                 }
                 .tabItem {
@@ -53,6 +56,10 @@ struct AnimeTrackerApp: App {
             .environmentObject(discoverViewModel)
         }
     }
+}
+
+enum ActiveAlert {
+    case iCloudNotLoggedIn
 }
 
 extension Color {

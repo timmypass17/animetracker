@@ -8,93 +8,107 @@
 import SwiftUI
 import CloudKit
 
-enum ActiveAlert {
-    case failure
-}
-
 struct EpisodeSheet: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var animeViewModel: AnimeViewModel
-    @Binding var item: WeebItem?
     @State var progress: Float = 0.0
-    
+    @Binding var item: WeebItem?
     @Binding var isShowingSheet: Bool
-    @State var activeAlert: ActiveAlert = .failure
-    @State var showAlert = false
     let type: WeebItemType?
     
+    var title: String {
+        return "\(type == .anime ? "Episode" : "Chapter") Progression"
+    }
+    
+    var subtitle: String {
+        if type == .anime {
+            return "Keep track of episodes watched!"
+        } else {
+            return "Keep track of chapters read!"
+        }
+    }
+    
     var body: some View {
-            VStack(alignment: .leading) {
-                Text("Episode Progression")
-                    .font(.title)
-                    .bold()
-
-                Text("Keep track of episodes watched!")
-                    .foregroundColor(.secondary)
+        VStack(alignment: .leading) {
+            Text(title)
+                .font(.title)
+                .bold()
+            
+            Text(subtitle)
+                .foregroundColor(.secondary)
+            
+            if let anime = item as? Anime {
+                WeebCell(item: anime)
                 
-                if let anime = item as? Anime {
-                    AnimeCell(anime: anime)
-
-                    HStack {
-                        Button(action: { handleMinus() }) {
-                            Image(systemName: "minus")
-                        }
-                        
-                        // TODO: Some animes don't have num count (ex. One Piece)
-                        Slider(
-                            value: $progress,
-                            in: 0.0...Float(anime.getNumEpisodes()),
-                            step: 1.0
-                        ) {
-                            Text("Episode")
-                        } minimumValueLabel: {
-                            Text("0")
-                        } maximumValueLabel: {
-                            Text("")
-                        }
-                        Button(action: { handlePlus() }) {
-                            Image(systemName: "plus")
-                        }
-                    }
-                    .padding(.top, 10)
-                    
-                    Text("Currently on episode: \(Int(progress)) / \(anime.getNumEpisodes())")
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .font(.caption)
+                // TODO: Turn this into 1 view
+                if anime.getNumEpisodes() > 0 {
+                    ProgressionSlider(
+                        item: anime,
+                        progress: $progress,
+                        maxEpisodeOrChapter: anime.getNumEpisodes()
+                    )
+                } else {
+                    ProgressionStepper(
+                        item: anime,
+                        progress: $progress,
+                        maxEpisodeOrChapter: anime.getNumEpisodes()
+                    )
                 }
-
-                Spacer()
-
-                Button(action: {
-                    Task {
-                        if let item = item {
-                            await animeViewModel.saveProgress(item: item, seen: Int(progress))
-                        }
-                    }
-                }) {
-                    // save to icloud
-                    Text("Save")
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                        .background(Color.accentColor)
-                        .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-                .alert(isPresented: $showAlert) {
-                    switch activeAlert {
-                    case .failure:
-                        return Alert(title: Text("Unable to save record!"),
-                              message: Text("Please login to an iCloud account."),
-                              dismissButton: .default(Text("Got it!"))
-                        )
-                    }
+            } else if let manga = item as? Manga {
+                WeebCell(item: manga)
+                
+                if manga.getNumChapters() > 0 {
+                    ProgressionSlider(
+                        item: manga,
+                        progress: $progress,
+                        maxEpisodeOrChapter: manga.getNumChapters()
+                    )
+                } else {
+                    ProgressionStepper(
+                        item: manga,
+                        progress: $progress,
+                        maxEpisodeOrChapter: manga.getNumChapters()
+                    )
                 }
             }
-            .padding()
-            .padding(.top)
-            .onAppear {
-                progress = Float(item?.progress?.seen ?? 0)
+            
+            Spacer()
+            
+            Button(action: {
+                self.isShowingSheet = false
+                guard let item = item else { return }
+                
+                Task {
+                    // struct is immutable, have to reassign entire object
+                    let updatedItem = await animeViewModel.saveProgress(item: item, seen: Int(progress))
+                    if let updatedItem = updatedItem {
+                        // Updated item sucessfully
+                        self.item = updatedItem
+                    }
+                }
+            }) {
+                // save to icloud
+                Text("Save")
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.accentColor)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .padding(.top)
+        .onAppear {
+            progress = Float(item?.progress?.seen ?? 0)
+        }
+        .alert(isPresented: $appState.showAlert) {
+            switch appState.activeAlert {
+            case .iCloudNotLoggedIn:
+                return Alert(
+                    title: Text("Unable to save progress!"),
+                      message: Text("Please verify that you are logged into your iCloud account by going to Settings > iCloud on your device.")
+                )
+            }
         }
     }
     
@@ -115,12 +129,12 @@ struct EpisodeSheet_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             EpisodeSheet(
-                isShowingSheet: .constant(true),
                 item: .constant(SampleData.sampleData[0]),
+                isShowingSheet: .constant(true),
                 type: .anime
             )
-                .environmentObject(AppState())
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+            .environmentObject(AppState())
+            .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
         }
     }
 }

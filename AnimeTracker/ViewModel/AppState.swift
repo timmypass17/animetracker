@@ -7,11 +7,16 @@
 
 import Foundation
 import CloudKit
+import SwiftUI
 
 // single source of truth for user's data, authentication tokens, screen navigation state (selected tabs, presented sheets)
 @MainActor
 class AppState: ObservableObject {
-    @Published var isSignedInToiCloud: Bool = false
+    @Published var path = NavigationPath() // stack of views
+    @Published var isSignedInToiCloud = false
+    @Published var showAlert = false
+    @Published var activeAlert: ActiveAlert = .iCloudNotLoggedIn
+
     var userID: CKRecord.ID?
     
     let defaults = UserDefaults.standard // used to store basic types, we use it to store user setting's preferences

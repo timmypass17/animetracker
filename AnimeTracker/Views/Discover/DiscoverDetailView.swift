@@ -25,7 +25,7 @@ struct DiscoverDetailView: View {
                     NavigationLink {
                         AnimeDetail(id: item.id, type: .anime)
                     } label: {
-                        DiscoverCell(animeNode: item, geometry: geometry, width: 0.29, isScaled: true)
+                        DiscoverCell(item: item, geometry: geometry, width: 0.29, isScaled: true)
                     }
                     .buttonStyle(.plain)
                 }

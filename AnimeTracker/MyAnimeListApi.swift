@@ -23,7 +23,8 @@ protocol MyAnimeListApiService {
 }
 
 struct MyAnimeListApi {
-    static var fieldValues: String = Anime.CodingKeys.allCases.map { $0.rawValue }.joined(separator: ",")
+    static var animeField: String = Anime.CodingKeys.allCases.map { $0.rawValue }.joined(separator: ",")
+    static var mangaField: String = Manga.CodingKeys.allCases.map { $0.rawValue }.joined(separator: ",")
     static var baseUrl = "https://api.myanimelist.net/v2"
     static var apiKey = "e7bc56aa1b0ea0afe3299d889922e5b8"
 }

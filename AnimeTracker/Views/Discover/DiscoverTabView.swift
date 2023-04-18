@@ -25,6 +25,6 @@ struct DiscoverTabView: View {
 struct DiscoverTabView_Previews: PreviewProvider {
     static var previews: some View {
         DiscoverTabView()
-            .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+            .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
     }
 }

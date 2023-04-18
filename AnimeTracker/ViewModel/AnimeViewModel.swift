@@ -21,12 +21,13 @@ class AnimeViewModel: ObservableObject {
     @Published var showErrorAlert = false
     
     var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
+    var appState: AppState
     private var cancellables = Set<AnyCancellable>()
     let TAG = "[AnimeViewModel]"
     
-    init(animeRepository: AnimeRepository) {
+    init(animeRepository: AnimeRepository, appState: AppState) {
         self.animeRepository = animeRepository
-        
+        self.appState = appState
         // subscribe to changes in repository. Connects publisher to another publisher. modifying userAnimeList updates animeData
         self.animeRepository.$animeData
             .assign(to: \.userAnimeMangaList, on: self)
@@ -67,31 +68,39 @@ class AnimeViewModel: ObservableObject {
             return nil
         }
     }
+    
+    enum MALApiError: Error {
+        case missingItem
+    }
 
-    func saveProgress(item: WeebItem, seen: Int) async {
+    func saveProgress(item: WeebItem, seen: Int) async -> WeebItem? {
         let result = await animeRepository.save(item: item, seen: seen)
         switch result {
         case .success(let record):
             // Update existing item
             if let index = userAnimeMangaList.firstIndex(where: { $0.id == item .id }) {
                 userAnimeMangaList[index].progress = Progress(record: record)
-                return
+                return userAnimeMangaList[index]
             }
             
             // Add item locally
             if var anime = item as? Anime {
                 anime.progress = Progress(record: record)
                 userAnimeMangaList.append(anime)
+                return anime
             }
             else if var manga = item as? Manga {
                 manga.progress = Progress(record: record)
                 userAnimeMangaList.append(manga)
+                return manga
             }
-            
-            return
-        case .failure(let failure):
+            return nil
+        case .failure(let error):
             // Show iCloud error alert (e.g. User needs to relog iCloud password, should be rare)
-            return
+            
+            appState.activeAlert = .iCloudNotLoggedIn
+            appState.showAlert = true
+            return nil
         }
     }
 

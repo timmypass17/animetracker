@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DiscoverCell: View {
-    let animeNode: WeebItem
+    let item: WeebItem
     let geometry: GeometryProxy
     let width: CGFloat
     var isScaled: Bool = false
@@ -23,17 +23,19 @@ struct DiscoverCell: View {
     }
     
     var description: String {
-        return "Description"
-//        if animeNode.node.animeType == .anime {
-//            return "\(animeNode.node.getMediaType().uppercased()) - \(animeNode.node.getNumEpisodesOrChapters()) Episodes"
-//        } else {
-//            return "\(animeNode.node.getMediaType().capitalized) - Ch. \(animeNode.node.getNumEpisodesOrChapters())"
-//        }
+        if let anime = item as? Anime {
+            return "\(anime.getMediaType().uppercased()) - \(anime.getNumEpisodes()) Episodes"
+        }
+        if let manga = item as? Manga {
+            return "\(manga.getMediaType()) - Ch. \(manga.getNumChapters())"
+        }
+        
+        return "Unknown"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            AsyncImage(url: URL(string: animeNode.main_picture?.medium ?? "")) { image in
+            AsyncImage(url: URL(string: item.main_picture?.medium ?? "")) { image in
                 image
                     .resizable()
                     .scaledToFill()
@@ -49,7 +51,7 @@ struct DiscoverCell: View {
                     .frame(width: isScaled ? posterWidth : 100, height: isScaled ?  posterHeight : 150)
             }
             
-            Text(animeNode.getTitle())
+            Text(item.getTitle())
                 .font(.system(size: 14))
                 .lineLimit(1)
                 .padding(.top, 4)
@@ -58,7 +60,7 @@ struct DiscoverCell: View {
                 .foregroundColor(Color.ui.textColor.opacity(0.6))
                 .font(.system(size: 10))
             
-            AnimeStatus(animeNode: animeNode)
+            AnimeStatus(animeNode: item)
                 .padding(.top, 2)
                         
         }
@@ -91,7 +93,7 @@ struct TagView: View {
 struct DiscoverCell_Previews: PreviewProvider {
     static var previews: some View {
         GeometryReader { geometry in
-            DiscoverCell(animeNode: SampleData.sampleData[0], geometry: geometry, width: 0.25)
+            DiscoverCell(item: SampleData.sampleData[0], geometry: geometry, width: 0.25)
         }
     }
 }

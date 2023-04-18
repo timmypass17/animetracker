@@ -9,22 +9,16 @@ import SwiftUI
 
 // TODO: Refrator code to have optional animeNode
 struct AnimeDetail: View {
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var animeViewModel: AnimeViewModel
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    @State var item: WeebItem?
-    @State var currentEpisode: Float = 0.0
-    @State var isShowingSheet = false
-    @State var selectedTab: DetailTab = .background
-    @State var animationAmount = 1.0
-    @State var isLoading = false
-    @State var showDeleteAlert = false
+    @StateObject var detailViewModel = DetailViewModel()
     
+    // Can't move these into viewmodel for some reason
+    @State var item: WeebItem?
     let id: Int
-    let type: WeebItemType?
+    let type: WeebItemType // do not need this because once we get item, we can refer if next items will be all anime or all manga. Not possible to jump between anime and manga
     
     var body: some View {
-//        if let item = item {
             ScrollView(.vertical) {
                 VStack(alignment: .leading, spacing: 0) {
                     DetailTopSection(item: item)
@@ -36,11 +30,11 @@ struct AnimeDetail: View {
                     DetailProgress(item: $item)
                         .padding(.top)
                     
-                    DetailTabView(selectedTab: $selectedTab)
+                    DetailTabView(selectedTab: $detailViewModel.selectedTab)
                         .padding(.top)
                         .unredacted()
                     
-                    switch selectedTab {
+                    switch detailViewModel.selectedTab {
                     case .background:
                         Synopsis(animeNode: item)
                             .padding(.top)
@@ -66,7 +60,7 @@ struct AnimeDetail: View {
                     case .recommendation:
                         RecommendationRow(
                             recommendedItems: item?.recommendations ?? [],
-                            type: type ?? .anime
+                            type: type
                         )
                         .padding(.top)
                     }
@@ -88,9 +82,9 @@ struct AnimeDetail: View {
             .edgesIgnoringSafeArea(.top)
             .navigationTitle(item?.getTitle() ?? "")
             .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $isShowingSheet, onDismiss: { /** Save data **/ }, content: {
+            .sheet(isPresented: $detailViewModel.isShowingSheet, onDismiss: { /** Save data **/ }, content: {
                 NavigationView {
-                    EpisodeSheet(isShowingSheet: $isShowingSheet, item: $item, type: type)
+                    EpisodeSheet(item: $item, isShowingSheet: $detailViewModel.isShowingSheet, type: type)
                 }
                 .presentationDetents([.medium])
             })
@@ -105,7 +99,7 @@ struct AnimeDetail: View {
     //                    }
     //                }
                     
-                    Button(action: { isShowingSheet.toggle() }) {
+                    Button(action: { detailViewModel.isShowingSheet.toggle() }) {
                         Image(systemName: "plus") // plus.square
                             .imageScale(.large)
                         
@@ -117,12 +111,12 @@ struct AnimeDetail: View {
                 Task {
                     //                isLoading = true
                     await fetchItem()
-                    isLoading = false
+                    detailViewModel.isLoading = false
                 }
             }
             .alert(
                 "Delete Progress",
-                isPresented: $showDeleteAlert,
+                isPresented: $detailViewModel.showDeleteAlert,
                 presenting: item
             ) { animeNode in
                 Button(role: .destructive) {
@@ -138,15 +132,19 @@ struct AnimeDetail: View {
                 } label: {
                     Text("Cancel")
                 }
-            } message: { anime in
-                Text("Are you sure you want to delete your progress for \"\(item?.getTitle() ?? "Title not found")\"?")
+            } message: { item in
+                Text("Are you sure you want to delete your progress for \"\(item.getTitle())\"?")
             }
+//            .alert(isPresented: $appState.showAlert) {
+//                switch appState.activeAlert {
+//                case .iCloudNotLoggedIn:
+//                    return Alert(title: Text("Unable to save record!"),
+//                          message: Text("Please login to an iCloud account."),
+//                          dismissButton: .default(Text("Got it!"))
+//                    )
+//                }
+//            }
         .animation(.easeInOut, value: 1.0)
-//        } else {
-//            ProgressView()
-//                .redacted(reason: item == nil ? .placeholder : [])
-//        }
-        
     }
     
     func fetchItem() async {
@@ -176,14 +174,14 @@ struct AnimeDetail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             AnimeDetail(item: SampleData.sampleData[0], id: 0, type: .anime)
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
-            
+
         }
-        
+
         NavigationView {
             AnimeDetail(item: nil, id: 0, type: .manga)
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }

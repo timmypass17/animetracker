@@ -9,8 +9,9 @@ import Foundation
 import CloudKit
 
 // might be <T: Codable>
+
 struct AnimeCollection<T: WeebItem>: Codable {
-    var data: [T] = []
+    var data: [AnimeNode<T>] = []
     var season: AnimeSeason?
 }
 
@@ -184,12 +185,17 @@ enum Ranking: String {
     case manga, novels, manhwa, manhua
 }
 
-enum Season: String, CaseIterable, Codable, Identifiable {
+enum Season: String, CaseIterable, Codable {
     case fall, summer, spring, winter
-    var id: Self { self }
+//    var id: Self { self }
+    
+    enum CodingKeys: String, CodingKey {
+        case fall, summer, spring, winter
+    }
 }
 
-enum AnimeType: String, CaseIterable, Identifiable, Codable {
+enum AnimeType: String, CaseIterable, Codable {
     case anime, manga, novels, manhwa, manhua, oneshots, doujin
-    var id: Self { self } // forEach
+//    var id: Self { self } // forEach
+    
 }

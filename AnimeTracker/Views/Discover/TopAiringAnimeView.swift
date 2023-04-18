@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct TopAiringAnimeView: View {
-    @EnvironmentObject var discoverViewModel: DiscoverViewModel
     var geometry: GeometryProxy
-
+    
     var body: some View {
         TopAiringAnimeRow(geometry: geometry)
     }
@@ -19,7 +18,7 @@ struct TopAiringAnimeView: View {
 struct TopAiringAnimeRow: View {
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
     var geometry: GeometryProxy
-
+    
     let leftGradient = LinearGradient(
         gradient: Gradient(stops: [
             .init(color: Color.ui.background, location: 0),
@@ -36,6 +35,15 @@ struct TopAiringAnimeRow: View {
         ]),
         startPoint: .trailing,
         endPoint: .leading
+    )
+    
+    let gradient = LinearGradient(
+        gradient: Gradient(stops: [
+            .init(color: Color.ui.background, location: 0),
+            .init(color: .clear, location: 1.0) // 1.5 height of gradient
+        ]),
+        startPoint: .bottom,
+        endPoint: .top
     )
     
     var body: some View {
@@ -55,7 +63,7 @@ struct TopAiringAnimeRow: View {
                     HStack {
                         Text("Top Airing Animes".uppercased())
                             .foregroundColor(Color.ui.textColor.opacity(0.6))
-
+                        
                         
                         Spacer()
                         
@@ -69,24 +77,24 @@ struct TopAiringAnimeRow: View {
                 .buttonStyle(.plain)
                 
                 TabView {
-//                    ForEach(discoverViewModel.topAiringAnimes, id: \.node.id) { animeNode in
-//                        NavigationLink {
-//                            AnimeDetail(id: animeNode.node.id, animeType: .anime)
-//                        } label: {
-//                            DetailTopSection(animeNode: animeNode)
-//                                .padding()
-//                                .background(alignment: .top) {
-//                                    if let url = animeNode.node.main_picture?.large {
-//                                        DetailBackground(url: url)
-//                                            .opacity(0.5)
+                    ForEach(discoverViewModel.topAiringAnimes, id: \.id) { anime in
+                        NavigationLink {
+                            AnimeDetail(id: anime.id, type: .anime)
+                        } label: {
+                            DetailTopSection(item: anime)
+                                .padding()
+                                .background(alignment: .top) {
+                                    if let url = anime.main_picture?.large {
+                                        DetailBackground(url: url)
+                                            .overlay(gradient)
 //                                            .overlay(leftGradient)
 //                                            .overlay(rightGradient)
-//                                    }
-//                                }
-//                                .padding(.vertical)
-//                        }
-//                        .buttonStyle(.plain)
-//                    }
+                                    }
+                                }
+                                .padding(.vertical)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .tabViewStyle(.page)
                 .indexViewStyle(.page(backgroundDisplayMode: .never))

@@ -12,7 +12,7 @@ import Combine
 class DiscoverViewModel: ObservableObject {
     @Published var animeRepository: AnimeRepository
     @Published var searchResults: [WeebItem] = []
-    @Published var topAiringAnimes = [Anime]()
+    @Published var topAiringAnimes: [Anime] = []
     @Published var popularMangas = [Manga]()
     @Published var searchText = ""
     @Published var selectedAnimeType: AnimeType = .anime
@@ -30,11 +30,11 @@ class DiscoverViewModel: ObservableObject {
             .store(in: &cancellables)
         
         Task {
-//            var airingAnimes = try await fetchTopAiringAnimes()
-//            while airingAnimes.data.count > 5 {
-//                airingAnimes.data.removeLast()
-//            }
-//            self.topAiringAnimes = airingAnimes
+            var airingAnimes = try await fetchTopAiringAnimes()
+            while airingAnimes.count > 5 {
+                airingAnimes.removeLast()
+            }
+            self.topAiringAnimes = airingAnimes
 //            
             var mangas = try await fetchPopularMangas()
             while mangas.count > 5 {
@@ -62,7 +62,8 @@ class DiscoverViewModel: ObservableObject {
         let result = await animeRepository.fetchAnimes(title: title)
         switch result {
         case .success(let animeCollection):
-            return animeCollection.data
+            return []
+//            return animeCollection.data
         case .failure(_):
             return []
         }
@@ -72,7 +73,8 @@ class DiscoverViewModel: ObservableObject {
         let result = await animeRepository.fetchMangas(title: title)
         switch result {
         case .success(let animeCollection):
-            return animeCollection.data
+            return []
+//            return animeCollection.data
         case .failure(_):
             return []
         }
@@ -82,7 +84,7 @@ class DiscoverViewModel: ObservableObject {
         let result = await animeRepository.fetchTopAiringAnimes(page: page)
         switch result {
         case .success(let animeCollection):
-            return animeCollection.data
+            return animeCollection.data.map { $0.node }
         case .failure(_):
             return []
         }
@@ -91,8 +93,8 @@ class DiscoverViewModel: ObservableObject {
     func fetchPopularMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType = .anime, page: Int = 0) async throws -> [Manga] {
         let result = await animeRepository.fetchPopularMangas(page: page)
         switch result {
-        case .success(let animeCollection):
-            return animeCollection.data
+        case .success(let mangaCollection):
+            return mangaCollection.data.map { $0.node }
         case .failure(_):
             return []
         }
@@ -102,7 +104,7 @@ class DiscoverViewModel: ObservableObject {
         let result = await animeRepository.fetchAnimes(season: season, year: year, page: page)
         switch result {
         case .success(let animeCollection):
-            return animeCollection.data
+            return animeCollection.data.map { $0.node }
         case .failure(_):
             return []
         }
@@ -111,8 +113,8 @@ class DiscoverViewModel: ObservableObject {
     func loadMoreMangas(season: Season = .fall, year: Int = 0, animeType: AnimeType, page: Int) async -> [Manga] {
         let result = await animeRepository.fetchMangas(animeType: animeType, page: page)
         switch result {
-        case .success(let animeCollection):
-            return animeCollection.data
+        case .success(let mangaCollection):
+            return mangaCollection.data.map { $0.node }
         case .failure(_):
             // TODO: change func to return either optional or Result. Returning default object hides underlying issue.
             return []

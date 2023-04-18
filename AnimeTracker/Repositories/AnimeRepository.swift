@@ -34,7 +34,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     ///     - animeID: Anime's unique identifier.
     /// - Returns: Anime from MyAnimeList with that id.
     func fetchAnime(animeID: Int) async -> Result<Anime, Error> {
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(animeID)?fields=\(MyAnimeListApi.fieldValues)")
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/\(animeID)?fields=\(MyAnimeListApi.animeField)")
         else { return .failure(FetchError.badURL) }
         
         var request = URLRequest(url: url)
@@ -60,7 +60,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
         guard !title.isEmpty else { return .failure(FetchError.badURL) }
         
         let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
-        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)")
+        guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime?q=\(titleFormatted)&fields=\(MyAnimeListApi.animeField)&limit=\(limit)")
         else { return .failure(FetchError.badURL) }
         
         var request = URLRequest(url: url)
@@ -90,7 +90,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     func fetchTopAiringAnimes(page: Int = 0) async -> Result<AnimeCollection<Anime>, Error> {
         do {
             let offset = page * limit
-            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/ranking?ranking_type=airing&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badURL }
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/ranking?ranking_type=airing&fields=\(MyAnimeListApi.animeField)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badURL }
             
             var request = URLRequest(url: url)
             request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
@@ -109,7 +109,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     func fetchPopularMangas(page: Int = 0) async -> Result<AnimeCollection<Manga>, Error> {
         do {
             let offset = page * limit
-            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=bypopularity&fields=\(MyAnimeListApi.fieldValues)&limit=10&offset=\(offset)") else { throw FetchError.badURL }
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=bypopularity&fields=\(MyAnimeListApi.mangaField)&limit=10&offset=\(offset)") else { throw FetchError.badURL }
             
             var request = URLRequest(url: url)
             request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
@@ -134,7 +134,8 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     func fetchAnimes(season: Season, year: Int, page: Int) async -> Result<AnimeCollection<Anime>, Error> {
         do {
             let offset = page * limit
-            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/season/\(year)/\(season.rawValue)?&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)&sort=anime_num_list_users") else { throw FetchError.badRequest }
+
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/anime/season/\(year)/\(season.rawValue)?&fields=\(MyAnimeListApi.animeField)&limit=\(limit)&offset=\(offset)&sort=anime_num_list_users") else { throw FetchError.badRequest }
             
             var request = URLRequest(url: url)
             request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
@@ -156,7 +157,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     /// - Returns: List of mangas from MyAnimeList using that id.
     func fetchManga(mangaID: Int) async -> Result<Manga, Error> {
         do {
-            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/\(mangaID)?fields=\(MyAnimeListApi.fieldValues)") else { throw FetchError.badRequest }
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/\(mangaID)?fields=\(MyAnimeListApi.mangaField)") else { throw FetchError.badRequest }
             
             var request = URLRequest(url: url)
             request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
@@ -182,7 +183,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
             guard !title.isEmpty else { throw FetchError.badRequest }
             
             let titleFormatted = title.replacingOccurrences(of: " ", with: "_")
-            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga?q=\(titleFormatted)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)") else { throw FetchError.badURL }
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga?q=\(titleFormatted)&fields=\(MyAnimeListApi.animeField)&limit=\(limit)") else { throw FetchError.badURL }
             var request = URLRequest(url: url)
             request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
             
@@ -213,7 +214,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     func fetchMangas(animeType: AnimeType, page: Int) async -> Result<AnimeCollection<Manga>, Error> {
         do {
             let offset = page * limit
-            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=\(animeType.rawValue)&fields=\(MyAnimeListApi.fieldValues)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
+            guard let url = URL(string: "\(MyAnimeListApi.baseUrl)/manga/ranking?ranking_type=\(animeType.rawValue)&fields=\(MyAnimeListApi.mangaField)&limit=\(limit)&offset=\(offset)") else { throw FetchError.badRequest }
             
             var request = URLRequest(url: url)
             request.setValue(MyAnimeListApi.apiKey, forHTTPHeaderField: "X-MAL-CLIENT-ID")
@@ -421,5 +422,6 @@ enum FetchError: Error {
     case badRequest
     case badJson
     case badURL
+    case missingResponse
 }
 

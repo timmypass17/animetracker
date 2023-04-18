@@ -13,17 +13,38 @@ struct HomeView: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
+//        ScrollView {
+//            VStack(spacing: 0) {
+//                HomeTabView()
+//                    .padding([.horizontal, .bottom])
+//
+//                Divider()
+//
+//                WatchList()
+//                    .padding(.horizontal)
+//                    .padding(.trailing, 4) // scooth from scroll axis
+//            }
+//        }
+        List {
+//            VStack(spacing: 0) {
                 HomeTabView()
-                    .padding([.horizontal, .bottom])
+//                    .padding([.horizontal, .bottom])
+//                .padding(.bottom)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.ui.background)
 
-                Divider()
+//                Divider()
                 
                 WatchList()
-                    .padding([.horizontal])
-            }
+//                    .padding(.horizontal)
+//                    .padding(.trailing, 4) // scooth from scroll axis
+//            }
         }
+        .listStyle(.plain)
+//        .listRowInsets(EdgeInsets())
+        .scrollContentBackground(.hidden)
+        .background(Color.ui.background)
+
         .navigationTitle("My Anime List")
         .toolbar {
             ToolbarItem {
@@ -47,7 +68,6 @@ struct HomeView: View {
                 }
             }
         }
-        .background(Color.ui.background)
         .searchable(
             text: $animeViewModel.filterText,
             prompt: "Filter by name"
@@ -79,7 +99,7 @@ struct HomeView_Previews: PreviewProvider {
         NavigationStack {
             HomeView()
                 .environmentObject(AppState())
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
         }
     }
 }

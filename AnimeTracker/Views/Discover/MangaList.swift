@@ -16,7 +16,7 @@ struct MangaList: View {
         LazyVStack {
             PopularMangas(geometry: geometry)
 
-            ForEach(mangaTypes) { mangaType in
+            ForEach(mangaTypes, id: \.self) { mangaType in
                 if mangaType != .doujin && mangaType != .oneshots {
                     DiscoverRow(
                         title: mangaType.rawValue.capitalized,
