@@ -11,7 +11,7 @@ import CloudKit
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var animeViewModel: AnimeViewModel
-
+    
     var body: some View {
 //        ScrollView {
 //            VStack(spacing: 0) {
@@ -20,11 +20,12 @@ struct HomeView: View {
 //
 //                Divider()
 //
-//                WatchList()
+//                WatchList(data: animeViewModel.selectedAnimeData)
 //                    .padding(.horizontal)
 //                    .padding(.trailing, 4) // scooth from scroll axis
 //            }
 //        }
+        
         List {
 //            VStack(spacing: 0) {
                 HomeTabView()
@@ -32,19 +33,22 @@ struct HomeView: View {
 //                .padding(.bottom)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.ui.background)
+                .padding(.top, -8)
+                .padding(.bottom, 8)
 
-//                Divider()
-                
-                WatchList()
+            WatchList(data: animeViewModel.selectedAnimeData)
 //                    .padding(.horizontal)
 //                    .padding(.trailing, 4) // scooth from scroll axis
 //            }
         }
         .listStyle(.plain)
+        
 //        .listRowInsets(EdgeInsets())
         .scrollContentBackground(.hidden)
         .background(Color.ui.background)
-
+//        .toolbar {
+//          EditButton()
+//        }
         .navigationTitle("My Anime List")
         .toolbar {
             ToolbarItem {
@@ -72,19 +76,19 @@ struct HomeView: View {
             text: $animeViewModel.filterText,
             prompt: "Filter by name"
         ) {
-//            WatchList()
+            SearchList(data: animeViewModel.filterResults)
         }
         .onChange(of: animeViewModel.filterText) { newValue in
-//            animeViewModel.filterDataByTitle(query: newValue)
+            animeViewModel.filterDataByTitle(query: newValue)
         }
         .onChange(of: animeViewModel.selectedViewMode) { newValue in
-//            animeViewModel.applySort()
+            animeViewModel.applySort()
         }
         .onChange(of: animeViewModel.selectedSort) { newValue in
-//            animeViewModel.applySort()
+            animeViewModel.applySort()
         }
         .onAppear {
-//            animeViewModel.applySort()
+            animeViewModel.applySort()
         }
         .refreshable {
             Task{

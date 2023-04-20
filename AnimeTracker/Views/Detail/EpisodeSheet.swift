@@ -15,6 +15,7 @@ struct EpisodeSheet: View {
     @Binding var item: WeebItem?
     @Binding var isShowingSheet: Bool
     let type: WeebItemType?
+    @State var isLoading = false
     
     var title: String {
         return "\(type == .anime ? "Episode" : "Chapter") Progression"
@@ -30,15 +31,22 @@ struct EpisodeSheet: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text(title)
-                .font(.title)
-                .bold()
+            HStack {
+                Text(title)
+                    .font(.title)
+                    .bold()
+            }
             
             Text(subtitle)
                 .foregroundColor(.secondary)
             
             if let anime = item as? Anime {
                 WeebCell(item: anime)
+                    .padding(.top)
+                    .padding(.bottom, 8)
+                
+                Divider()
+                    .padding(.bottom, 8)
                 
                 // TODO: Turn this into 1 view
                 if anime.getNumEpisodes() > 0 {
@@ -75,26 +83,38 @@ struct EpisodeSheet: View {
             Spacer()
             
             Button(action: {
-                self.isShowingSheet = false
-                guard let item = item else { return }
+                isLoading = true
                 
                 Task {
+                    guard let item = item else { return }
                     // struct is immutable, have to reassign entire object
                     let updatedItem = await animeViewModel.saveProgress(item: item, seen: Int(progress))
                     if let updatedItem = updatedItem {
                         // Updated item sucessfully
                         self.item = updatedItem
+                        isShowingSheet = false
+                    } else {
+                        appState.activeAlert = .iCloudNotLoggedIn
+                        appState.showAlert = true
                     }
+                    isLoading = false
                 }
             }) {
                 // save to icloud
-                Text("Save")
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.accentColor)
-                    .cornerRadius(10)
+                Group {
+                    if isLoading {
+                        ProgressView()
+                    } else {
+                        Text("Save")
+                    }
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, minHeight: 40)
+                .background(Color.accentColor)
+                .cornerRadius(10)
             }
             .buttonStyle(.plain)
+            .disabled(isLoading)
         }
         .padding()
         .padding(.top)
@@ -110,6 +130,11 @@ struct EpisodeSheet: View {
                 )
             }
         }
+//        .overlay {
+//            if isLoading {
+//                ProgressView()
+//            }
+//        }
     }
     
     func handlePlus() {

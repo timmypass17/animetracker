@@ -48,12 +48,20 @@ struct DiscoverRow: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top) {
                     ForEach(animeCollection, id: \.id) { item in
-                        NavigationLink {
-                            AnimeDetail(id: item.id, type: .anime)
-                        } label: {
+                        NavigationLink(value: animeCollection.first is Anime
+                                       ? DetailDestination.anime(item.id)
+                                       : DetailDestination.manga(item.id)) {
                             DiscoverCell(item: item, geometry: geometry, width: 0.25)
                         }
                         .buttonStyle(.plain)
+                        
+                        
+//                        NavigationLink {
+//                            AnimeDetail(id: item.id, type: )
+//                        } label: {
+//                            DiscoverCell(item: item, geometry: geometry, width: 0.25)
+//                        }
+//                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal)

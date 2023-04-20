@@ -7,10 +7,11 @@
 
 import SwiftUI
 
+
 struct DiscoverView: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
-    
+
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
@@ -42,28 +43,29 @@ struct DiscoverView: View {
                 text: $discoverViewModel.searchText,
                 prompt: discoverViewModel.selectedAnimeType == .anime ? "Search Anime" : "Search Mangas, Novels, etc"
             ) {
-                WatchList()
+                DiscoverSearchList(data: discoverViewModel.searchResults)
             }
             .autocorrectionDisabled(true)
             .onSubmit(of: .search) {
-//                Task {
-//                    if discoverViewModel.selectedAnimeType == .anime {
-//                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
-//                    } else {
-//                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
-//                    }
-//                }
+                Task {
+                    if discoverViewModel.selectedAnimeType == .anime {
+                        discoverViewModel.searchResults = await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                    } else {
+                        discoverViewModel.searchResults = await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText)
+                    }
+                }
             }
             .onReceive(discoverViewModel.$searchText.debounce(for: 0.3, scheduler: RunLoop.main)
             ) { _ in
+                print("Searching for anime \(discoverViewModel.searchText)")
                 // Debounce. Fetch api calls after 0.5 seconds of not typing.
-//                Task {
-//                    if discoverViewModel.selectedAnimeType == .anime {
-//                        discoverViewModel.searchResults = try await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText).data
-//                    } else {
-//                        discoverViewModel.searchResults = try await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText).data
-//                    }
-//                }
+                Task {
+                    if discoverViewModel.selectedAnimeType == .anime {
+                        discoverViewModel.searchResults = await discoverViewModel.fetchAnimesByTitle(title: discoverViewModel.searchText)
+                    } else {
+                        discoverViewModel.searchResults = await discoverViewModel.fetchMangasByTitle(title: discoverViewModel.searchText)
+                    }
+                }
             }
             .navigationTitle("Discover Anime")
         }

@@ -12,7 +12,10 @@ import SwiftUI
 // single source of truth for user's data, authentication tokens, screen navigation state (selected tabs, presented sheets)
 @MainActor
 class AppState: ObservableObject {
-    @Published var path = NavigationPath() // stack of views
+    @Published var homePath = NavigationPath() // stack of views
+    @Published var discoverPath = NavigationPath() // stack of views
+    @Published var settingPath = NavigationPath() // stack of views
+
     @Published var isSignedInToiCloud = false
     @Published var showAlert = false
     @Published var activeAlert: ActiveAlert = .iCloudNotLoggedIn
@@ -20,7 +23,7 @@ class AppState: ObservableObject {
     var userID: CKRecord.ID?
     
     let defaults = UserDefaults.standard // used to store basic types, we use it to store user setting's preferences
-    private lazy var database: CKDatabase = container.publicCloudDatabase
+    private lazy var database: CKDatabase = container.privateCloudDatabase
     private lazy var container: CKContainer = CKContainer.default()
     let TAG = "[AppState]"
     
@@ -35,6 +38,7 @@ class AppState: ObservableObject {
     func getiCloudStatus() async {
         do {
             let status = try await container.accountStatus()
+            
             switch status {
             case .available:
                 print("\(TAG) iCloud available") // user may still need to login password

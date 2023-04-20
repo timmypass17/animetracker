@@ -25,12 +25,12 @@ class DiscoverViewModel: ObservableObject {
         self.animeRepository = animeRepository
         recentSeasons = getRecentSeasonYear()
         
-        self.animeRepository.$searchResults
-            .assign(to: \.searchResults, on: self)
-            .store(in: &cancellables)
-        
+//        self.animeRepository.$searchResults
+//            .assign(to: \.searchResults, on: self)
+//            .store(in: &cancellables)
+//        
         Task {
-            var airingAnimes = try await fetchTopAiringAnimes()
+            var airingAnimes = await fetchTopAiringAnimes()
             while airingAnimes.count > 5 {
                 airingAnimes.removeLast()
             }
@@ -62,8 +62,7 @@ class DiscoverViewModel: ObservableObject {
         let result = await animeRepository.fetchAnimes(title: title)
         switch result {
         case .success(let animeCollection):
-            return []
-//            return animeCollection.data
+            return animeCollection.data.map { $0.node }
         case .failure(_):
             return []
         }
@@ -72,9 +71,8 @@ class DiscoverViewModel: ObservableObject {
     func fetchMangasByTitle(title: String, limit: Int = 15) async -> [Manga] {
         let result = await animeRepository.fetchMangas(title: title)
         switch result {
-        case .success(let animeCollection):
-            return []
-//            return animeCollection.data
+        case .success(let mangaCollection):
+            return mangaCollection.data.map { $0.node }
         case .failure(_):
             return []
         }

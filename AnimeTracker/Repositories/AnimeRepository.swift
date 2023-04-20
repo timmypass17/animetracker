@@ -12,9 +12,9 @@ import CloudKit
 @MainActor
 class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitService **/ {
     @Published var animeData: [WeebItem]
-    @Published var searchResults: [WeebItem]
+    @Published var searchResults: [WeebItem] // might remove?
     private lazy var container: CKContainer = CKContainer.default()
-    private lazy var database: CKDatabase = container.publicCloudDatabase
+    private lazy var database: CKDatabase = container.privateCloudDatabase
     private let limit = 10
     private let TAG = "[AnimeRepository]"
     private var userID: CKRecord.ID?
@@ -71,7 +71,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { return .failure(FetchError.badRequest) }
             
             var animeCollection = try JSONDecoder().decode(AnimeCollection<Anime>.self, from: data)
-            
+            print("Successfully got anime")
             // Update record for each search item using user's list.
 //            for (index, searchItem) in animeCollection.data.enumerated() {
 //                if let existingAnime = animeData.first(where: { searchItem.node.id == $0.node.id}) {
@@ -307,19 +307,18 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
 //    }
 //
 //
-//    /// Delete an Anime record.
-//    /// - Parameters:
-//    ///     - animeNode: Anime object containing record to delete from CloudKit.
-//    func deleteAnime(animeNode: AnimeNode) async {
-//        do {
-//            let recordToDelete = animeNode.record
-//            animeData = animeData.filter { $0.record.recordID != recordToDelete.recordID }
-//            try await database.deleteRecord(withID: recordToDelete.recordID)
-//            print("\(TAG) Successfully removed \(String(describing: animeNode.node.title)).")
-//        } catch {
-//            print("\(TAG) Failed to remove \(String(describing: animeNode.node.title)) \n \(error)")
-//        }
-//    }
+    /// Delete an Anime record.
+    /// - Parameters:
+    ///     - animeNode: Anime object containing record to delete from CloudKit.
+    func deleteAnime(weebItem: WeebItem) async {
+        do {
+            guard let recordID = weebItem.progress?.recordID else { return }// Delete locally            
+            try await database.deleteRecord(withID: recordID)
+            print("\(TAG) Successfully removed \(weebItem.title).")
+        } catch {
+            print("\(TAG) Failed to remove \(weebItem.title) \n \(error)")
+        }
+    }
 //
     /// Retrieves animes and mangas using Anime records from Cloudkit.
     /// - Parameters:

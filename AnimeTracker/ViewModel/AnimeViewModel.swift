@@ -78,7 +78,7 @@ class AnimeViewModel: ObservableObject {
         switch result {
         case .success(let record):
             // Update existing item
-            if let index = userAnimeMangaList.firstIndex(where: { $0.id == item .id }) {
+            if let index = animeRepository.animeData.firstIndex(where: { $0.id == item .id }) {
                 userAnimeMangaList[index].progress = Progress(record: record)
                 return userAnimeMangaList[index]
             }
@@ -86,69 +86,74 @@ class AnimeViewModel: ObservableObject {
             // Add item locally
             if var anime = item as? Anime {
                 anime.progress = Progress(record: record)
-                userAnimeMangaList.append(anime)
+                animeRepository.animeData.append(anime) // recall: viewmodel's data listens to changes in repo's data
+//                userAnimeMangaList.append(anime)
                 return anime
             }
             else if var manga = item as? Manga {
                 manga.progress = Progress(record: record)
-                userAnimeMangaList.append(manga)
+                animeRepository.animeData.append(manga)
+//                userAnimeMangaList.append(manga)
                 return manga
             }
             return nil
         case .failure(let error):
-            // Show iCloud error alert (e.g. User needs to relog iCloud password, should be rare)
-            
-            appState.activeAlert = .iCloudNotLoggedIn
-            appState.showAlert = true
             return nil
         }
     }
 
-//    func deleteAnime(animeNode: AnimeNode) async {
-//        await animeRepository.deleteAnime(animeNode: animeNode)
-//    }
-//
-//    func filterDataByTitle(query: String) {
-//        filterResults = animeRepository.animeData.filter { $0.node.getTitle().lowercased().contains(query.lowercased()) }
-//    }
-    
+    func deleteProgress(item: WeebItem) async {
+        // Delete locally (delete from repo, single source of truth)
+        animeRepository.animeData = animeRepository.animeData.filter { $0.progress?.id != item.progress?.id }
+        applySort()
+        
+        // Delete saved item
+        await animeRepository.deleteAnime(weebItem: item)
+    }
 }
 
 extension AnimeViewModel {
-//    func applySort() {
-//        sortByMode()
-//        sortBySorting()
-//        
-//        func sortByMode() {
-//            switch selectedViewMode {
-//            case .all:
-//                selectedAnimeData = userAnimeList
-//            case .in_progress:
-//                selectedAnimeData = animeData.filter {
-//                    var n = $0.node.getNumEpisodesOrChapters()
+    func filterDataByTitle(query: String) {
+        filterResults = animeRepository.animeData.filter { $0.getTitle().lowercased().contains(query.lowercased()) }
+    }
+    
+    func applySort() {
+        sortByMode()
+        sortBySorting()
+        
+        func sortByMode() {
+            switch selectedViewMode {
+            case .all:
+                selectedAnimeData = userAnimeMangaList
+            case .in_progress:
+//                selectedAnimeData = userAnimeMangaList.filter {
+//                    var n = $0.getNumEpisodesOrChapters()
 //                    if n == 0 { n = Int.max } // 0 episodes means series is ongoing
 //                    return 1..<n ~= $0.record.seen
 //                }
-//            case .finished:
-//                selectedAnimeData = animeData.filter { ($0.record.seen) == $0.node.getNumEpisodesOrChapters() && ($0.record.seen) != 0 }
-//            case .not_started:
-//                selectedAnimeData = animeData.filter { $0.record.seen == 0 }
-//            }
-//        }
-//        
-//        func sortBySorting() {
-//            switch selectedSort {
-//            case .alphabetical:
-//                selectedAnimeData = selectedAnimeData.sorted { $0.node.getTitle() < $1.node.getTitle() }
-//            case .newest:
-//                selectedAnimeData = selectedAnimeData.sorted { $0.node.start_season?.year ?? Int.max > $1.node.start_season?.year ?? Int.max }
-//            case .date_created:
-//                selectedAnimeData = selectedAnimeData.sorted { $0.record.creationDate > $1.record.creationDate }
-//            case .last_modified:
-//                selectedAnimeData = selectedAnimeData.sorted { $0.record.modificationDate > $1.record.modificationDate }
-//            }
-//        }
-//    }
+                break
+            case .finished:
+//                selectedAnimeData = userAnimeMangaList.filter { ($0..seen) == $0.node.getNumEpisodesOrChapters() && ($0.record.seen) != 0 }
+                break
+            case .not_started:
+                selectedAnimeData = userAnimeMangaList.filter { $0.progress?.seen == 0 }
+            }
+        }
+        
+        func sortBySorting() {
+            switch selectedSort {
+            case .alphabetical:
+                selectedAnimeData = selectedAnimeData.sorted { $0.getTitle() < $1.getTitle() }
+            case .newest:
+//                selectedAnimeData = selectedAnimeData.sorted { $0.start_season?.year ?? Int.max > $1.start_season?.year ?? Int.max }
+                break
+            case .date_created:
+                selectedAnimeData = selectedAnimeData.sorted { $0.progress?.creationDate ?? Date() > $1.progress?.creationDate ?? Date() }
+            case .last_modified:
+                selectedAnimeData = selectedAnimeData.sorted { $0.progress?.modificationDate ?? Date() > $1.progress?.modificationDate ?? Date() }
+            }
+        }
+    }
 }
 
 enum ViewMode: String, CaseIterable, Identifiable {

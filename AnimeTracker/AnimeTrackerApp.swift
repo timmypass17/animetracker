@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+enum DetailDestination: Hashable {
+    case anime(Int)
+    case manga(Int)
+}
 
 @main
 struct AnimeTrackerApp: App {
@@ -26,25 +30,38 @@ struct AnimeTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             TabView {
-                NavigationStack(path: $appState.path) {
+                NavigationStack(path: $appState.homePath) {
                     HomeView()
-                        .navigationDestination(for: Int.self) { id in
-                            AnimeDetail(id: id, type: .anime)
+                        .navigationDestination(for: DetailDestination.self) { destination in
+                            switch destination {
+                            case .anime(let id):
+                                AnimeDetail(id: id, type: .anime)
+                            case .manga(let id):
+                                AnimeDetail(id: id, type: .manga)
+                            }
                         }
                 }
                 .tabItem {
                     Label("List", systemImage: "list.bullet")
                 }
                 
-                NavigationStack(path: $appState.path) {
+                NavigationStack(path: $appState.discoverPath) {
                     DiscoverView()
+                        .navigationDestination(for: DetailDestination.self) { destination in
+                            switch destination {
+                            case .anime(let id):
+                                AnimeDetail(id: id, type: .anime)
+                            case .manga(let id):
+                                AnimeDetail(id: id, type: .manga)
+                            }
+                        }
                 }
                 .tabItem {
                     Label("Discover", systemImage: "magnifyingglass")
                 }
                 
                 // TODO: Add settings, user defaults, remove all, import animes, display different list styles
-                NavigationStack(path: $appState.path) {
+                NavigationStack(path: $appState.settingPath) {
                     Text("Settings View")
                 }
                 .tabItem {

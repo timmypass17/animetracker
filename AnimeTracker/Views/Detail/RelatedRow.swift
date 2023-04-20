@@ -21,6 +21,7 @@ struct RelatedRow: View {
                     HStack(alignment: .top) {
                         ForEach(relatedItems, id: \.node.id) { item in
                             NavigationLink {
+                                // TODO: Remove type, not needed
                                 AnimeDetail(id: item.node.id, type: type)
                             } label: {
                                 RelatedRowCell(relatedItem: item)
