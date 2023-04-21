@@ -21,13 +21,12 @@ class AnimeViewModel: ObservableObject {
     @Published var showErrorAlert = false
     
     var animeRepository: AnimeRepository // share with other viewmodel, so create repo in main file, and pass into init()
-    var appState: AppState
+//    var appState: AppState
     private var cancellables = Set<AnyCancellable>()
     let TAG = "[AnimeViewModel]"
     
-    init(animeRepository: AnimeRepository, appState: AppState) {
+    init(animeRepository: AnimeRepository) {
         self.animeRepository = animeRepository
-        self.appState = appState
         // subscribe to changes in repository. Connects publisher to another publisher. modifying userAnimeList updates animeData
         self.animeRepository.$animeData
             .assign(to: \.userAnimeMangaList, on: self)

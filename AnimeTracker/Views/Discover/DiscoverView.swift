@@ -77,7 +77,7 @@ struct DiscoverView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             DiscoverView()
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }

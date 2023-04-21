@@ -69,7 +69,7 @@ struct WatchList_Previews: PreviewProvider {
         WatchList(data: SampleData.sampleData)
             .environmentObject(
                 AnimeViewModel(
-                    animeRepository: AnimeRepository(animeData: SampleData.sampleData), appState: AppState()
+                    animeRepository: AnimeRepository(animeData: SampleData.sampleData)
                 )
             )
     }

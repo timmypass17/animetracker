@@ -174,14 +174,14 @@ struct AnimeDetail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             AnimeDetail(item: SampleData.sampleData[0], id: 0, type: .anime)
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
 
         }
 
         NavigationView {
             AnimeDetail(item: nil, id: 0, type: .manga)
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
                 .environmentObject(DiscoverViewModel(animeRepository: AnimeRepository()))
         }
     }

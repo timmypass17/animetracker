@@ -14,7 +14,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     @Published var animeData: [WeebItem]
     @Published var searchResults: [WeebItem] // might remove?
     private lazy var container: CKContainer = CKContainer.default()
-    private lazy var database: CKDatabase = container.privateCloudDatabase
+    private lazy var database: CKDatabase = container.privateCloudDatabase // TOOD: Change back to private
     private let limit = 10
     private let TAG = "[AnimeRepository]"
     private var userID: CKRecord.ID?
@@ -244,7 +244,10 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
             if let record = try results.first?.1.get() {
                 // Record found
                 record[.seen] = seen    // update progress
-                try await database.save(record) // sucess if record is new or modified.
+                
+                
+                
+//                try await database.save(record) // sucess if record is new or modified.
                 print("Sucessfully modified item \(item.getTitle())")
                 return .success(record)
             } else {

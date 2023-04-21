@@ -159,7 +159,7 @@ struct EpisodeSheet_Previews: PreviewProvider {
                 type: .anime
             )
             .environmentObject(AppState())
-            .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
+            .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

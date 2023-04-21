@@ -14,17 +14,24 @@ enum DetailDestination: Hashable {
 
 @main
 struct AnimeTrackerApp: App {
-    @StateObject var appState: AppState
+    @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
+    @StateObject var appState = AppState.shared
     @StateObject var animeViewModel: AnimeViewModel
     @StateObject var discoverViewModel: DiscoverViewModel
-
+    @StateObject var profileViewModel = ProfileViewModel()
+    
     init() {
         // https://swiftui-lab.com/random-lessons/#data-10
-        let appState = AppState()
+//        let appState = AppState()
         let animeRepository = AnimeRepository()
-        _appState = StateObject(wrappedValue: appState)
-        _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository, appState: appState))
+//        _appState = StateObject(wrappedValue: appState)
+        _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository))
         _discoverViewModel = StateObject(wrappedValue: DiscoverViewModel(animeRepository: animeRepository))
+        
+//        Task {
+//            // Ask only once (to show again, delete and reinstall app)
+//            try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+//        }
     }
     
     var body: some Scene {
@@ -62,15 +69,16 @@ struct AnimeTrackerApp: App {
                 
                 // TODO: Add settings, user defaults, remove all, import animes, display different list styles
                 NavigationStack(path: $appState.settingPath) {
-                    Text("Settings View")
+                    ProfileView()
                 }
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
+                    Label("Profile", systemImage: "person")
                 }
             }
             .environmentObject(appState)
             .environmentObject(animeViewModel)
             .environmentObject(discoverViewModel)
+            .environmentObject(profileViewModel)
         }
     }
 }

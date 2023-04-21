@@ -103,7 +103,7 @@ struct HomeView_Previews: PreviewProvider {
         NavigationStack {
             HomeView()
                 .environmentObject(AppState())
-                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository(), appState: AppState()))
+                .environmentObject(AnimeViewModel(animeRepository: AnimeRepository()))
         }
     }
 }
