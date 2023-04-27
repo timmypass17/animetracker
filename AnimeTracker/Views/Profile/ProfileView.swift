@@ -8,9 +8,14 @@
 import SwiftUI
 import PhotosUI
 
+enum ProfileTab: String, CaseIterable, Identifiable {
+    case watchlist, friends
+    var id: Self { self }
+}
+
 struct ProfileView: View {
+    @EnvironmentObject var appState: AppState
     @EnvironmentObject var profileViewModel: ProfileViewModel
-    @State var text = ""
     
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -35,9 +40,9 @@ struct ProfileView: View {
                 
                 // Name
                 HStack(spacing: 4) {
-                    Text("timby")
+                    Text(profileViewModel.profile.usernameString())
                         .fontWeight(.bold)
-                    Text("#4931")
+                    Text("#\(profileViewModel.profile.usernameDigits())")
                         .foregroundColor(.gray)
                 }
                 .font(.system(size: 18))
@@ -55,7 +60,7 @@ struct ProfileView: View {
                     }
                     
                     VStack {
-                        Text("150")
+                        Text("\(profileViewModel.getNumAnime())")
                             .font(.system(size: 20))
                             .fontWeight(.bold)
                         Text("Anime")
@@ -64,7 +69,7 @@ struct ProfileView: View {
                     }
                     
                     VStack {
-                        Text("18")
+                        Text("\(profileViewModel.getNumManga())")
                             .font(.system(size: 20))
                             .fontWeight(.bold)
                         
@@ -74,84 +79,95 @@ struct ProfileView: View {
                     }
                 }
                 
-                
-                
-                //            Text("Add your friend on AniRecord")
-                //                .font(.system(size: 25))
-                //                .fontWeight(.bold)
-                
-                //            Text("Invite your friends to stay connected and share your viewing history together!")
-                //                .foregroundColor(.gray)
-                //                .multilineTextAlignment(.center)
-                
                 Divider()
                     .padding(.vertical, 8)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Add via username".uppercased())
-                        .font(.system(size: 12))
-                    
-                    TextField("Username#0000", text: $text)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    Text("Your username is timby#4931")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                Picker("Profile Tab", selection: $profileViewModel.selectedTab) {
+                    ForEach(ProfileTab.allCases) { mode in
+                        Text(mode.rawValue.capitalized)
+                    }
                 }
+                .pickerStyle(.segmented)
                 .padding(.bottom)
                 
-                Button {
-                    // Handle sending friend request
-                } label: {
-                    Text("Send Friend Request")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                        .background(Color.accentColor)
-                        .cornerRadius(4)
-                }
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Pending - 6".uppercased())
-                        .font(.system(size: 12))
+                switch profileViewModel.selectedTab {
+                case .watchlist:
+                    SearchList(
+                        data: profileViewModel.userAnimeMangaList,
+                        path: $appState.profilePath,
+                        showDivider: true
+                    )
+                case .friends:
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Add via username".uppercased())
+                            .font(.system(size: 12))
+                        
+                        TextField("Username#0000", text: $profileViewModel.searchText)
+                            .textFieldStyle(.roundedBorder)
+                        
+                        Text("Your username is \(profileViewModel.profile.usernameString())#\(profileViewModel.profile.usernameDigits())")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.bottom)
                     
-                    ForEach(1..<3) { i in
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(.regularMaterial)
-                                .frame(width: 40, height: 40)
-                            Text("Pending \(i)")
-                            
-                            Spacer()
-                            
-                            Image(systemName: "xmark")
+                    Button {
+                        // Handle sending friend request
+                        Task {
+                            await profileViewModel.sendFriendRequest()
+                        }
+                    } label: {
+                        Text("Send Friend Request")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 40)
+                            .background(Color.accentColor)
+                            .cornerRadius(4)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Pending - 6".uppercased())
+                            .font(.system(size: 12))
+                        
+                        ForEach(1..<3) { i in
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(.regularMaterial)
+                                    .frame(width: 40, height: 40)
+                                Text("Pending \(i)")
+                                
+                                Spacer()
+                                
+                                Image(systemName: "xmark")
 
-                            Image(systemName: "checkmark")
-                                .symbolRenderingMode(.multicolor)
+                                Image(systemName: "checkmark")
+                                    .symbolRenderingMode(.multicolor)
 
+                            }
                         }
                     }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top)
-                
-                
-                VStack(alignment: .leading, spacing: 16) {
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top)
                     
-                    Text("Friends - 7".uppercased())
-                        .font(.system(size: 12))
                     
-                    ForEach(1..<8) { i in
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(.thinMaterial)
-                                .frame(width: 40, height: 40)
-                            Text("Friend \(i)")
+                    VStack(alignment: .leading, spacing: 16) {
+                        
+                        Text("Friends - 7".uppercased())
+                            .font(.system(size: 12))
+                        
+                        ForEach(1..<8) { i in
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(.thinMaterial)
+                                    .frame(width: 40, height: 40)
+                                Text("Friend \(i)")
+                            }
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top)
+                
                 
                 Spacer()
             }
@@ -169,7 +185,7 @@ struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             ProfileView()
-                .environmentObject(ProfileViewModel())
+                .environmentObject(ProfileViewModel(animeRepository: AnimeRepository()))
         }
     }
 }

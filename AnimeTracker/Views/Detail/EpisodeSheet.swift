@@ -83,12 +83,13 @@ struct EpisodeSheet: View {
             Spacer()
             
             Button(action: {
+                guard let item = item else { return }
                 isLoading = true
                 
                 Task {
-                    guard let item = item else { return }
                     // struct is immutable, have to reassign entire object
                     let updatedItem = await animeViewModel.saveProgress(item: item, seen: Int(progress))
+                    print("got item")
                     if let updatedItem = updatedItem {
                         // Updated item sucessfully
                         self.item = updatedItem

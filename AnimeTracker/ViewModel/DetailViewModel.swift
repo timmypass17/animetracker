@@ -15,4 +15,5 @@ class DetailViewModel: ObservableObject {
     @Published var animationAmount = 1.0
     @Published var isLoading = false
     @Published var showDeleteAlert = false
+
 }

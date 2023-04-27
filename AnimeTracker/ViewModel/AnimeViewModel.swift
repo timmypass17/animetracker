@@ -27,6 +27,7 @@ class AnimeViewModel: ObservableObject {
     
     init(animeRepository: AnimeRepository) {
         self.animeRepository = animeRepository
+        
         // subscribe to changes in repository. Connects publisher to another publisher. modifying userAnimeList updates animeData
         self.animeRepository.$animeData
             .assign(to: \.userAnimeMangaList, on: self)
@@ -43,7 +44,7 @@ class AnimeViewModel: ObservableObject {
     }
     
     // TODO: Maybe make this return Result or optional, instead of default object.
-    func fetchAnime(id: Int) async -> Anime {
+    func fetchAnime(id: Int) async -> Anime? {
         let result = await animeRepository.fetchAnime(animeID: id)
         switch result {
         case .success(let animeNode):
@@ -51,7 +52,7 @@ class AnimeViewModel: ObservableObject {
             return animeNode
         case .failure(_):
             print("Failed to get anime")
-            return Anime(id: 0)
+            return nil
         }
     }
     
@@ -59,9 +60,9 @@ class AnimeViewModel: ObservableObject {
     func fetchMangaByID(id: Int) async -> Manga? {
         let result = await animeRepository.fetchManga(mangaID: id)
         switch result {
-        case .success(let animeNode):
+        case .success(let manga):
             print("Successfully got manga")
-            return animeNode
+            return manga
         case .failure(_):
             print("Failed to get manga")
             return nil
@@ -78,7 +79,7 @@ class AnimeViewModel: ObservableObject {
         case .success(let record):
             // Update existing item
             if let index = animeRepository.animeData.firstIndex(where: { $0.id == item .id }) {
-                userAnimeMangaList[index].progress = Progress(record: record)
+                animeRepository.animeData[index].progress = Progress(record: record)
                 return userAnimeMangaList[index]
             }
             
@@ -108,6 +109,23 @@ class AnimeViewModel: ObservableObject {
         
         // Delete saved item
         await animeRepository.deleteAnime(weebItem: item)
+    }
+    
+    func fetchWeebItem(id: Int, type: WeebItemType) async -> WeebItem? {
+        // Cached
+        if let existingItem = userAnimeMangaList.first(where: { $0.id == id }) {
+            print("Hit cached item")
+            return existingItem
+        }
+        
+        print("Sending network request")
+        // Send network request
+        switch type {
+        case .anime:
+            return await fetchAnime(id: id)
+        default:
+            return await fetchMangaByID(id: id)
+        }
     }
 }
 

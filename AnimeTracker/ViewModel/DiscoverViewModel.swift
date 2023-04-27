@@ -28,7 +28,7 @@ class DiscoverViewModel: ObservableObject {
 //        self.animeRepository.$searchResults
 //            .assign(to: \.searchResults, on: self)
 //            .store(in: &cancellables)
-//        
+        
         Task {
             var airingAnimes = await fetchTopAiringAnimes()
             while airingAnimes.count > 5 {

@@ -12,15 +12,17 @@ struct SearchList: View {
     @EnvironmentObject var animeViewModel: AnimeViewModel
     
     var data: [WeebItem]
+    @Binding var path: NavigationPath
+    var showDivider = false // divider ruins view when used in list
     
     var body: some View {
         ForEach(data, id: \.id) { item in
             Button {
                 if item is Anime {
-                    appState.homePath.append(DetailDestination.anime(item.id))
+                    path.append(DetailDestination.anime(item.id))
                 }
                 else if item is Manga {
-                    appState.homePath.append(DetailDestination.manga(item.id))
+                    path.append(DetailDestination.manga(item.id))
                 }
             } label: {
                 WeebCell(item: item)
@@ -28,7 +30,10 @@ struct SearchList: View {
             }
             .buttonStyle(.plain)
             .listRowBackground(Color.ui.background)
-
+            
+            if showDivider {
+                Divider()
+            }
         }
     }
     

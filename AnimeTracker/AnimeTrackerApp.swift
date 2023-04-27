@@ -15,19 +15,20 @@ enum DetailDestination: Hashable {
 @main
 struct AnimeTrackerApp: App {
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
-    @StateObject var appState = AppState.shared
+    @StateObject var appState: AppState
     @StateObject var animeViewModel: AnimeViewModel
     @StateObject var discoverViewModel: DiscoverViewModel
-    @StateObject var profileViewModel = ProfileViewModel()
+    @StateObject var profileViewModel: ProfileViewModel
     
     init() {
         // https://swiftui-lab.com/random-lessons/#data-10
-//        let appState = AppState()
+        let appState = AppState()
         let animeRepository = AnimeRepository()
-//        _appState = StateObject(wrappedValue: appState)
+        _appState = StateObject(wrappedValue: appState)
         _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository))
         _discoverViewModel = StateObject(wrappedValue: DiscoverViewModel(animeRepository: animeRepository))
-        
+        _profileViewModel = StateObject(wrappedValue: ProfileViewModel(animeRepository: animeRepository))
+                
 //        Task {
 //            // Ask only once (to show again, delete and reinstall app)
 //            try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
@@ -68,7 +69,7 @@ struct AnimeTrackerApp: App {
                 }
                 
                 // TODO: Add settings, user defaults, remove all, import animes, display different list styles
-                NavigationStack(path: $appState.settingPath) {
+                NavigationStack(path: $appState.profilePath) {
                     ProfileView()
                 }
                 .tabItem {

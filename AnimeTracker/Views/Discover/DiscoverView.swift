@@ -9,6 +9,7 @@ import SwiftUI
 
 
 struct DiscoverView: View {
+    @EnvironmentObject var appState: AppState
     @EnvironmentObject var animeViewModel: AnimeViewModel
     @EnvironmentObject var discoverViewModel: DiscoverViewModel
 
@@ -43,7 +44,12 @@ struct DiscoverView: View {
                 text: $discoverViewModel.searchText,
                 prompt: discoverViewModel.selectedAnimeType == .anime ? "Search Anime" : "Search Mangas, Novels, etc"
             ) {
-                DiscoverSearchList(data: discoverViewModel.searchResults)
+//                DiscoverSearchList(data: discoverViewModel.searchResults)
+                
+                SearchList(
+                    data: discoverViewModel.searchResults,
+                    path: $appState.discoverPath
+                )
             }
             .autocorrectionDisabled(true)
             .onSubmit(of: .search) {

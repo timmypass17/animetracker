@@ -14,17 +14,15 @@ import SwiftUI
 class AppState: ObservableObject {
     @Published var homePath = NavigationPath() // stack of views
     @Published var discoverPath = NavigationPath() // stack of views
-    @Published var settingPath = NavigationPath() // stack of views
+    @Published var profilePath = NavigationPath() // stack of views
     @Published var isSignedInToiCloud = false
     @Published var showAlert = false
     @Published var activeAlert: ActiveAlert = .iCloudNotLoggedIn
-    
-    static let shared = AppState() // TODO: Singleton bad, use environment object
-    
+        
     var userID: CKRecord.ID?
     
     let defaults = UserDefaults.standard // used to store basic types, we use it to store user setting's preferences
-    private lazy var database: CKDatabase = container.privateCloudDatabase // TODO: Change back to private
+    private lazy var database: CKDatabase = container.publicCloudDatabase // TODO: Change back to private
     private lazy var container: CKContainer = CKContainer.default()
     let TAG = "[AppState]"
     

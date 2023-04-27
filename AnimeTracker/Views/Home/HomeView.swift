@@ -12,6 +12,9 @@ struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var animeViewModel: AnimeViewModel
     
+    init() {
+        UIScrollView.appearance().keyboardDismissMode = .onDrag
+    }
     var body: some View {
 //        ScrollView {
 //            VStack(spacing: 0) {
@@ -42,7 +45,6 @@ struct HomeView: View {
 //            }
         }
         .listStyle(.plain)
-        
 //        .listRowInsets(EdgeInsets())
         .scrollContentBackground(.hidden)
         .background(Color.ui.background)
@@ -76,7 +78,10 @@ struct HomeView: View {
             text: $animeViewModel.filterText,
             prompt: "Filter by name"
         ) {
-            SearchList(data: animeViewModel.filterResults)
+            SearchList(
+                data: animeViewModel.filterResults,
+                path: $appState.homePath
+            )
         }
         .onChange(of: animeViewModel.filterText) { newValue in
             animeViewModel.filterDataByTitle(query: newValue)

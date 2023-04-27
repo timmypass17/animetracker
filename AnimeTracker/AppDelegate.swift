@@ -34,6 +34,7 @@ class AppDelegate: NSObject,/* UIResponder */ UIApplicationDelegate, UNUserNotif
                 print("Subscription: \(subscription.subscriptionID)")
             }
         }
+        
         return true
     }
 
@@ -131,8 +132,8 @@ class AppDelegate: NSObject,/* UIResponder */ UIApplicationDelegate, UNUserNotif
         // Set an appropriate QoS and add the operation to the private
         // database's operation queue to execute it.
         operation.qualityOfService = .utility
-        CKContainer.default().publicCloudDatabase.add(operation)
-//        CKContainer.default().privateCloudDatabase.add(operation)
+//        CKContainer.default().publicCloudDatabase.add(operation)
+        CKContainer.default().privateCloudDatabase.add(operation)
     }
 }
 

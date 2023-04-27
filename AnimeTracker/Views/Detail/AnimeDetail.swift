@@ -110,7 +110,7 @@ struct AnimeDetail: View {
             .onAppear {
                 Task {
                     //                isLoading = true
-                    await fetchItem()
+                    item = await animeViewModel.fetchWeebItem(id: id, type: type)
                     detailViewModel.isLoading = false
                 }
             }
@@ -135,34 +135,25 @@ struct AnimeDetail: View {
             } message: { item in
                 Text("Are you sure you want to delete your progress for \"\(item.getTitle())\"?")
             }
-//            .alert(isPresented: $appState.showAlert) {
-//                switch appState.activeAlert {
-//                case .iCloudNotLoggedIn:
-//                    return Alert(title: Text("Unable to save record!"),
-//                          message: Text("Please login to an iCloud account."),
-//                          dismissButton: .default(Text("Got it!"))
-//                    )
-//                }
-//            }
         .animation(.easeInOut, value: 1.0)
     }
     
-    func fetchItem() async {
-        // Cached
-        if let existingItem = animeViewModel.userAnimeMangaList.first(where: { $0.id == id }) {
-            print("Hit cached item")
-            item = existingItem
-            return
-        }
-        
-        // Send network request
-        switch type {
-        case .anime:
-            item = await animeViewModel.fetchAnime(id: id)
-        default:
-            item = await animeViewModel.fetchMangaByID(id: id)
-        }
-    }
+//    func fetchWeebItem(id: Int) async -> WeebItem {
+//        // Cached
+//        if let existingItem = animeViewModel.userAnimeMangaList.first(where: { $0.id == id }) {
+//            print("Hit cached item")
+//            item = existingItem
+//            return
+//        }
+//        
+//        // Send network request
+//        switch type {
+//        case .anime:
+//            item = await animeViewModel.fetchAnime(id: id)
+//        default:
+//            item = await animeViewModel.fetchMangaByID(id: id)
+//        }
+//    }
 }
 
 enum DetailOption: String, CaseIterable, Identifiable {
