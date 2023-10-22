@@ -14,8 +14,7 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     @Published var animeData: [WeebItem]
     @Published var searchResults: [WeebItem] // might remove?
     @Published var profile: Profile
-    //    @Published var friends: [User]
-    //    @Published var request: [FriendRequest]
+    @Published var friends: [Profile] = []
     
     private lazy var container: CKContainer = CKContainer.default()
     private lazy var database: CKDatabase = container.publicCloudDatabase // TOOD: Change back to private
@@ -30,28 +29,125 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
         
         Task {
             userID = try await container.userRecordID()
-            loadUserAnimeList()
+            loadUserAnimeList() // fetches profile. maybe split functiona up
             await createProfileIfNeeded()
-            //            await
+            await getFriends()
             
         }
     }
     
-    private func friendRequestExists(senderID: String, receiverID: String) async -> Bool {
+    func getFriends() async {
+        do {
+            // Get user's friends
+            let recordToMatch = CKRecord.Reference(recordID: self.profile.recordID, action: .none)
+            let predicate1 = NSPredicate(format: "profile1 == %@", recordToMatch)
+            let query1 = CKQuery(recordType: "Friends", predicate: predicate1)
+            let (results1, _) = try await database.records(matching: query1, desiredKeys: [Friends.RecordKey.profile2.rawValue])
+            
+            let predicate2 = NSPredicate(format: "profile2 == %@", recordToMatch)
+            let query2 = CKQuery(recordType: "Friends", predicate: predicate2)
+            let (results2, _) = try await database.records(matching: query2, desiredKeys: [Friends.RecordKey.profile1.rawValue])
+
+            var profileIDs1: [CKRecord.ID] = try results1
+                .map { try $0.1.get() }
+                .compactMap { ($0[Friends.RecordKey.profile2] as? CKRecord.Reference)?.recordID }
+            
+            var profileIDs2: [CKRecord.ID] = try results2
+                .map { try $0.1.get() }
+                .compactMap { ($0[Friends.RecordKey.profile1] as? CKRecord.Reference)?.recordID }
+            
+            // Get profiles using friend's profile field
+            let profileResults1 = try await database.records(for: profileIDs1)
+            let profileResults2 = try await database.records(for: profileIDs2)
+            var profiles: [Profile] = []
+            
+            profiles.append(contentsOf: try profileResults1.compactMap { Profile(record: try $0.value.get()) })
+            profiles.append(contentsOf: try profileResults2.compactMap { Profile(record: try $0.value.get()) })
+
+            self.friends = profiles
+        } catch {
+            print("Fail to get friends: \(error)")
+            self.friends = []
+        }
+    }
+    
+    func acceptFriendRequest(friendRequestCellViewModel: FriendRequestCellViewModel) async -> Result<FriendRequestCellViewModel, Error> {
+        // Delete friend request and add friend record
+        do {
+            let friendRecord = CKRecord(recordType: "Friends")
+            friendRecord[Friends.RecordKey.profile1] = CKRecord.Reference(recordID: profile.recordID, action: .deleteSelf)
+            friendRecord[Friends.RecordKey.profile2] = CKRecord.Reference(recordID: friendRequestCellViewModel.profile.recordID, action: .deleteSelf)
+            
+            let friendRequestRecordID = friendRequestCellViewModel.friendshipRequest.recordID
+            let (saveResults, deleteResults) = try await database.modifyRecords(
+                saving: [friendRecord],
+                deleting: [friendRequestRecordID]
+            )
+            
+            print("Successfully accepted friend request")
+            print(friendRequestRecordID.recordName)
+            return .success(friendRequestCellViewModel)
+        } catch {
+            print("Error accepting friend request")
+            return .failure(error)
+        }
+    }
+    
+    func getPendingFriendRequest() async -> Result<[FriendRequestCellViewModel], Error> {
+        do {
+            // Fetch pending request
+            let userID = try await container.userRecordID()
+            let reference = CKRecord.Reference(recordID: userID, action: .none)
+            let predicate = NSPredicate(format: "receiverID == %@", reference)
+            let query = CKQuery(recordType: "FriendRequest", predicate: predicate)
+            let (friendRequestResults, _) = try await database.records(matching: query)
+            
+            let pendingFriendRequests: [FriendRequest] = try friendRequestResults
+                .compactMap { try FriendRequest(record: $0.1.get()) }
+            
+            print("Friend request: \(pendingFriendRequests.map { $0.senderID.recordID.recordName })")
+            let profileIDs: [CKRecord.ID] = pendingFriendRequests.map { $0.profileID.recordID }
+
+            // Fetch profile
+            let profileResults = try await database.records(for: profileIDs)
+            
+            let profiles: [Profile] = try profileResults
+                .compactMap { try Profile(record: $0.value.get()) }
+            print("Friend profiles: \(profiles.map { $0.username })")
+
+            // Stitch results together
+            var result: [FriendRequestCellViewModel] = []
+            
+            for request in pendingFriendRequests {
+                if let profile = profiles.first(where: { $0.userID.recordID == request.senderID.recordID }) {
+                    result.append(FriendRequestCellViewModel(profile: profile, friendshipRequest: request))
+                }
+            }
+            
+            print("Successfully got pending friend requests \(result.map { $0.profile.username })")
+            return .success(result)
+        } catch {
+            print("Error getting pending friend requests: \(error)")
+            return .failure(error)
+        }
+    }
+    
+    private func friendRequestExists(friendID: CKRecord.ID) async -> Bool {
         do {
             let userID = try await container.userRecordID()
             // Check if reciever exists
             
-            
             // Check if friendship request exists
             let sender = CKRecord.Reference(recordID: userID, action: .none)
-            let receiver = CKRecord.Reference(recordID: CKRecord.ID(recordName: receiverID), action: .none)
+            let receiver = CKRecord.Reference(recordID: friendID, action: .none)
             let predicate = NSPredicate(format: "senderID == %@ AND receiverID == %@", sender, receiver)
             let query = CKQuery(recordType: "FriendRequest", predicate: predicate)
             let (results, _) = try await database.records(matching: query, desiredKeys: [], resultsLimit: 1)
-            if results.isEmpty {
+            if !results.isEmpty {
+                print("Friend request exits")
                 return true
             }
+            print("Friend request does not exits")
             return false
         } catch {
             print("Error checking if friend request exists: \(error)")
@@ -62,20 +158,28 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
     enum FriendRequestError: Error {
         case friendRequestExistsAlready
         case badSave
+        case badUsername
     }
 
     
-    func sendFriendRequest(senderID: String, receiverID: String) async -> Result<FriendRequest, Error> { // throws
+    func sendFriendRequest(username: String) async -> Result<FriendRequest, Error> { // throws
         // throw friendrequest error? viewmodel will catch and handle error and update ui?
-//        guard await !friendRequestExists(senderID: senderID, receiverID: receiverID) else {
-//            return .failure(FriendRequestError.friendRequestExistsAlready)
-//        }
         
         do {
+            // Get friend's userID from profile
+            guard let receiverID = await getUserID(from: username) else { return .failure(FriendRequestError.badUsername) }
+            
+            // Check if request exists already
+            guard await !friendRequestExists(friendID: receiverID) else {
+                return .failure(FriendRequestError.friendRequestExistsAlready)
+            }
+            
             // Create friend request
+            let senderID = try await container.userRecordID()
             let requestRecord = CKRecord(recordType: "FriendRequest")
-            requestRecord[.senderID] = CKRecord.Reference(recordID: CKRecord.ID(recordName: senderID), action: .none)
-            requestRecord[.receiverID] = CKRecord.Reference(recordID: CKRecord.ID(recordName: receiverID), action: .none)
+            requestRecord[.senderID] = CKRecord.Reference(recordID: senderID, action: .none)
+            requestRecord[.receiverID] = CKRecord.Reference(recordID: receiverID, action: .none)
+            requestRecord[.profileID] = CKRecord.Reference(recordID: profile.recordID, action: .none)
             
             let record = try await database.save(requestRecord)
             if let request = FriendRequest(record: record) {
@@ -86,6 +190,27 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
         } catch {
             print("Error sending friend request: \(error)")
             return .failure(error)
+        }
+    }
+    
+    func getUserID(from username: String) async -> CKRecord.ID? {
+        do {
+            // Get profile record with matching username
+            let predicate = NSPredicate(format: "username == %@", username)
+            let query = CKQuery(recordType: "Profile", predicate: predicate)
+            let (results, _) = try await database.records(matching: query, resultsLimit: 1)
+            if let record = try results.first?.1.get() {
+                print("Successfully got friend's userID")
+                if let reference = record[.userID] as? CKRecord.Reference {
+                    return reference.recordID
+                }
+            }
+            print("Username does not exist")
+            return nil
+            // Return profile's user reference
+        } catch {
+            print("Erroring getting user id from \(username): \(error)")
+            return nil
         }
     }
     
@@ -123,69 +248,54 @@ class AnimeRepository: ObservableObject /**MyAnimeListApiService, CloudKitServic
             return "user\(randLetters)#\(randDigits)"
         }
         
-        //        // FIXME: Remove later
-        //        UserDefaults.standard.setValue(false, forKey: "didCreateProfile")
-        
-        // If user already created a profile, no need to do unncessary trips (i.e. check if user exists, creating it...)
-        guard !UserDefaults.standard.bool(forKey: "didCreateProfile") else {
-            print("Profile already created.")
-            
-            // Handle fetching user profile
-            do {
-                let userID = try await container.userRecordID()
-                let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
-                let predicate = NSPredicate(format: "userID == %@", recordToMatch)
-                let query = CKQuery(recordType: "Profile", predicate: predicate)
-                let (results, _) = try await database.records(matching: query, resultsLimit: 1)
-                if let result = try results.first?.1.get(),
-                   let profile = Profile(record: result) {
-                    print("Got existing profile")
-                    self.profile = profile
-                } else {
-                    print("Failed to get profile")
+        // Handle fetching user profile
+        do {
+            let userID = try await container.userRecordID()
+            let recordToMatch = CKRecord.Reference(recordID: userID, action: .none)
+            let predicate = NSPredicate(format: "userID == %@", recordToMatch)
+            let query = CKQuery(recordType: "Profile", predicate: predicate)
+            let (results, _) = try await database.records(matching: query, resultsLimit: 1)
+            if let result = try results.first?.1.get(),
+               let profile = Profile(record: result) {
+                print("Got existing profile")
+                self.profile = profile
+            } else {
+                print("Failed to get profile")
+                // Handle creating user profile
+                // 1. Initalize profile record with default values (e.g. username#0000)
+                let record = CKRecord(recordType: "Profile", recordID: CKRecord.ID(recordName: UUID().uuidString))
+                
+                // 2. Generate random username
+                var defaultUsername = generateRandomUsername()
+                var attempts = 0 // Just incase infinite loop, "impossible" to not get a unique username
+                
+                // 3. Check if username is taken
+                while await isUsernameTaken(username: defaultUsername) && attempts < 10 {
+                    defaultUsername = generateRandomUsername()
+                    attempts += 1
                 }
                 
-            } catch {
-                print("Error fetching profile: \(error)")
-            }
-            return
-        }
-        
-        // Handle creating user profile
-        do {
-            // 1. Initalize profile record with default values (e.g. username#0000)
-            let record = CKRecord(recordType: "Profile", recordID: CKRecord.ID(recordName: UUID().uuidString))
-            
-            // 2. Generate random username
-            var defaultUsername = generateRandomUsername()
-            var attempts = 0 // Just incase infinite loop, "impossible" to not get a unique username
-            
-            // 3. Check if username is taken
-            while await isUsernameTaken(username: defaultUsername) && attempts < 10 {
-                defaultUsername = generateRandomUsername()
-                attempts += 1
-            }
-            
-            print(defaultUsername)
-            
-            record[.username] = defaultUsername
-            record[.profileImage] = nil
-            let userID = try await CKContainer.default().userRecordID()
-            record[.userID] = CKRecord.Reference(recordID: userID, action: .deleteSelf)
-            
-            print("Saving profile")
-            let profileRecord = try await database.save(record)
-            if let profile = Profile(record: profileRecord) {
-                self.profile = profile
-                print("Profile created sucessfully")
-                UserDefaults.standard.setValue(true, forKey: "didCreateProfile")
+                print(defaultUsername)
+                
+                record[.username] = defaultUsername
+                record[.profileImage] = nil
+                let userID = try await CKContainer.default().userRecordID()
+                record[.userID] = CKRecord.Reference(recordID: userID, action: .deleteSelf)
+                
+                print("Saving profile")
+                let profileRecord = try await database.save(record)
+                if let profile = Profile(record: profileRecord) {
+                    self.profile = profile
+                    print("Profile created sucessfully")
+                }
             }
             
         } catch {
-            print("Error creating profile: \(error)")
+            print("Error fetching profile: \(error)")
         }
+        return
     }
-    
+            
     func isUsernameTaken(username: String) async -> Bool  {
         do {
             let predicate = NSPredicate(format: "username == %@", username)

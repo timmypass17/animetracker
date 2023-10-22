@@ -17,6 +17,8 @@ class ProfileViewModel: ObservableObject {
     @Published var userAnimeMangaList: [WeebItem] = []
     @Published var searchText = ""
     @Published var selectedTab: ProfileTab = .friends
+    @Published var pendingFriendRequest: [FriendRequestCellViewModel] = []
+    @Published var friends: [Profile] = []
     
     @Published private(set) var imageState: ImageState = .empty
     @Published var imageSelection: PhotosPickerItem? {
@@ -52,16 +54,38 @@ class ProfileViewModel: ObservableObject {
         self.animeRepository.$profile
             .assign(to: \.profile, on: self)
             .store(in: &cancellables)
+        
+        self.animeRepository.$friends
+            .assign(to: \.friends, on: self)
+            .store(in: &cancellables)
+        
+        Task {
+            await getPendingFriendRequest()
+        }
     }
     
     // Use modifying records to handle invite and creating friendship records atommically
     
+    func acceptFriendRequest(friendRequestCellViewModel: FriendRequestCellViewModel) async {
+        let result = await animeRepository.acceptFriendRequest(friendRequestCellViewModel: friendRequestCellViewModel)
+        switch result {
+        case .success(let friendRequestCellViewModel):
+            pendingFriendRequest = pendingFriendRequest.filter { $0.friendshipRequest.id != friendRequestCellViewModel.friendshipRequest.id }
+            animeRepository.friends.append(friendRequestCellViewModel.profile)
+            break
+        case .failure(let error):
+            break
+        }
+    }
     
+    func rejectFriendRequest() async {
+        return
+    }
     
     func sendFriendRequest() async {
         do {
             let userID = try await container.userRecordID()
-            let result = await animeRepository.sendFriendRequest(senderID: userID.recordName, receiverID: self.searchText)
+            let result = await animeRepository.sendFriendRequest(username: self.searchText)
             switch result {
             case .success(let friendRequest):
                 // Handle successfully sending friend request
@@ -75,6 +99,16 @@ class ProfileViewModel: ObservableObject {
         }
     }
     
+    func getPendingFriendRequest() async {
+        let result = await animeRepository.getPendingFriendRequest()
+        switch result {
+        case .success(let friendRequestViewModel):
+            self.pendingFriendRequest = friendRequestViewModel
+        case .failure(let _):
+            self.pendingFriendRequest = []
+        }
+    }
+
     func getNumAnime() -> Int {
         return userAnimeMangaList.filter { $0.getWeebItemType() == .anime }.count
     }

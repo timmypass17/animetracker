@@ -28,11 +28,6 @@ struct AnimeTrackerApp: App {
         _animeViewModel = StateObject(wrappedValue: AnimeViewModel(animeRepository: animeRepository))
         _discoverViewModel = StateObject(wrappedValue: DiscoverViewModel(animeRepository: animeRepository))
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(animeRepository: animeRepository))
-                
-//        Task {
-//            // Ask only once (to show again, delete and reinstall app)
-//            try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
-//        }
     }
     
     var body: some Scene {

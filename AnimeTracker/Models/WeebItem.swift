@@ -84,7 +84,7 @@ struct RecommendationNode: Codable {
 
 struct RelatedItem: Codable {
     let node: RecommendationNode
-    let relation_type_formatted: String
+    let relation_type_formatted: String?
 }
 
 // MARK: Getters

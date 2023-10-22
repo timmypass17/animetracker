@@ -14,6 +14,7 @@ enum ProfileTab: String, CaseIterable, Identifiable {
 }
 
 struct ProfileView: View {
+    @EnvironmentObject var appDelegate: AppDelegate
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var profileViewModel: ProfileViewModel
     
@@ -50,11 +51,11 @@ struct ProfileView: View {
                 
                 HStack(spacing: 40) {
                     VStack {
-                        Text("20")
+                        Text("\(profileViewModel.friends.count)")
                             .font(.system(size: 20))
                             .fontWeight(.bold)
                         
-                        Text("Following")
+                        Text("Friends")
                             .foregroundColor(.gray)
                             .font(.system(size: 12))
                     }
@@ -125,42 +126,45 @@ struct ProfileView: View {
                             .cornerRadius(4)
                     }
                     
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Pending - 6".uppercased())
-                            .font(.system(size: 12))
-                        
-                        ForEach(1..<3) { i in
-                            HStack(spacing: 12) {
-                                Circle()
-                                    .fill(.regularMaterial)
-                                    .frame(width: 40, height: 40)
-                                Text("Pending \(i)")
-                                
-                                Spacer()
-                                
-                                Image(systemName: "xmark")
-
-                                Image(systemName: "checkmark")
-                                    .symbolRenderingMode(.multicolor)
-
+                    if profileViewModel.pendingFriendRequest.count > 0 {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Pending - \(profileViewModel.pendingFriendRequest.count)".uppercased())
+                                .font(.system(size: 12))
+                            
+                            ForEach(profileViewModel.pendingFriendRequest) { friendRequestViewModel in
+                                FriendRequestCell(friendRequestCellViewModel: friendRequestViewModel) { friendRequestCellViewModel in
+                                    await profileViewModel.acceptFriendRequest(friendRequestCellViewModel: friendRequestCellViewModel)
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top)
                     
                     
                     VStack(alignment: .leading, spacing: 16) {
                         
-                        Text("Friends - 7".uppercased())
+                        Text("Friends - \(profileViewModel.friends.count)".uppercased())
                             .font(.system(size: 12))
                         
-                        ForEach(1..<8) { i in
+                        ForEach(profileViewModel.friends) { profile in
                             HStack(spacing: 12) {
-                                Circle()
-                                    .fill(.thinMaterial)
-                                    .frame(width: 40, height: 40)
-                                Text("Friend \(i)")
+                                AsyncImage(url: profile.profileImage?.fileURL) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else if phase.error != nil {
+                                        Circle()
+                                            .fill(.regularMaterial)
+                                    } else {
+                                        ProgressView()
+                                    }
+                                }
+                                .frame(width: 40, height: 40)
+                                .clipShape(Circle())
+                                
+                                Text("\(profile.username)")
                             }
                         }
                     }
@@ -177,7 +181,18 @@ struct ProfileView: View {
         .background(Color.ui.background)
         .refreshable {
             // Handle fetching data
+            print("Fetching profile")
         }
+        .onReceive(appDelegate.$newPendingRequest) { newValue in
+            print("onChange")
+            guard let newValue = newValue else { return }
+            
+//            profileViewModel.pendingFriendRequest.append(newValue)
+        }
+        .onAppear {
+            print("Friends - \(profileViewModel.friends.count)")
+        }
+        
     }
 }
 

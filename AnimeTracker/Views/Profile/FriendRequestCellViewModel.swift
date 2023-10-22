@@ -6,3 +6,19 @@
 //
 
 import Foundation
+
+@MainActor
+class FriendRequestCellViewModel: ObservableObject, Identifiable {
+    @Published var profile: Profile
+    @Published var friendshipRequest: FriendRequest
+
+    var id: String {
+        return "profile.id + friendshipRequest.id"
+    }
+    
+    init(profile: Profile, friendshipRequest: FriendRequest) {
+        self.profile = profile
+        self.friendshipRequest = friendshipRequest
+    }
+    
+}

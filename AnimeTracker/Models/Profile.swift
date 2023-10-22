@@ -27,9 +27,16 @@ struct Profile: Identifiable {
     
     // Extract data from record
     init?(record: CKRecord) {
-        guard let username = record[.username] as? String,
-              let profileImage = record[.profileImage] as? CKAsset?,
-              let userID = record[.userID] as? CKRecord.Reference else {
+        guard let username = record[.username] as? String else {
+            print("Username not found")
+            return nil
+        }
+        guard let profileImage = record[.profileImage] as? CKAsset? else {
+            print("Profile image not found")
+            return nil
+        }
+        guard let userID = record[.userID] as? CKRecord.Reference else {
+            print("UserID not found")
             return nil
         }
         
